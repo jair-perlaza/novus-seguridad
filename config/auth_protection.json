@@ -1,0 +1,9 @@
+{
+  "failure_window_minutes": 15,
+  "risk_log_attempts_max": 3,
+  "monitoring_attempt": 4,
+  "block_attempt": 5,
+  "first_block_minutes": 30,
+  "recurrence_block_minutes": 1440,
+  "admin_review_after_recurrences": 2
+}
