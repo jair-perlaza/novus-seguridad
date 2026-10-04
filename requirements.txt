@@ -28,3 +28,4 @@ qrcode[pil]>=7.4.2
 waitress>=2.1.2
 # CLOUD-P0 optional — only required when DATABASE_URL points to PostgreSQL
 # psycopg[binary]>=3.1.0
+gunicorn
