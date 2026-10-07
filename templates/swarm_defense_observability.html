@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <title>Swarm Defense — Observabilidad</title>
+  <style>
+    :root { --bg:#0f1419; --fg:#e7ecf1; --muted:#8b9aab; --acc:#3d9cfd; --ok:#3dd68c; --card:#1a222c; }
+    body { margin:0; font-family: "Segoe UI", system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+    main { max-width:960px; margin:0 auto; padding:2rem 1.25rem; }
+    h1 { font-size:1.4rem; font-weight:600; margin:0 0 .25rem; }
+    h2 { font-size:1rem; margin:1.75rem 0 .75rem; }
+    .sub { color:var(--muted); font-size:.9rem; margin-bottom:1.5rem; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+    .card { background:var(--card); border:1px solid #2a3542; border-radius:8px; padding:14px 16px; }
+    .card .k { color:var(--muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
+    .card .v { font-size:1.35rem; margin-top:6px; font-variant-numeric:tabular-nums; word-break:break-all; }
+    pre { background:var(--card); border:1px solid #2a3542; border-radius:8px; padding:12px; overflow:auto; font-size:.8rem; }
+    a { color:var(--acc); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Swarm Defense Engine — Observabilidad</h1>
+  <p class="sub">Solo métricas técnicas reales. Sin datos simulados. Mesh peer-to-peer si hay peers confiados.</p>
+  <div class="grid" id="cards"></div>
+  <h2>Swarm Mesh</h2>
+  <div class="grid" id="mesh-cards"></div>
+  <h2>Detalle</h2>
+  <pre id="raw">Cargando…</pre>
+  <p class="sub"><a href="/api/swarm-defense/observability">API Swarm</a> · <a href="/api/swarm-mesh/status">API Mesh</a></p>
+</main>
+<script>
+function card(k,v){return `<div class="card"><div class="k">${k}</div><div class="v">${v ?? '—'}</div></div>`;}
+async function load() {
+  const r = await fetch('/api/swarm-defense/observability', {credentials:'same-origin'});
+  const d = await r.json();
+  document.getElementById('raw').textContent = JSON.stringify(d, null, 2);
+  const items = [
+    ['Motores activos', d.motors_active],
+    ['Eventos procesados', d.events_processed],
+    ['Decisiones coordinadas', d.coordinated_decisions],
+    ['Tiempo medio (ms)', d.avg_response_ms ?? '—'],
+    ['Correlaciones buffer', d.correlations_buffered],
+    ['Bus publicados', (d.bus||{}).published],
+    ['Memoria entradas', ((d.memory||{}).entries)],
+    ['Aprendizajes', ((d.learning||{}).accepted)],
+    ['Salud', d.health],
+  ];
+  document.getElementById('cards').innerHTML = items.map(([k,v]) => card(k,v)).join('');
+  const m = d.mesh || {};
+  const ioc = m.ioc_counts || {};
+  if (!d.mesh) {
+    document.getElementById('mesh-cards').innerHTML = card('Mesh', 'NO DISPONIBLE');
+  } else {
+    const meshItems = [
+      ['Nodo', m.node_id || '—'],
+      ['Peers conectados', m.peers_connected],
+      ['Peers confiados', m.trusted_peers],
+      ['IOC enviados (eventos)', m.outbound],
+      ['IOC recibidos (eventos)', m.inbound],
+      ['Hashes compartidos', ioc.hashes],
+      ['IPs compartidas', ioc.ips],
+      ['Dominios compartidos', ioc.domains],
+      ['Crypto nodo', m.crypto_ok === true ? 'OK' : (m.crypto_ok === false ? 'FAIL' : '—')],
+      ['Salud mesh', m.health || '—'],
+    ];
+    document.getElementById('mesh-cards').innerHTML = meshItems.map(([k,v]) => card(k,v)).join('');
+  }
+}
+load().catch(e => { document.getElementById('raw').textContent = String(e); });
+setInterval(load, 15000);
+</script>
+</body>
+</html>

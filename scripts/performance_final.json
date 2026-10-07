@@ -1,0 +1,86 @@
+{
+  "label": "final",
+  "cpu_pct": 62.5,
+  "ram_pct": 82.6,
+  "login_ms": 9,
+  "login_status": 302,
+  "endpoints": [
+    {
+      "path": "/dashboard",
+      "status": 200,
+      "ms_min": 438,
+      "ms_avg": 454,
+      "ms_max": 482
+    },
+    {
+      "path": "/api/dashboard/live",
+      "status": 200,
+      "ms_min": 440,
+      "ms_avg": 576,
+      "ms_max": 818
+    },
+    {
+      "path": "/api/security/summary",
+      "status": 200,
+      "ms_min": 473,
+      "ms_avg": 492,
+      "ms_max": 507
+    },
+    {
+      "path": "/api/system/sector-shield/status",
+      "status": 200,
+      "ms_min": 2,
+      "ms_avg": 3,
+      "ms_max": 3
+    },
+    {
+      "path": "/api/system/sector-protection",
+      "status": 200,
+      "ms_min": 20,
+      "ms_avg": 21,
+      "ms_max": 23
+    },
+    {
+      "path": "/api/threat-intel/dashboard",
+      "status": 200,
+      "ms_min": 15,
+      "ms_avg": 328,
+      "ms_max": 951
+    },
+    {
+      "path": "/api/network/nodes",
+      "status": 200,
+      "ms_min": 1,
+      "ms_avg": 2,
+      "ms_max": 2
+    },
+    {
+      "path": "/vulnerabilidades",
+      "status": 200,
+      "ms_min": 4,
+      "ms_avg": 6,
+      "ms_max": 9
+    },
+    {
+      "path": "/network",
+      "status": 200,
+      "ms_min": 28,
+      "ms_avg": 39,
+      "ms_max": 61
+    },
+    {
+      "path": "/topology",
+      "status": 200,
+      "ms_min": 5,
+      "ms_avg": 8,
+      "ms_max": 13
+    },
+    {
+      "path": "/inteligencia",
+      "status": 200,
+      "ms_min": 11,
+      "ms_avg": 15,
+      "ms_max": 22
+    }
+  ]
+}

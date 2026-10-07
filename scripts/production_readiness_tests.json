@@ -1,0 +1,165 @@
+{
+  "tests": [
+    {
+      "name": "registry write",
+      "pass": true,
+      "how": "record_defense_event",
+      "evidence": "id=DEF-8ce3e9b5dfeb"
+    },
+    {
+      "name": "registry read",
+      "pass": true,
+      "how": "event_exists",
+      "evidence": "id=DEF-8ce3e9b5dfeb"
+    },
+    {
+      "name": "registry summary",
+      "pass": true,
+      "how": "get_registry_summary",
+      "evidence": "{'prevent': 215, 'detect': 341, 'contain': 1141, 'respond': 2332, 'recover': 63, 'audit': 173}"
+    },
+    {
+      "name": "critico sin evidencia downgrade",
+      "pass": true,
+      "how": "classify_risk_level",
+      "evidence": "ALTO"
+    },
+    {
+      "name": "partial isolation gate",
+      "pass": true,
+      "how": "_has_critical_evidence",
+      "evidence": "sin evidencia = no aislamiento"
+    },
+    {
+      "name": "ADE activación trazable",
+      "pass": true,
+      "how": "activate_after_failed_remediation",
+      "evidence": "status=resolved_by_remediation level=ALTO"
+    },
+    {
+      "name": "detección brute force",
+      "pass": true,
+      "how": "_detect_auth_anomalies",
+      "evidence": "{'verified': True, 'evidence': '36 intentos fallidos desde 203.0.113.99', 'ip': '203.0.113.99', 'attempts': 36, 'source': 'audit_logs'}"
+    },
+    {
+      "name": "contención IP brute force",
+      "pass": true,
+      "how": "IPBloqueada",
+      "evidence": "blocked=True"
+    },
+    {
+      "name": "recuperación unblock IP",
+      "pass": true,
+      "how": "revert_containment",
+      "evidence": "IP 203.0.113.99 desbloqueada"
+    },
+    {
+      "name": "NDR alertas entorno hostil",
+      "pass": true,
+      "how": "analyze_behavior 10 unknown",
+      "evidence": "['Entorno hostil — alta proporción de dispositivos desconocidos', 'Entorno hostil — actividad de autenticación anómala']"
+    },
+    {
+      "name": "API defense-registry",
+      "pass": true,
+      "how": "GET /api/system/defense-registry",
+      "evidence": "HTTP 200"
+    },
+    {
+      "name": "ASPE init",
+      "pass": true,
+      "how": "aspe.initialize",
+      "evidence": "success"
+    },
+    {
+      "name": "threat scan",
+      "pass": true,
+      "how": "detect_threats_realtime",
+      "evidence": "dict"
+    }
+  ],
+  "evidence": [
+    {
+      "test": "registry write",
+      "result": "id=DEF-8ce3e9b5dfeb"
+    },
+    {
+      "test": "registry read",
+      "result": "id=DEF-8ce3e9b5dfeb"
+    },
+    {
+      "test": "registry summary",
+      "result": {
+        "prevent": 215,
+        "detect": 341,
+        "contain": 1141,
+        "respond": 2332,
+        "recover": 63,
+        "audit": 173
+      }
+    },
+    {
+      "test": "critico sin evidencia downgrade",
+      "result": "ALTO"
+    },
+    {
+      "test": "partial isolation gate",
+      "result": "sin evidencia = no aislamiento"
+    },
+    {
+      "test": "ADE activación trazable",
+      "result": "status=resolved_by_remediation level=ALTO"
+    },
+    {
+      "test": "detección brute force",
+      "result": {
+        "verified": true,
+        "evidence": "36 intentos fallidos desde 203.0.113.99",
+        "ip": "203.0.113.99",
+        "attempts": 36,
+        "source": "audit_logs"
+      }
+    },
+    {
+      "test": "contención IP brute force",
+      "result": "blocked=True"
+    },
+    {
+      "test": "recuperación unblock IP",
+      "result": "IP 203.0.113.99 desbloqueada"
+    },
+    {
+      "test": "NDR alertas entorno hostil",
+      "result": [
+        "Entorno hostil — alta proporción de dispositivos desconocidos",
+        "Entorno hostil — actividad de autenticación anómala"
+      ]
+    },
+    {
+      "test": "API defense-registry",
+      "result": "HTTP 200"
+    },
+    {
+      "test": "ASPE init",
+      "result": "success"
+    },
+    {
+      "test": "threat scan",
+      "result": "dict"
+    }
+  ],
+  "limitations": [
+    "Sin IDS/packet inspection — DNS/DHCP spoofing no verificable en host",
+    "Bloqueo IP remoto en SQLite — sin enforcement firewall OS para todos los escenarios",
+    "Sector móvil sin agente/SDK",
+    "BEC/Phishing sin OAuth email en producción",
+    "MITM completo requiere NOVUS_EXPECTED_CERT_PIN",
+    "Escalabilidad >100 dispositivos no validada en laboratorio real"
+  ],
+  "summary": {
+    "passed": 13,
+    "total": 13,
+    "all_pass": true
+  }
+}

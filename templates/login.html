@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Acceso</title>
+    <style>
+        body { 
+            background: linear-gradient(rgba(5, 10, 24, 0.85), rgba(5, 10, 24, 0.85)), 
+                        url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1920'); 
+            background-size: cover; 
+            background-position: center;
+            background-attachment: fixed;
+            color: white; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            margin: 0;
+            overflow: hidden;
+        }
+        .card { 
+            background: rgba(15, 23, 42, 0.95); 
+            padding: 40px; 
+            border-radius: 15px; 
+            border: 1px solid #00d4ff; 
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2); 
+            width: 350px;
+            backdrop-filter: blur(10px);
+        }
+        h2 { text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border: 1px solid #1e293b; 
+            background: #0f172a; 
+            color: #00d4ff; 
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+        input:focus { border-color: #00d4ff; box-shadow: 0 0 8px rgba(0, 212, 255, 0.5); }
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-top: 10px; 
+            transition: all 0.3s ease; 
+            text-transform: uppercase;
+        }
+        .btn-main { background: #00d4ff; color: #050a18; }
+        .btn-main:hover { background: #00b8e6; transform: translateY(-2px); }
+        .btn-reg { 
+            background: transparent; 
+            color: #94a3b8; 
+            border: 1px solid #334155; 
+            margin-top: 15px;
+        }
+        .btn-reg:hover { border-color: #94a3b8; color: white; background: rgba(255,255,255,0.05); }
+        .footer-text { font-size: 11px; text-align: center; color: #475569; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 style="text-align:center; color:#00d4ff;">NOVUS</h2>
+        <p style="font-size: 12px; text-align: center; color: #64748b; margin-bottom: 25px;">
+            Inteligencia Artificial aplicada a la Seguridad PyME
+        </p>
+
+        {% set query_error = request.args.get('error') %}
+        {% set msg = request.args.get('msg') %}
+        {% if error %}
+        <div style="margin-bottom: 12px; border: 1px solid #7f1d1d; background: rgba(127, 29, 29, 0.25); color: #fecaca; padding: 10px; border-radius: 8px; font-size: 12px;">
+            {{ error }}
+        </div>
+        {% elif query_error %}
+        <div style="margin-bottom: 12px; border: 1px solid #7f1d1d; background: rgba(127, 29, 29, 0.25); color: #fecaca; padding: 10px; border-radius: 8px; font-size: 12px;">
+            {{ query_error }}
+        </div>
+        {% endif %}
+        {% if msg %}
+        <div style="margin-bottom: 12px; border: 1px solid #166534; background: rgba(22, 101, 52, 0.25); color: #bbf7d0; padding: 10px; border-radius: 8px; font-size: 12px;">
+            {{ msg }}
+        </div>
+        {% endif %}
+        
+        <form action="{{ url_for('auth.login') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% if mfa_required %}
+            <input type="hidden" name="email" value="{{ email or '' }}">
+            <p style="font-size:12px;opacity:0.9;margin-bottom:10px;">{{ message or 'Código MFA requerido' }}</p>
+            <input type="text" name="mfa_code" placeholder="Código Authenticator (TOTP)" autocomplete="one-time-code" inputmode="numeric">
+            <input type="text" name="mfa_recovery" placeholder="O código de recuperación" style="margin-top:8px;">
+            {% else %}
+            <input type="email" name="email" placeholder="Correo corporativo" required>
+            <input type="password" name="password" placeholder="Contraseña de acceso" required>
+            {% endif %}
+            
+            <div style="margin-top: 20px;">
+                <button type="submit" class="btn-main">
+                    {% if mfa_required %}Verificar MFA{% else %}Acceder al Sistema{% endif %}
+                </button>
+                
+                {% if not mfa_required %}
+                <button type="button" onclick="window.location.href='{{ url_for('auth.registro_empresa') }}'" class="btn-reg">
+                    Registrar Empresa
+                </button>
+                <p style="margin-top:14px;font-size:12px;text-align:center;opacity:0.85">
+                    <a href="{{ url_for('auth.membresias') }}" style="color:#00d4ff;text-decoration:none">Ver planes y membresías</a>
+                </p>
+                {% endif %}
+            </div>
+        </form>
+        
+        <div class="footer-text">
+            SISTEMA CIFRADO CON BÓVEDA AES-256 <br>
+            MONITOREO NOVUS ACTIVO
+        </div>
+    </div>
+</body>
+</html>

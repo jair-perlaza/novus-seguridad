@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Health Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #06090f; color: white; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .hc-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 10px; }
+        .status-activo { color: #22c55e; }
+        .status-degradado { color: #f59e0b; }
+        .status-detenido { color: #ef4444; }
+        .status-no_disponible { color: #94a3b8; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="platform_health">
+    {% set active_module = 'platform_health' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header class="flex flex-wrap justify-between items-start gap-4">
+            <div>
+                <h1 class="text-2xl font-bold uppercase tracking-tighter">Health Center</h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">
+                    Monitoreo interno en tiempo real — telemetría real · sin datos inventados
+                </p>
+            </div>
+            <div class="text-right text-[10px] text-gray-500">
+                <div>Ciclo: <span id="hc-cycle">{{ dash.cycle_id or '—' }}</span></div>
+                <div>Actualizado: <span id="hc-updated">{{ dash.timestamp_utc or dash.generated_at_utc }}</span></div>
+            </div>
+        </header>
+
+        {% if dash.snapshot_stale or dash.data_freshness in ('STALE', 'NOT_AVAILABLE') %}
+        <div class="hc-card p-4 border-amber-500/40 bg-amber-950/20 text-amber-200 text-sm">
+            <i class="fas fa-clock mr-2"></i>
+            {{ dash.user_message or 'Datos de salud temporalmente no disponibles.' }}
+            {% if dash.observed_at %}
+            <span class="block text-[10px] text-amber-300/80 mt-1">Última actualización: {{ dash.observed_at }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% set s = dash.summary or {} %}
+        <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 text-center text-[10px]">
+            <div class="hc-card p-3">
+                <div id="hc-overall" class="text-lg font-bold status-{{ s.overall_status or 'no_disponible' }}">{{ s.overall_status_label or 'NO DISPONIBLE' }}</div>
+                <div class="text-gray-500">Estado general</div>
+            </div>
+            <div class="hc-card p-3">
+                <div id="hc-avail" class="text-lg font-bold text-cyan-300">{{ s.availability_pct if s.availability_pct is not none else 'NO DISPONIBLE' }}{% if s.availability_pct is not none %}%{% endif %}</div>
+                <div class="text-gray-500">Disponibilidad</div>
+            </div>
+            <div class="hc-card p-3">
+                <div id="hc-active" class="text-lg font-bold text-green-400">{{ s.services_active if s.services_active is not none else '—' }}</div>
+                <div class="text-gray-500">Servicios activos</div>
+            </div>
+            <div class="hc-card p-3">
+                <div id="hc-down" class="text-lg font-bold text-red-400">{{ s.services_down if s.services_down is not none else '—' }}</div>
+                <div class="text-gray-500">Servicios caídos</div>
+            </div>
+            <div class="hc-card p-3">
+                <div id="hc-cpu" class="text-lg font-bold">{{ s.cpu_percent if s.cpu_percent != 'NO DISPONIBLE' else 'NO DISPONIBLE' }}{% if s.cpu_percent != 'NO DISPONIBLE' and s.cpu_percent is not none %}%{% endif %}</div>
+                <div class="text-gray-500">CPU</div>
+            </div>
+            <div class="hc-card p-3">
+                <div id="hc-ram" class="text-lg font-bold">{{ s.ram_percent if s.ram_percent != 'NO DISPONIBLE' else 'NO DISPONIBLE' }}{% if s.ram_percent != 'NO DISPONIBLE' and s.ram_percent is not none %}%{% endif %}</div>
+                <div class="text-gray-500">RAM</div>
+            </div>
+            <div class="hc-card p-3">
+                <div id="hc-disk" class="text-lg font-bold">{{ s.disk_percent if s.disk_percent != 'NO DISPONIBLE' else 'NO DISPONIBLE' }}{% if s.disk_percent != 'NO DISPONIBLE' and s.disk_percent is not none %}%{% endif %}</div>
+                <div class="text-gray-500">Disco</div>
+            </div>
+            <div class="hc-card p-3">
+                <div id="hc-lat" class="text-lg font-bold">{{ s.latency_avg_ms if s.latency_avg_ms != 'NO DISPONIBLE' else 'NO DISPONIBLE' }}</div>
+                <div class="text-gray-500">Latencia (ms)</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-[10px]">
+            <div class="hc-card p-3">
+                <div id="hc-errors" class="text-lg font-bold text-red-300">{{ s.errors or 0 }}</div>
+                <div class="text-gray-500">Errores</div>
+            </div>
+            <div class="hc-card p-3">
+                <div id="hc-warn" class="text-lg font-bold text-amber-300">{{ s.warnings or 0 }}</div>
+                <div class="text-gray-500">Advertencias</div>
+            </div>
+            <div class="hc-card p-3">
+                <div id="hc-alerts" class="text-lg font-bold text-orange-300">{{ s.alert_count or 0 }}</div>
+                <div class="text-gray-500">Alertas ciclo</div>
+            </div>
+            <div class="hc-card p-3">
+                <div id="hc-na" class="text-lg font-bold text-slate-400">{{ s.services_unavailable or 0 }}</div>
+                <div class="text-gray-500">NO DISPONIBLE</div>
+            </div>
+        </div>
+
+        <section>
+            <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400 mb-3">Componentes</h2>
+            <div id="hc-components" class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                {% for c in dash.components or [] %}
+                <div class="hc-card p-4">
+                    <div class="flex justify-between gap-2">
+                        <div>
+                            <div class="text-sm font-bold">{{ c.label }}</div>
+                            <span class="text-[10px] uppercase font-bold status-{{ c.status }}">{{ c.status_label }}</span>
+                        </div>
+                        <div class="text-[10px] text-gray-500">{{ c.component_id }}</div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-[10px] text-gray-400">
+                        <div><span class="text-gray-600 block">Uptime</span>{{ c.uptime_label }}</div>
+                        <div><span class="text-gray-600 block">CPU</span>{{ c.cpu_percent }}{% if c.cpu_percent != 'NO DISPONIBLE' and c.cpu_percent is number %}%{% endif %}</div>
+                        <div><span class="text-gray-600 block">RAM</span>{{ c.ram_mb }}{% if c.ram_mb != 'NO DISPONIBLE' and c.ram_mb is number %} MB{% endif %}</div>
+                        <div><span class="text-gray-600 block">Disco</span>{{ c.disk_percent }}{% if c.disk_percent != 'NO DISPONIBLE' and c.disk_percent is number %}%{% endif %}</div>
+                        <div><span class="text-gray-600 block">Errores</span>{{ c.error_count }}</div>
+                        <div><span class="text-gray-600 block">Excepciones</span>{{ c.exception_count }}</div>
+                        <div><span class="text-gray-600 block">Resp (ms)</span>{{ c.response_time_ms }}</div>
+                        <div><span class="text-gray-600 block">Latencia</span>{{ c.latency_ms }}</div>
+                        <div><span class="text-gray-600 block">Eventos</span>{{ c.events_processed }}</div>
+                        <div><span class="text-gray-600 block">Perdidos</span>{{ c.events_lost }}</div>
+                        <div><span class="text-gray-600 block">Cola</span>{{ c.queue_pending }}</div>
+                        <div><span class="text-gray-600 block">Última act.</span>{{ c.last_activity }}</div>
+                    </div>
+                    {% if c.last_error %}
+                    <div class="mt-2 text-[10px] text-red-400/90">{{ c.last_error }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="hc-card p-4">
+                <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400 mb-3">Alertas / Issues</h2>
+                <div id="hc-issues" class="space-y-2 text-[11px] max-h-72 overflow-y-auto">
+                    {% for i in dash.issues or [] %}
+                    <div class="border border-slate-800 rounded p-2">
+                        <span class="text-amber-400 font-bold">{{ i.severity }}</span>
+                        · {{ i.component_id }} · {{ i.code }}
+                        <div class="text-gray-400">{{ i.message }}</div>
+                    </div>
+                    {% else %}
+                    <div class="text-gray-500">Sin issues en el último ciclo (telemetría real).</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="hc-card p-4">
+                <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400 mb-3">Historial</h2>
+                <div id="hc-history" class="space-y-2 text-[11px] max-h-72 overflow-y-auto font-mono">
+                    {% for h in (dash.history or [])|reverse %}
+                    <div class="border border-slate-800 rounded p-2 text-gray-400">
+                        <span class="text-cyan-500">{{ h.timestamp_utc }}</span>
+                        {{ h.event_type }} · {{ h.component_id }}
+                    </div>
+                    {% else %}
+                    <div class="text-gray-500">Historial vacío hasta el primer ciclo.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        {% include 'partials/global_search.html' %}
+        {% include 'partials/ai_kernel_panel.html' %}
+    </main>
+    <script>
+    function esc(v) {
+        if (v === null || v === undefined) return 'NO DISPONIBLE';
+        return String(v);
+    }
+    function renderComponent(c) {
+        const cpu = c.cpu_percent;
+        const ram = c.ram_mb;
+        const disk = c.disk_percent;
+        return `<div class="hc-card p-4">
+            <div class="flex justify-between gap-2">
+                <div><div class="text-sm font-bold">${esc(c.label)}</div>
+                <span class="text-[10px] uppercase font-bold status-${esc(c.status)}">${esc(c.status_label)}</span></div>
+                <div class="text-[10px] text-gray-500">${esc(c.component_id)}</div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-[10px] text-gray-400">
+                <div><span class="text-gray-600 block">Uptime</span>${esc(c.uptime_label)}</div>
+                <div><span class="text-gray-600 block">CPU</span>${esc(cpu)}${typeof cpu==='number'?'%':''}</div>
+                <div><span class="text-gray-600 block">RAM</span>${esc(ram)}${typeof ram==='number'?' MB':''}</div>
+                <div><span class="text-gray-600 block">Disco</span>${esc(disk)}${typeof disk==='number'?'%':''}</div>
+                <div><span class="text-gray-600 block">Errores</span>${esc(c.error_count)}</div>
+                <div><span class="text-gray-600 block">Excepciones</span>${esc(c.exception_count)}</div>
+                <div><span class="text-gray-600 block">Resp (ms)</span>${esc(c.response_time_ms)}</div>
+                <div><span class="text-gray-600 block">Latencia</span>${esc(c.latency_ms)}</div>
+                <div><span class="text-gray-600 block">Eventos</span>${esc(c.events_processed)}</div>
+                <div><span class="text-gray-600 block">Perdidos</span>${esc(c.events_lost)}</div>
+                <div><span class="text-gray-600 block">Cola</span>${esc(c.queue_pending)}</div>
+                <div><span class="text-gray-600 block">Última act.</span>${esc(c.last_activity)}</div>
+            </div>
+            ${c.last_error ? `<div class="mt-2 text-[10px] text-red-400/90">${esc(c.last_error)}</div>` : ''}
+        </div>`;
+    }
+    async function refreshHealthCenter(forceCycle) {
+        try {
+            if (forceCycle) {
+                await fetch('/api/health/cycle', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({publish: true, self_heal: true})
+                });
+            } else {
+                await fetch('/api/health/status', {credentials: 'same-origin'});
+            }
+            const r = await fetch('/api/health/dashboard', {credentials: 'same-origin'});
+            const data = await r.json();
+            if (!data.ok || !data.dashboard) return;
+            const d = data.dashboard;
+            const s = d.summary || {};
+            document.getElementById('hc-cycle').textContent = d.cycle_id || '—';
+            document.getElementById('hc-updated').textContent = d.timestamp_utc || d.generated_at_utc || 'NOT AVAILABLE';
+            const overall = document.getElementById('hc-overall');
+            if (!s.overall_status_label && d.note) {
+                overall.textContent = 'NOT MEASURED';
+                overall.className = 'text-lg font-bold status-no_disponible';
+            } else {
+                overall.textContent = s.overall_status_label || 'NOT AVAILABLE';
+                overall.className = 'text-lg font-bold status-' + (s.overall_status || 'no_disponible');
+            }
+            document.getElementById('hc-avail').textContent = (s.availability_pct != null ? s.availability_pct + '%' : 'NO DISPONIBLE');
+            document.getElementById('hc-active').textContent = s.services_active ?? '—';
+            document.getElementById('hc-down').textContent = s.services_down ?? '—';
+            document.getElementById('hc-cpu').textContent = s.cpu_percent === 'NO DISPONIBLE' || s.cpu_percent == null ? 'NO DISPONIBLE' : s.cpu_percent + '%';
+            document.getElementById('hc-ram').textContent = s.ram_percent === 'NO DISPONIBLE' || s.ram_percent == null ? 'NO DISPONIBLE' : s.ram_percent + '%';
+            document.getElementById('hc-disk').textContent = s.disk_percent === 'NO DISPONIBLE' || s.disk_percent == null ? 'NO DISPONIBLE' : s.disk_percent + '%';
+            document.getElementById('hc-lat').textContent = s.latency_avg_ms ?? 'NO DISPONIBLE';
+            document.getElementById('hc-errors').textContent = s.errors || 0;
+            document.getElementById('hc-warn').textContent = s.warnings || 0;
+            document.getElementById('hc-alerts').textContent = s.alert_count || 0;
+            document.getElementById('hc-na').textContent = s.services_unavailable || 0;
+            document.getElementById('hc-components').innerHTML = (d.components || []).map(renderComponent).join('');
+            const issues = d.issues || [];
+            document.getElementById('hc-issues').innerHTML = issues.length
+                ? issues.map(i => `<div class="border border-slate-800 rounded p-2"><span class="text-amber-400 font-bold">${esc(i.severity)}</span> · ${esc(i.component_id)} · ${esc(i.code)}<div class="text-gray-400">${esc(i.message)}</div></div>`).join('')
+                : '<div class="text-gray-500">Sin issues en el último ciclo (telemetría real).</div>';
+            const hist = (d.history || []).slice().reverse();
+            document.getElementById('hc-history').innerHTML = hist.length
+                ? hist.map(h => `<div class="border border-slate-800 rounded p-2 text-gray-400"><span class="text-cyan-500">${esc(h.timestamp_utc)}</span> ${esc(h.event_type)} · ${esc(h.component_id)}</div>`).join('')
+                : '<div class="text-gray-500">Historial vacío.</div>';
+        } catch (e) { console.debug('health center refresh', e); }
+    }
+    refreshHealthCenter(false);
+    setInterval(function(){ refreshHealthCenter(false); }, 15000);
+    </script>
+</body>
+</html>

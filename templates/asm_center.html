@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Asset Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #06090f; color: white; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .as-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 10px; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="asm_center">
+    {% set active_module = 'asm_center' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header class="flex flex-wrap justify-between items-start gap-4">
+            <div>
+                <h1 class="text-2xl font-bold uppercase tracking-tighter">
+                    <i class="fas fa-sitemap text-emerald-400 mr-2"></i>Asset Intelligence Center
+                </h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">
+                    Attack Surface Management — datos reales del sistema y red · sin activos inventados
+                </p>
+            </div>
+            <button onclick="runScan()" class="px-3 py-1 bg-emerald-700 hover:bg-emerald-600 text-xs rounded">
+                <i class="fas fa-radar mr-1"></i>Full Scan
+            </button>
+        </header>
+        <div id="stats-row" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="as-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3"><i class="fas fa-desktop mr-1 text-cyan-400"></i>Host Local</h3>
+                <div id="host-info" class="text-xs space-y-1"></div>
+            </div>
+            <div class="as-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3"><i class="fas fa-network-wired mr-1 text-blue-400"></i>Nodos de Red</h3>
+                <div id="network-nodes" class="text-xs max-h-64 overflow-y-auto space-y-1"></div>
+            </div>
+            <div class="as-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3"><i class="fas fa-box mr-1 text-amber-400"></i>Software</h3>
+                <div id="software-list" class="text-xs max-h-64 overflow-y-auto space-y-1"></div>
+            </div>
+            <div class="as-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3"><i class="fas fa-plug mr-1 text-green-400"></i>Puertos Abiertos</h3>
+                <div id="ports-list" class="text-xs max-h-64 overflow-y-auto space-y-1"></div>
+            </div>
+            <div class="as-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3"><i class="fas fa-certificate mr-1 text-purple-400"></i>Certificados</h3>
+                <div id="certs-list" class="text-xs max-h-64 overflow-y-auto space-y-1"></div>
+            </div>
+            <div class="as-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3"><i class="fas fa-ghost mr-1 text-rose-400"></i>Shadow IT</h3>
+                <div id="shadow-it" class="text-xs max-h-64 overflow-y-auto space-y-1"></div>
+            </div>
+            <div class="as-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3"><i class="fas fa-project-diagram mr-1 text-teal-400"></i>Dependencias</h3>
+                <div id="deps-list" class="text-xs max-h-48 overflow-y-auto space-y-1"></div>
+            </div>
+            <div class="as-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3"><i class="fas fa-shield-alt mr-1 text-red-400"></i>Exposicion</h3>
+                <div id="exposure-info" class="text-xs space-y-1"></div>
+            </div>
+        </div>
+    </main>
+    <script>
+    const API='/api/asm';
+    async function load(){
+        try{
+            const r=await fetch(API+'/dashboard');const j=await r.json();if(!j.ok)return;
+            const d=j.dashboard;const s=d.summary||{};
+            document.getElementById('stats-row').innerHTML=[
+                st('Activos',s.total_assets,'fa-server','cyan'),
+                st('Red',s.network_devices,'fa-network-wired','blue'),
+                st('Software',s.software_count,'fa-box','amber'),
+                st('Servicios',s.services_count,'fa-cog','green'),
+                st('Certs',s.certificates_count,'fa-certificate','purple'),
+                st('Puertos',s.open_ports_count,'fa-plug','teal'),
+                st('Shadow IT',s.shadow_it_count,'fa-ghost','rose'),
+                st('Criticidad',s.criticality_level||'-','fa-exclamation-triangle','red'),
+            ].join('');
+            const h=d.local_host||{};
+            document.getElementById('host-info').innerHTML=
+                `<div><b>Hostname:</b> ${h.hostname||'-'}</div>`+
+                `<div><b>IP:</b> ${h.ip||'-'}</div><div><b>MAC:</b> ${h.mac||'-'}</div>`+
+                `<div><b>OS:</b> ${h.os||'-'} ${h.os_version||''}</div>`+
+                `<div><b>Arch:</b> ${h.architecture||'-'}</div>`+
+                `<div><b>CPU:</b> ${h.cpu_cores||'-'} cores</div>`+
+                `<div><b>RAM:</b> ${h.ram_total_gb||'-'} GB</div>`+
+                `<div><b>Uptime:</b> ${h.uptime_days||'-'} days</div>`+
+                `<div><b>Gateway:</b> ${h.gateway||'-'}</div>`+
+                `<div><b>Class:</b> ${h.classification||'-'}</div>`;
+            rl('network-nodes',(d.network_nodes||[]).map(n=>`<span class="text-cyan-400">${n.ip}</span> <span class="text-gray-500">${n.mac||''}</span> <span class="text-white">${n.hostname||''}</span> <span class="text-gray-600">${n.vendor||''}</span> [${n.classification}]`));
+            rl('software-list',(d.software_sample||[]).map(s=>`<span class="text-amber-400">${s.name||''}</span> <span class="text-gray-500">${s.version||''}</span> <span class="text-gray-600">${s.publisher||''}</span>`));
+            rl('ports-list',(d.open_ports||[]).map(p=>`<span class="text-green-400">:${p.port||''}</span> <span class="text-gray-500">${p.address||''}</span> pid=${p.pid||''}`));
+            rl('certs-list',(d.certificates||[]).map(c=>`<span class="${c.expired?'text-red-400':'text-purple-400'}">${(c.subject||'').slice(0,50)}</span> <span class="text-gray-500">${c.not_after||''}</span> ${c.expired?'<span class="text-red-500">EXPIRADO</span>':''}`));
+            rl('shadow-it',(d.shadow_it||[]).map(s=>`<span class="text-rose-400">[${s.type}]</span> ${s.hostname||s.name||''} <span class="text-gray-500">${s.ip||''}</span>`));
+            rl('deps-list',(d.dependencies||[]).map(dep=>`${dep.from} -> ${dep.to} <span class="text-gray-500">[${dep.type}]</span>`));
+            const e=d.exposure||{};
+            document.getElementById('exposure-info').innerHTML=
+                `<div><b>Score:</b> <span class="${e.exposure_score>=0.3?'text-red-400':'text-green-400'}">${e.exposure_score||0}</span></div>`+
+                `<div><b>Factores:</b> ${(e.factors||[]).join(', ')}</div>`+
+                `<div><b>Criticidad:</b> ${(d.criticality||{}).level||'-'} (${(d.criticality||{}).criticality_score||0})</div>`;
+        }catch(e){console.error(e);}
+    }
+    function st(l,v,i,c){return `<div class="as-card p-2 text-center"><i class="fas ${i} text-${c}-400"></i><div class="text-lg font-bold">${v??'-'}</div><div class="text-[8px] text-gray-500 uppercase">${l}</div></div>`;}
+    function rl(id,items){document.getElementById(id).innerHTML=items.length?items.map(i=>`<div class="border-b border-gray-800 py-1">${i}</div>`).join(''):'<div class="text-gray-600">Sin datos</div>';}
+    async function runScan(){await fetch(API+'/scan',{method:'POST'});load();}
+    load();setInterval(load,30000);
+    </script>
+</body>
+</html>

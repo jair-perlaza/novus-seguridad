@@ -1,0 +1,65 @@
+{
+  "ips": {
+    "203.0.113.77": {
+      "count": 1,
+      "peers": [
+        "novus-usuario-8ea82b133e20"
+      ],
+      "first_seen": "2026-07-27T18:53:24.815974+00:00",
+      "last_seen": "2026-07-27T18:53:24.815999+00:00",
+      "last_msg_id": "MESH-615fcbdbb40d463a97e317ca5a325860"
+    },
+    "198.51.100.44": {
+      "count": 1,
+      "peers": [
+        "novus-usuario-8ea82b133e20"
+      ],
+      "first_seen": "2026-07-27T18:53:33.163379+00:00",
+      "last_seen": "2026-07-27T18:53:33.163403+00:00",
+      "last_msg_id": "MESH-91aa5ce477da463488ba6e2d51cced3d"
+    }
+  },
+  "domains": {
+    "evil-mesh-proof.example": {
+      "count": 1,
+      "peers": [
+        "novus-usuario-8ea82b133e20"
+      ],
+      "first_seen": "2026-07-27T18:53:24.816012+00:00",
+      "last_seen": "2026-07-27T18:53:24.816020+00:00",
+      "last_msg_id": "MESH-615fcbdbb40d463a97e317ca5a325860"
+    },
+    "prop-mesh.example": {
+      "count": 1,
+      "peers": [
+        "novus-usuario-8ea82b133e20"
+      ],
+      "first_seen": "2026-07-27T18:53:33.163413+00:00",
+      "last_seen": "2026-07-27T18:53:33.163418+00:00",
+      "last_msg_id": "MESH-91aa5ce477da463488ba6e2d51cced3d"
+    }
+  },
+  "hashes": {
+    "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+      "count": 1,
+      "peers": [
+        "novus-usuario-8ea82b133e20"
+      ],
+      "first_seen": "2026-07-27T18:53:24.816028+00:00",
+      "last_seen": "2026-07-27T18:53:24.816035+00:00",
+      "last_msg_id": "MESH-615fcbdbb40d463a97e317ca5a325860"
+    }
+  },
+  "urls": {},
+  "behaviors": {
+    "lateral_movement_probe": {
+      "count": 1,
+      "peers": [
+        "novus-usuario-8ea82b133e20"
+      ],
+      "first_seen": "2026-07-27T18:53:24.816041+00:00",
+      "last_seen": "2026-07-27T18:53:24.816046+00:00",
+      "last_msg_id": "MESH-615fcbdbb40d463a97e317ca5a325860"
+    }
+  }
+}

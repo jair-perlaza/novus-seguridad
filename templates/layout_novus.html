@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Network Topology</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{ url_for('static', filename='js/novus-metrics.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/novus-adaptive-poll.js') }}"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #06090f;
+            --panel-dark: #0c121d;
+            --accent-blue: #5d5fef;
+            --text-gray: #8a92a6;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar-item-active {
+            background: linear-gradient(90deg, rgba(93, 95, 239, 0.2) 0%, rgba(93, 95, 239, 0) 100%);
+            border-right: 3px solid var(--accent-blue);
+            color: #a5a6f6;
+        }
+        .grid-bg {
+            background-image: radial-gradient(circle, #1a1f2e 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        .node-card {
+            background: rgba(13, 20, 32, 0.8);
+            border: 1px solid #1e293b;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .status-pill {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+        }
+        .glow-blue { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        .glow-orange { box-shadow: 0 0 15px rgba(249, 115, 22, 0.5); }
+        .glow-purple { box-shadow: 0 0 15px rgba(168, 85, 247, 0.5); }
+        
+        /* Estilos para contenedor dinámico */
+        #dynamic-content {
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #5d5fef;
+        }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen w-full">
+
+    <!-- SIDEBAR -->
+    <aside class="w-60 h-full border-r border-gray-800 flex flex-col bg-[#06090f] z-20">
+        <div class="p-6 flex items-center space-x-3">
+            <div class="text-2xl font-bold tracking-wider">NOVUS</div>
+            <div class="text-gray-500"><i class="fas fa-bars"></i></div>
+        </div>
+        
+        <nav class="flex-1 text-sm space-y-1">
+            <div class="px-6 py-3 flex items-center text-gray-400 space-x-3 cursor-pointer hover:text-white" onclick="loadContent('dashboard', event)">
+                <i class="fas fa-home w-5"></i><span>Dashboard</span>
+            </div>
+            <div class="px-6 py-3 flex items-center text-gray-400 space-x-3 cursor-pointer hover:text-white" onclick="loadContent('inteligencia', event)">
+                <i class="fas fa-brain w-5 text-purple-400"></i><span>Centro de Inteligencia</span>
+            </div>
+            <div class="px-6 py-3 flex items-center text-gray-400 space-x-3 cursor-pointer hover:text-white" onclick="loadContent('incidentes', event)">
+                <i class="fas fa-exclamation-triangle w-5"></i><span>Incidentes</span>
+            </div>
+            <div class="px-6 py-3 flex items-center text-gray-400 space-x-3 cursor-pointer hover:text-white" onclick="loadContent('xdr', event)">
+                <i class="fas fa-shield-virus w-5"></i><span>XDR / Amenazas</span>
+            </div>
+            <div class="px-6 py-3 flex items-center text-gray-400 space-x-3 sidebar-item-active cursor-pointer" onclick="loadContent('network', event)">
+                <i class="fas fa-network-wired w-5 text-indigo-400"></i><span>Network</span>
+            </div>
+            <div class="px-6 py-3 flex items-center text-gray-400 space-x-3 cursor-pointer hover:text-white" onclick="loadContent('endpoints', event)">
+                <i class="fas fa-desktop w-5"></i><span>Endpoints</span>
+            </div>
+            <div class="px-6 py-3 flex items-center text-gray-400 space-x-3 cursor-pointer hover:text-white" onclick="loadContent('identidades', event)">
+                <i class="fas fa-fingerprint w-5"></i><span>Identidades</span>
+            </div>
+            <div class="px-6 py-3 flex items-center text-gray-400 space-x-3 cursor-pointer hover:text-white" onclick="loadContent('vulnerabilidades', event)">
+                <i class="fas fa-bug w-5"></i><span>Vulnerabilidades</span>
+            </div>
+            <div class="px-6 py-3 flex items-center text-gray-400 space-x-3 cursor-pointer hover:text-white" onclick="loadContent('siem', event)">
+                <i class="fas fa-file-contract w-5"></i><span>SIEM / Logs</span>
+            </div>
+            <div class="px-6 py-3 flex items-center text-gray-400 space-x-3 cursor-pointer hover:text-white" onclick="loadContent('reportes', event)">
+                <i class="fas fa-chart-bar w-5"></i><span>Reports</span>
+            </div>
+            <div class="px-6 py-3 flex items-center text-gray-400 space-x-3 cursor-pointer hover:text-white" onclick="loadContent('automatizacion', event)">
+                <i class="fas fa-robot w-5"></i><span>Automatización</span>
+            </div>
+            <div class="px-6 py-3 flex items-center text-gray-400 space-x-3 cursor-pointer hover:text-white" onclick="loadContent('configuracion', event)">
+                <i class="fas fa-cog w-5"></i><span>Configuración</span>
+            </div>
+        </nav>
+
+        <div class="p-4 bg-[#0a0f18] m-4 rounded-xl border border-gray-800 text-[10px]">
+            <div class="mb-2 text-gray-500 uppercase">Entorno</div>
+            <div class="flex items-center justify-between mb-2">
+                <span>● Producción</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 flex flex-col relative">
+        <!-- HEADER -->
+        <header class="flex items-center justify-between px-8 py-4 bg-[#06090f]">
+            <div>
+                <h1 class="text-xl font-semibold" id="page-title">Network</h1>
+                <p class="text-xs text-gray-500" id="page-subtitle">Mapa de Red en Tiempo Real</p>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div class="flex space-x-2 bg-[#0c121d] p-1 rounded-lg border border-gray-800">
+                    <button class="bg-[#1e293b] px-4 py-1 text-xs rounded shadow" id="view-toggle">Topología</button>
+                    <button class="px-4 py-1 text-xs text-gray-500">Filtros</button>
+                    <button class="px-4 py-1 text-xs text-gray-500">Tiempo Real</button>
+                </div>
+                <div class="relative novus-global-search-bar">
+                    <input type="search" id="layout-search-input" data-novus-search-inline="true" autocomplete="off" spellcheck="false" placeholder="Buscar... (Ctrl+K)" class="bg-[#0c121d] border border-gray-800 rounded-full px-4 py-1 text-xs w-48 focus:outline-none cursor-text">
+                    <div id="novus-inline-search-kernel" class="novus-inline-search-kernel hidden"></div>
+                    <div id="novus-inline-search-results" class="novus-inline-search-dropdown novus-search-results hidden"></div>
+                    <i class="fas fa-search absolute right-3 top-2 text-gray-600 text-[10px] pointer-events-none"></i>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative cursor-pointer" id="layout-bell-btn" title="Centro de Eventos"><i class="far fa-bell"></i><span id="layout-alert-badge" class="absolute -top-1 -right-1 bg-red-500 text-[8px] rounded-full px-1">—</span></div>
+                    <div class="flex items-center space-x-2">
+                        <div class="text-right"><div class="text-[10px] font-bold">{{ user.nombre }}</div><div class="text-[8px] text-gray-500 uppercase">{{ user.rol }}</div></div>
+                        <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-xs">{{ user.nombre[:2]|upper }}</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPI STRIP -->
+        <div class="grid grid-cols-6 gap-4 px-8 mb-4">
+            <div class="bg-[#0c121d] p-3 rounded-xl border border-gray-800 flex items-center space-x-4">
+                <div class="text-green-500 text-2xl"><i class="fas fa-shield-alt"></i></div>
+                <div><div class="text-[8px] text-gray-500 uppercase leading-none">Estado General</div><div class="text-sm font-bold text-green-500 leading-tight" id="estado-general">Cargando...</div><div class="text-[8px] text-gray-600" id="estado-general-detalle">Obteniendo métricas del sistema</div></div>
+            </div>
+            <div class="bg-[#0c121d] p-3 rounded-xl border border-gray-800">
+                <div class="text-[8px] text-gray-500 uppercase">Nodos Activos</div>
+                <div class="flex items-baseline space-x-2"><span class="text-lg font-bold" id="nodos-activos">—</span><span class="text-[8px] text-green-500">Detectando...</span></div>
+            </div>
+            <div class="bg-[#0c121d] p-3 rounded-xl border border-gray-800">
+                <div class="text-[8px] text-gray-500 uppercase text-blue-400">Tráfico Total</div>
+                <div class="flex items-baseline space-x-2"><span class="text-lg font-bold" id="trafico-total">—</span><span class="text-[8px] text-green-500">MB</span></div>
+            </div>
+            <div class="bg-[#0c121d] p-3 rounded-xl border border-gray-800 border-l-4 border-red-500">
+                <div class="text-[8px] text-gray-500 uppercase">Amenazas Activas</div>
+                <div class="flex items-baseline space-x-2"><span class="text-lg font-bold text-red-500" id="amenazas-activas">—</span><span class="text-[8px] text-red-500">Esperando motor</span></div>
+            </div>
+            <div class="bg-[#0c121d] p-3 rounded-xl border border-gray-800">
+                <div class="text-[8px] text-gray-500 uppercase">Dispositivos</div>
+                <div class="flex items-baseline space-x-2"><span class="text-lg font-bold text-purple-400" id="dispositivos-total">—</span><span class="text-[8px] text-green-500">Escaneando...</span></div>
+            </div>
+            <div class="bg-[#0c121d] p-3 rounded-xl border border-gray-800">
+                <div class="text-[8px] text-gray-500 uppercase">Usuarios</div>
+                <div class="flex items-baseline space-x-2"><span class="text-lg font-bold text-blue-300" id="usuarios-total">—</span><span class="text-[8px] text-green-500">Conectados</span></div>
+            </div>
+        </div>
+
+        <!-- CONTENIDO DINÁMICO -->
+        <div id="dynamic-content" class="flex-1 px-8 pb-4 overflow-hidden">
+            <!-- El contenido se cargará aquí dinámicamente -->
+        </div>
+
+        <!-- BOTTOM PANELS (GRAPHS) -->
+        <footer class="h-48 px-8 flex space-x-4 mb-6">
+            <div class="flex-1 bg-[#0c121d] border border-gray-800 rounded-xl p-4">
+                <div class="text-[10px] font-bold text-gray-500 uppercase mb-2">Tráfico en Tiempo Real</div>
+                <div id="layout-traffic-chart" class="w-full h-24 flex items-end space-x-1">
+                    <div class="text-[10px] text-gray-500">Cargando tráfico...</div>
+                </div>
+                <div class="flex justify-between text-[8px] text-gray-600 mt-2"><span id="layout-traffic-start">--:--</span><span id="layout-traffic-mid">--:--</span><span id="layout-traffic-end">--:--</span></div>
+            </div>
+            <div class="w-64 bg-[#0c121d] border border-gray-800 rounded-xl p-4">
+                <div class="text-[10px] font-bold text-gray-500 uppercase mb-4 text-center">Tráfico de Red</div>
+                <div id="layout-traffic-summary" class="text-center text-[10px] text-gray-400">Cargando...</div>
+            </div>
+            <div class="w-80 bg-[#0c121d] border border-gray-800 rounded-xl p-4">
+                <div class="text-[10px] font-bold text-gray-500 uppercase mb-2">Estado del Host</div>
+                <div id="layout-host-status" class="text-[10px] text-gray-400 space-y-1">Cargando métricas del sistema...</div>
+            </div>
+        </footer>
+
+        <!-- BARRA INFERIOR DE ESTADO -->
+        <div class="px-8 py-2 border-t border-gray-800 flex justify-between items-center text-[9px] text-gray-500">
+            <div class="flex items-center space-x-6">
+                <span><i class="far fa-clock mr-1"></i> Última actualización: <span id="layout-last-update">--:--:--</span></span>
+                <span><i class="fas fa-server mr-1 text-blue-400"></i> Host: <span id="layout-host-name">Cargando...</span></span>
+                <span id="layout-health-indicator" class="text-gray-400">Salud del sistema: Cargando...</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span id="layout-uptime-label">Tiempo de actividad: Cargando...</span>
+                <div class="flex items-center">
+                    <span class="mr-2 uppercase">Auto-refresh</span>
+                    <div class="w-6 h-3 bg-green-500 rounded-full relative"><div class="absolute right-0.5 top-0.5 w-2 h-2 bg-white rounded-full"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función para cargar contenido dinámicamente
+        async function loadContent(page, evt) {
+            const dynamicContent = document.getElementById('dynamic-content');
+            const pageTitle = document.getElementById('page-title');
+            const pageSubtitle = document.getElementById('page-subtitle');
+            const viewToggle = document.getElementById('view-toggle');
+            
+            const routes = {
+                dashboard: '/dashboard',
+                network: '/network',
+                inteligencia: '/inteligencia',
+                xdr: '/xdr',
+                endpoints: '/endpoints',
+                identidades: '/sector-login',
+                vulnerabilidades: '/vulnerabilidades',
+                reportes: '/reportes',
+                configuracion: '/configuracion',
+                automatizacion: '/automatizacion',
+                incidentes: '/incidentes',
+                siem: '/siem',
+                topology: '/topology',
+            };
+
+            if (routes[page]) {
+                if (evt && evt.target) {
+                    document.querySelectorAll('.sidebar-item-active').forEach(item => {
+                        item.classList.remove('sidebar-item-active');
+                    });
+                    const navItem = evt.target.closest('.px-6');
+                    if (navItem) navItem.classList.add('sidebar-item-active');
+                }
+                window.location.href = routes[page];
+                return;
+            }
+
+            dynamicContent.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin text-2xl"></i></div>';
+            
+            try {
+                if (evt && evt.target) {
+                    document.querySelectorAll('.sidebar-item-active').forEach(item => {
+                        item.classList.remove('sidebar-item-active');
+                    });
+                    const navItem = evt.target.closest('.px-6');
+                    if (navItem) navItem.classList.add('sidebar-item-active');
+                }
+
+                dynamicContent.innerHTML = `
+                    <div class="flex items-center justify-center h-full">
+                        <div class="text-center text-gray-400">Sin datos disponibles para este módulo.</div>
+                    </div>
+                `;
+                pageTitle.textContent = page.charAt(0).toUpperCase() + page.slice(1);
+                pageSubtitle.textContent = 'Esperando información real';
+                viewToggle.textContent = 'Vista';
+            } catch (error) {
+                console.error('Error cargando contenido:', error);
+                dynamicContent.innerHTML = '<div class="text-red-500 text-center p-8">Error al cargar el contenido</div>';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchKPIData();
+        });
+
+        const layoutTrafficHistory = [];
+
+        async function fetchKPIData() {
+            try {
+                const fetchJson = (typeof NovusFetch !== 'undefined')
+                    ? NovusFetch.fetchJson.bind(NovusFetch)
+                    : (url) => fetch(url, {credentials:'same-origin'}).then(r => r.json());
+
+                const dashboardData = await fetchJson('/api/dashboard/live');
+
+                let metricsData = { metrics: {} };
+                let infoData = {};
+                try {
+                    metricsData = await fetchJson('/api/dashboard/metrics');
+                    infoData = await fetchJson('/api/network/info');
+                } catch (e) { /* secundario — no bloquear KPIs */ }
+
+                if (NovusMetrics.isMonitoringNotConfigured(dashboardData)) {
+                    const msg = NovusMetrics.monitoringNotConfiguredMessage(dashboardData);
+                    document.getElementById('nodos-activos').textContent = NovusMetrics.NO_DATA;
+                    document.getElementById('dispositivos-total').textContent = NovusMetrics.NO_DATA;
+                    document.getElementById('trafico-total').textContent = NovusMetrics.NO_DATA;
+                    document.getElementById('amenazas-activas').textContent = NovusMetrics.NO_DATA;
+                    document.getElementById('usuarios-total').textContent = NovusMetrics.NO_DATA;
+                    document.getElementById('estado-general').textContent = 'Monitoreo pendiente';
+                    document.getElementById('estado-general-detalle').textContent = msg;
+                    document.getElementById('layout-host-name').textContent = NovusMetrics.NO_DATA;
+                    document.getElementById('layout-health-indicator').textContent = msg;
+                    return;
+                }
+
+                const nodeCount = dashboardData.nodos_red != null ? dashboardData.nodos_red : (infoData.node_count != null ? infoData.node_count : null);
+                document.getElementById('nodos-activos').textContent = NovusMetrics.formatCount(nodeCount);
+                document.getElementById('dispositivos-total').textContent = NovusMetrics.formatCount(nodeCount);
+
+                const trafficTotal = NovusMetrics.sumTrafficMb(dashboardData.traffic_recv, dashboardData.traffic_sent);
+                document.getElementById('trafico-total').textContent = trafficTotal;
+                document.getElementById('amenazas-activas').textContent =
+                    typeof dashboardData.amenazas === 'number' ? dashboardData.amenazas : NovusMetrics.NO_DATA;
+                NovusMetrics.updateAlertBadgeEl(
+                    document.getElementById('layout-alert-badge'),
+                    typeof dashboardData.amenazas === 'number' ? dashboardData.amenazas : null
+                );
+                document.getElementById('usuarios-total').textContent = NovusMetrics.formatCount(dashboardData.usuarios);
+
+                const hasTraffic = NovusMetrics.pushTrafficHistory(
+                    layoutTrafficHistory,
+                    dashboardData.traffic_recv,
+                    dashboardData.traffic_sent
+                );
+                const chart = document.getElementById('layout-traffic-chart');
+                const summary = document.getElementById('layout-traffic-summary');
+                if (hasTraffic && layoutTrafficHistory.length) {
+                    const maxValue = Math.max(...layoutTrafficHistory, 1);
+                    chart.innerHTML = layoutTrafficHistory.map(value => {
+                        const height = Math.max(8, Math.round((value / maxValue) * 100));
+                        return `<div class="flex-1 bg-blue-500/30 border-t border-blue-400" style="height:${height}%"></div>`;
+                    }).join('');
+                    summary.innerHTML = `<div class="text-lg font-bold">${trafficTotal === NovusMetrics.NO_DATA ? NovusMetrics.NO_DATA : trafficTotal + ' MB'}</div>`;
+                } else {
+                    chart.innerHTML = '<div class="text-[10px] text-gray-500">Sin datos disponibles</div>';
+                    summary.textContent = 'Sin datos disponibles';
+                }
+
+                const metrics = metricsData.metrics || {};
+                const cpu = NovusMetrics.pickMetric(metrics.cpu, dashboardData.cpu);
+                const ram = NovusMetrics.pickMetric(metrics.ram, dashboardData.ram);
+                const disk = NovusMetrics.pickMetric(metrics.disk, dashboardData.disk);
+
+                document.getElementById('estado-general').textContent = 'Métricas en vivo';
+                document.getElementById('estado-general-detalle').textContent = NovusMetrics.formatMetricLine(cpu, ram, disk);
+                document.getElementById('layout-last-update').textContent = dashboardData.timestamp || new Date().toLocaleTimeString();
+                document.getElementById('layout-host-name').textContent = infoData.hostname || infoData.local_ip || NovusMetrics.NO_DATA;
+                document.getElementById('layout-health-indicator').textContent = `Amenazas detectadas: ${typeof dashboardData.amenazas === 'number' ? dashboardData.amenazas : NovusMetrics.NO_DATA}`;
+                document.getElementById('layout-uptime-label').textContent = `Tiempo de actividad: ${metrics.uptime_horas || NovusMetrics.NO_DATA}`;
+                document.getElementById('layout-host-status').innerHTML = NovusMetrics.hostStatusHtml(cpu, ram, disk, {
+                    conexiones: dashboardData.conexiones,
+                });
+                window._novusConexionesMeta = dashboardData.conexiones_meta || {};
+            } catch (error) {
+                console.error('Error fetching KPI data:', error);
+            }
+        }
+        
+        fetchKPIData();
+        if (window.NovusAdaptivePoll) {
+            NovusAdaptivePoll.create(fetchKPIData, { baseMs: 30000, minMs: 20000, maxMs: 60000 });
+        } else {
+            setInterval(fetchKPIData, 30000);
+        }
+    </script>
+    {% include 'partials/global_search.html' %}
+    {% include 'partials/metric_connections_modal.html' %}
+    {% include 'partials/ai_kernel_panel.html' %}
+    <script src="{{ url_for('static', filename='js/novus-notification-center.js') }}?v=notif-bh-1"></script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>NOVUS - Gestión de Endpoints</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        :root { --bg-dark: #06090f; --panel-dark: #0c121d; --accent-blue: #5d5fef; }
+        body { background-color: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; }
+        .endpoint-row:hover { background: rgba(93, 95, 239, 0.05); }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen w-full overflow-y-auto" data-novus-module="endpoints">
+    {% set active_module = 'endpoints' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 flex flex-col bg-[#06090f] grid-bg">
+        <header class="px-8 py-6 border-b border-gray-800 flex justify-between items-center bg-[#06090f]/50 backdrop-blur">
+            <div>
+                <h1 class="text-xl font-bold">Gestión de Endpoints</h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest italic">Monitoreo de Agentes en Tiempo Real</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-500/10 border border-blue-500/50 px-4 py-1 rounded text-[10px] text-blue-400 font-bold">
+                    DISPOSITIVOS: {{ endpoints_total if endpoints_total is defined else endpoints|length }}
+                </div>
+                <a href="{{ url_for('main.ruta_configuracion') }}" class="text-gray-400 hover:text-white text-sm no-underline">
+                    <i class="fas fa-cog mr-1"></i>Configuración
+                </a>
+                <a href="{{ url_for('auth.logout_seguro') }}" class="text-gray-400 hover:text-red-500 text-sm no-underline">
+                    <i class="fas fa-sign-out-alt mr-1"></i>Cerrar Sesión
+                </a>
+            </div>
+        </header>
+
+        <div class="p-8 overflow-y-auto space-y-6">
+            <section class="bg-[#0c121d] border border-indigo-500/30 rounded-xl p-6 shadow-2xl" id="endpoint-local-scan">
+                <div class="flex flex-wrap justify-between items-start gap-4 mb-4">
+                    <div>
+                        <h2 class="text-sm font-bold text-indigo-300 uppercase tracking-widest">
+                            <i class="fas fa-shield-virus mr-2"></i>Endpoint Shield — este equipo
+                        </h2>
+                        <p class="text-[10px] text-gray-500 mt-1" id="ep-host-label">Análisis real del host donde corre NOVUS</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="startEndpointScan('quick')" class="px-3 py-2 rounded-lg bg-indigo-600 text-[10px] font-bold uppercase">Escaneo rápido</button>
+                        <button type="button" onclick="startEndpointScan('full')" class="px-3 py-2 rounded-lg bg-purple-700 text-[10px] font-bold uppercase">Escaneo completo</button>
+                        <button type="button" onclick="startEndpointScan('custom')" class="px-3 py-2 rounded-lg border border-gray-600 text-[10px] font-bold uppercase">Personalizado</button>
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-3 gap-4 text-[10px] mb-4">
+                    <div class="bg-[#06090f] p-3 rounded-lg border border-gray-800">
+                        <div class="text-gray-500 uppercase">Monitor continuo</div>
+                        <div id="ep-monitor-status" class="text-green-400 font-bold mt-1">—</div>
+                    </div>
+                    <div class="bg-[#06090f] p-3 rounded-lg border border-gray-800">
+                        <div class="text-gray-500 uppercase">Progreso escaneo</div>
+                        <div id="ep-scan-progress" class="text-blue-400 font-bold mt-1">Inactivo</div>
+                    </div>
+                    <div class="bg-[#06090f] p-3 rounded-lg border border-gray-800">
+                        <div class="text-gray-500 uppercase">Hallazgos</div>
+                        <div id="ep-findings-count" class="text-amber-400 font-bold mt-1">0</div>
+                    </div>
+                </div>
+                <div id="ep-findings-list" class="max-h-48 overflow-y-auto text-xs space-y-2"></div>
+                <p class="text-[9px] text-gray-600 mt-3">Cuarentena: no se elimina nada sin confirmación. Use acciones por hallazgo.</p>
+            </section>
+
+            <div class="bg-[#0c121d] border border-gray-800 rounded-xl overflow-hidden shadow-2xl">
+                <table class="w-full text-left">
+                    <thead class="text-[10px] text-gray-500 uppercase bg-[#06090f] border-b border-gray-800">
+                        <tr>
+                            <th class="p-4">Dispositivo</th>
+                            <th class="p-4">Dirección IP</th>
+                            <th class="p-4">MAC Address</th>
+                            <th class="p-4">Tipo</th>
+                            <th class="p-4">Riesgo</th>
+                            <th class="p-4 text-right">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="endpoints-table-body" class="text-xs divide-y divide-gray-800 font-mono">
+                        {% for ep in endpoints %}
+                        <tr class="endpoint-row transition-all cursor-pointer" onclick="selectEndpoint('{{ ep.ip }}', '{{ ep.nombre }}')">
+                            <td class="p-4 flex items-center space-x-3">
+                                <i class="fas {{ ep.icono }} text-gray-500"></i>
+                                <span class="font-bold text-gray-200">{{ ep.nombre }}</span>
+                            </td>
+                            <td class="p-4 text-blue-400">{{ ep.ip }}</td>
+                            <td class="p-4 text-gray-500">{{ ep.mac }}</td>
+                            <td class="p-4">
+                                <span class="text-[9px] border border-gray-700 px-2 py-0.5 rounded text-gray-400 uppercase">
+                                    {{ ep.tipo }}
+                                </span>
+                            </td>
+                            <td class="p-4">
+                                {% if ep.hallazgos is number and ep.hallazgos > 0 %}
+                                <span class="text-yellow-500 font-bold">● {{ ep.hallazgos }} hallazgos</span>
+                                {% elif ep.hallazgos is number %}
+                                <span class="text-gray-400">● Sin hallazgos</span>
+                                {% else %}
+                                <span class="text-gray-400">● {{ ep.hallazgos }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="p-4 text-right">
+                                <span class="bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-[9px] font-black uppercase">
+                                    {{ ep.estado }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    <script>
+        function selectEndpoint(ip, nombre) {
+            window.NovusModuleExtra = { ip, endpoint_name: nombre };
+        }
+
+        async function refreshEndpointsTable() {
+            try {
+                const summaryResponse = await fetch('/api/security/summary');
+                const summaryData = await summaryResponse.json();
+                const inventory = summaryData.endpoint_inventory || [];
+                const total = summaryData.counters?.endpoints_total ?? inventory.length;
+
+                const headerBadge = document.querySelector('header .text-blue-400.font-bold');
+                if (headerBadge) {
+                    headerBadge.textContent = `DISPOSITIVOS: ${total}`;
+                }
+
+                const rows = inventory.map(ep => ({
+                    nombre: ep.nombre || ep.name || 'Dispositivo',
+                    ip: ep.ip || 'Sin datos disponibles',
+                    mac: ep.mac || 'Sin datos disponibles',
+                    tipo: ep.tipo || ep.type || 'dispositivo',
+                    hallazgos: ep.hallazgos ?? ep.findings ?? 'Sin datos disponibles',
+                    estado: ep.estado || ep.status || 'Sin datos disponibles',
+                    icono: ep.icono || (ep.source === 'local_host' ? 'fa-desktop' : 'fa-network-wired'),
+                }));
+
+                const tbody = document.getElementById('endpoints-table-body');
+                if (!tbody) return;
+
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">Sin datos disponibles. Esperando escaneo de red...</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = rows.map(ep => `
+                    <tr class="endpoint-row transition-all cursor-pointer" onclick="selectEndpoint('${String(ep.ip).replace(/'/g, "\\'")}', '${String(ep.nombre).replace(/'/g, "\\'")}')">
+                        <td class="p-4 flex items-center space-x-3">
+                            <i class="fas ${ep.icono} text-gray-500"></i>
+                            <span class="font-bold text-gray-200">${ep.nombre}</span>
+                        </td>
+                        <td class="p-4 text-blue-400">${ep.ip}</td>
+                        <td class="p-4 text-gray-500">${ep.mac}</td>
+                        <td class="p-4"><span class="text-[9px] border border-gray-700 px-2 py-0.5 rounded text-gray-400 uppercase">${ep.tipo}</span></td>
+                        <td class="p-4"><span class="text-gray-400">● ${ep.hallazgos} hallazgos</span></td>
+                        <td class="p-4 text-right"><span class="bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-[9px] font-black uppercase">${ep.estado}</span></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Endpoints refresh error:', error);
+            }
+        }
+
+        refreshEndpointsTable();
+        setInterval(refreshEndpointsTable, 10000);
+
+        let epScanId = null;
+        let epPollTimer = null;
+
+        async function loadEndpointEngineStatus() {
+            try {
+                const r = await fetch('/api/endpoint-scan/engine/status');
+                const d = await r.json();
+                if (!r.ok) return;
+                const mon = d.realtime_monitor || {};
+                document.getElementById('ep-host-label').textContent =
+                    `Host: ${d.host || 'local'} · Modos: ${(d.modes || []).join(', ')}`;
+                document.getElementById('ep-monitor-status').textContent =
+                    mon.active ? `Activo · ${mon.events_total || 0} eventos` : (mon.last_error || 'Inactivo');
+            } catch (e) { console.error('endpoint engine status', e); }
+        }
+
+        async function startEndpointScan(mode) {
+            let paths = null;
+            if (mode === 'custom') {
+                const raw = window.prompt('Rutas locales separadas por ; (ej. C:\\Users\\...\\Downloads)', '');
+                if (!raw) return;
+                paths = raw.split(';').map(s => s.trim()).filter(Boolean);
+            }
+            try {
+                const r = await fetch('/api/endpoint-scan/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode, paths }),
+                });
+                const d = await r.json();
+                if (!r.ok) { alert(d.message || 'Error al iniciar escaneo'); return; }
+                epScanId = d.scan_id;
+                document.getElementById('ep-scan-progress').textContent = 'Iniciado…';
+                if (epPollTimer) clearInterval(epPollTimer);
+                epPollTimer = setInterval(pollEndpointScan, 2500);
+                pollEndpointScan();
+            } catch (e) {
+                console.error('startEndpointScan', e);
+            }
+        }
+
+        async function pollEndpointScan() {
+            if (!epScanId) return;
+            try {
+                const sr = await fetch('/api/endpoint-scan/status/' + encodeURIComponent(epScanId));
+                const sd = await sr.json();
+                const scan = sd.scan || {};
+                document.getElementById('ep-scan-progress').textContent =
+                    `${scan.phase_label || scan.phase || '—'} · ${scan.progress_pct || 0}%`;
+                if (scan.status === 'completed' || scan.status === 'error') {
+                    clearInterval(epPollTimer);
+                    const rr = await fetch('/api/endpoint-scan/report/' + encodeURIComponent(epScanId));
+                    const rd = await rr.json();
+                    renderFindings((rd.report && rd.report.findings) || []);
+                }
+            } catch (e) { console.error('pollEndpointScan', e); }
+        }
+
+        function renderFindings(findings) {
+            const el = document.getElementById('ep-findings-list');
+            document.getElementById('ep-findings-count').textContent = String(findings.length);
+            if (!findings.length) {
+                el.innerHTML = '<p class="text-gray-500">Sin hallazgos por encima de umbral en este ciclo.</p>';
+                return;
+            }
+            el.innerHTML = findings.slice(0, 25).map(f => {
+                const path = (f.path || f.location || '').replace(/'/g, "\\'");
+                const cls = f.classification || f.risk || '—';
+                return `<div class="border border-gray-800 rounded p-2 flex flex-wrap justify-between gap-2">
+                    <div><span class="text-amber-400 font-bold">${cls}</span> — ${f.title || f.name || 'Hallazgo'}
+                    <div class="text-gray-500 truncate max-w-xl">${f.path || f.location || ''}</div>
+                    <div class="text-[9px] text-gray-600">${f.kernel_explanation || f.reason || ''}</div></div>
+                    <div class="flex gap-1">
+                        <button type="button" class="px-2 py-1 border border-gray-700 rounded text-[9px]" onclick="epAction('ignore','${path}')">Ignorar</button>
+                        <button type="button" class="px-2 py-1 border border-amber-700 rounded text-[9px]" onclick="epAction('quarantine','${path}')">Cuarentena</button>
+                        <button type="button" class="px-2 py-1 border border-red-800 rounded text-[9px]" onclick="epAction('delete','${path}')">Eliminar</button>
+                    </div></div>`;
+            }).join('');
+        }
+
+        async function epAction(action, path) {
+            if (!path) return;
+            const body = { action, path };
+            if (action === 'delete') {
+                if (!window.confirm('¿Confirmar eliminación permanente por administrador?')) return;
+                body.confirm = true;
+            }
+            const r = await fetch('/api/endpoint-scan/quarantine', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const d = await r.json();
+            alert(d.message || d.status || (r.ok ? 'OK' : 'Error'));
+        }
+
+        loadEndpointEngineStatus();
+        setInterval(loadEndpointEngineStatus, 15000);
+    </script>
+    {% include 'partials/global_search.html' %}
+    {% include 'partials/ai_kernel_panel.html' %}
+</body>
+</html>

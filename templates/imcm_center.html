@@ -1,0 +1,137 @@
+{% extends "base_novus.html" %}
+{% block title %}Incident Management Center — NOVUS{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-[#06090f] text-white p-6" x-data="imcmApp()" x-init="load()">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Incident Management Center</h1>
+        <p class="text-gray-400 text-sm mt-1">Convergencia de todos los motores NOVUS en incidentes unificados</p>
+      </div>
+      <button @click="load()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition">
+        <i class="fas fa-sync-alt mr-2"></i>Actualizar
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <template x-for="(val, key) in statsCards" :key="key">
+        <div class="bg-[#0d1117] border border-gray-800 rounded-xl p-4">
+          <p class="text-gray-500 text-xs uppercase" x-text="key"></p>
+          <p class="text-2xl font-bold mt-1" x-text="val"></p>
+        </div>
+      </template>
+    </div>
+
+    <!-- Recent incidents -->
+    <div class="bg-[#0d1117] border border-gray-800 rounded-xl p-5">
+      <h2 class="text-lg font-semibold mb-4">Incidentes Recientes</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-gray-500 border-b border-gray-800 text-left">
+            <th class="pb-2 px-2">ID</th><th class="pb-2 px-2">Titulo</th><th class="pb-2 px-2">Motor</th>
+            <th class="pb-2 px-2">Severidad</th><th class="pb-2 px-2">Estado</th><th class="pb-2 px-2">Prioridad</th>
+            <th class="pb-2 px-2">Fecha</th>
+          </tr></thead>
+          <tbody>
+            <template x-for="inc in incidents" :key="inc.id">
+              <tr class="border-b border-gray-800/50 hover:bg-gray-800/30 cursor-pointer" @click="selectIncident(inc.id)">
+                <td class="py-2 px-2 font-mono text-indigo-400" x-text="inc.id"></td>
+                <td class="py-2 px-2" x-text="inc.title"></td>
+                <td class="py-2 px-2 text-gray-400" x-text="inc.source_engine"></td>
+                <td class="py-2 px-2"><span class="px-2 py-0.5 rounded text-xs font-medium"
+                  :class="inc.severity=='CRITICO'?'bg-red-900/40 text-red-400':inc.severity=='ALTO'?'bg-orange-900/40 text-orange-400':'bg-yellow-900/40 text-yellow-400'"
+                  x-text="inc.severity"></span></td>
+                <td class="py-2 px-2 text-gray-300" x-text="inc.estado"></td>
+                <td class="py-2 px-2 text-gray-300" x-text="inc.prioridad"></td>
+                <td class="py-2 px-2 text-gray-500 text-xs" x-text="inc.fecha+' '+inc.hora"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+        <p x-show="incidents.length===0" class="text-gray-500 text-center py-6">No hay incidentes registrados. Los motores crean incidentes automaticamente al detectar amenazas.</p>
+      </div>
+    </div>
+
+    <!-- Detail -->
+    <div x-show="selected" class="bg-[#0d1117] border border-indigo-900/50 rounded-xl p-5 space-y-4">
+      <h2 class="text-lg font-semibold">Detalle: <span class="text-indigo-400" x-text="selected?.id"></span></h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+        <div><span class="text-gray-500">Motor:</span> <span x-text="selected?.source_engine"></span></div>
+        <div><span class="text-gray-500">Amenaza:</span> <span x-text="selected?.threat_type"></span></div>
+        <div><span class="text-gray-500">Estado:</span> <span x-text="selected?.estado"></span></div>
+        <div><span class="text-gray-500">Confianza:</span> <span x-text="selected?.confidence"></span></div>
+        <div><span class="text-gray-500">Riesgo:</span> <span x-text="selected?.risk_score"></span></div>
+        <div><span class="text-gray-500">Analista:</span> <span x-text="selected?.analyst || 'Sin asignar'"></span></div>
+      </div>
+      <!-- Kernel IA -->
+      <div class="border-t border-gray-800 pt-3">
+        <h3 class="text-sm font-semibold text-purple-400 mb-2"><i class="fas fa-brain mr-1"></i> Kernel IA (solo analisis)</h3>
+        <p class="text-sm text-gray-300" x-text="selected?.kernel_ia?.summary"></p>
+        <p class="text-xs text-gray-500" x-text="'Recomendacion: '+(selected?.kernel_ia?.recommendation||'')"></p>
+      </div>
+      <!-- SOPE -->
+      <div class="border-t border-gray-800 pt-3">
+        <h3 class="text-sm font-semibold text-cyan-400 mb-2"><i class="fas fa-cogs mr-1"></i> SOPE Playbook</h3>
+        <p class="text-sm text-gray-300" x-text="'Playbook: '+(selected?.sope?.playbook_nombre||'NO DISPONIBLE')"></p>
+      </div>
+      <!-- Forensic -->
+      <div class="border-t border-gray-800 pt-3">
+        <h3 class="text-sm font-semibold text-green-400 mb-2"><i class="fas fa-fingerprint mr-1"></i> Cadena Forense</h3>
+        <p class="text-xs text-gray-400 font-mono" x-text="'SHA256 before: '+(selected?.forensic?.before?.sha256||'')"></p>
+        <p class="text-xs text-gray-400 font-mono" x-text="'SHA256 after: '+(selected?.forensic?.after?.sha256||'')"></p>
+      </div>
+      <!-- Timeline -->
+      <div class="border-t border-gray-800 pt-3">
+        <h3 class="text-sm font-semibold text-yellow-400 mb-2"><i class="fas fa-clock mr-1"></i> Timeline</h3>
+        <div class="space-y-1">
+          <template x-for="ev in (selected?.timeline||[])" :key="ev.time+ev.event">
+            <div class="flex gap-3 text-xs">
+              <span class="text-gray-500 w-20 shrink-0" x-text="ev.time?.split('T')[1]||ev.time"></span>
+              <span class="text-gray-300" x-text="ev.engine+': '+ev.event"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline global -->
+    <div class="bg-[#0d1117] border border-gray-800 rounded-xl p-5">
+      <h2 class="text-lg font-semibold mb-3">Timeline Global</h2>
+      <div class="space-y-1 max-h-64 overflow-y-auto">
+        <template x-for="ev in timeline" :key="JSON.stringify(ev)">
+          <div class="flex gap-3 text-xs border-b border-gray-800/30 py-1">
+            <span class="text-gray-500 w-40 shrink-0" x-text="ev.timestamp_utc||''"></span>
+            <span class="text-indigo-400 w-24 shrink-0" x-text="ev.incident_id||''"></span>
+            <span class="text-gray-300" x-text="(ev.engine||'')+': '+(ev.event||ev.detail||'')"></span>
+          </div>
+        </template>
+        <p x-show="timeline.length===0" class="text-gray-500 text-center py-4">Sin eventos en timeline.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function imcmApp(){return{
+  statsCards:{}, incidents:[], timeline:[], selected:null, timelineLoaded:false,
+  async load(){
+    const d=await fetch('/api/imcm/dashboard').then(r=>r.json());
+    if(d.ok){
+      const db=d.dashboard;
+      this.statsCards={Total:db.total_incidents,Nuevo:db.by_state?.nuevo||0,Investigando:db.by_state?.investigando||0,Cerrado:db.by_state?.cerrado||0,Critico:db.by_severity?.CRITICO||0};
+      this.incidents=db.recent_incidents||[];
+    }
+    setTimeout(()=>this.loadTimeline(), 100);
+  },
+  async loadTimeline(){
+    if(this.timelineLoaded) return;
+    const t=await fetch('/api/imcm/timeline?limit=50').then(r=>r.json());
+    if(t.ok){ this.timeline=(t.timeline||[]).slice().reverse(); this.timelineLoaded=true; }
+  },
+  async selectIncident(id){
+    const r=await fetch('/api/imcm/incident/'+id).then(r=>r.json());
+    if(r.ok) this.selected=r.incident;
+  }
+}}
+</script>
+{% endblock %}

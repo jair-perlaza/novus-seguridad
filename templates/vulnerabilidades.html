@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Análisis de Vulnerabilidades</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-dark: #06090f; --accent: #5d5fef; }
+        body { background-color: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; }
+        .vuln-card { background: #0c121d; border: 1px solid #1e293b; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #06090f; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        .vuln-row { cursor: pointer; }
+        .vuln-row:hover { background: rgba(93,95,239,0.08); }
+        .impact-critico { background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid rgba(239,68,68,0.4); }
+        .impact-alto { background: rgba(249,115,22,0.2); color: #f97316; border: 1px solid rgba(249,115,22,0.4); }
+        .impact-medio { background: rgba(234,179,8,0.2); color: #eab308; border: 1px solid rgba(234,179,8,0.4); }
+        .impact-bajo { background: rgba(34,197,94,0.2); color: #22c55e; border: 1px solid rgba(34,197,94,0.4); }
+        .analyst-panel {
+            position: fixed; top: 0; right: -480px; width: min(460px, 96vw);
+            height: 100vh; background: #0a0f18; border-left: 1px solid #1e293b;
+            z-index: 900; transition: right 0.35s ease; overflow-y: auto; padding: 20px;
+        }
+        .analyst-panel.open { right: 0; }
+        .panel-section { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #1e293b; }
+        .panel-section h4 { font-size: 10px; text-transform: uppercase; color: #818cf8; margin-bottom: 6px; letter-spacing: 0.08em; }
+        .panel-section p { font-size: 12px; color: #cbd5e1; line-height: 1.5; }
+        .panel-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 10px; margin-bottom: 12px; }
+        .panel-meta span { padding: 3px 8px; border-radius: 6px; background: #111827; color: #94a3b8; }
+        .panel-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+        .panel-actions button { flex: 1 1 45%; padding: 8px; font-size: 10px; font-weight: 700; border-radius: 6px; cursor: pointer; border: none; }
+        .btn-remediate { background: #5d5fef; color: white; }
+        .btn-pdf { background: #1e293b; color: #e2e8f0; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen w-full" data-novus-module="vulnerabilidades">
+
+    {% set active_module = 'vulnerabilidades' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+
+    <main class="novus-main flex-1 flex flex-col min-w-0 overflow-y-auto bg-[#06090f]">
+        <header class="p-8 border-b border-gray-800 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold italic tracking-tighter uppercase">Analista de Vulnerabilidades</h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em]">Datos reales — motores activos — sin placeholders</p>
+            </div>
+            <div class="text-right text-xs text-gray-400">
+                <span id="header-count">{{ vulnerabilidades|length }}</span> hallazgo(s) activo(s)
+            </div>
+        </header>
+
+        <div class="p-8 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="vuln-card p-5 rounded-xl border-l-4 border-indigo-500">
+                    <div class="text-[10px] text-gray-500 uppercase font-bold mb-1">Activas</div>
+                    <div class="text-2xl font-black" id="stat-total">—</div>
+                </div>
+                <div class="vuln-card p-5 rounded-xl border-l-4 border-red-500">
+                    <div class="text-[10px] text-red-500 uppercase font-bold mb-1">Crítico / Alto</div>
+                    <div class="text-2xl font-black text-red-400" id="stat-high">—</div>
+                </div>
+                <div class="vuln-card p-5 rounded-xl border-l-4 border-yellow-500">
+                    <div class="text-[10px] text-yellow-500 uppercase font-bold mb-1">Medio</div>
+                    <div class="text-2xl font-black text-yellow-400" id="stat-med">—</div>
+                </div>
+                <div class="vuln-card p-5 rounded-xl border-l-4 border-green-500">
+                    <div class="text-[10px] text-green-500 uppercase font-bold mb-1">Resueltas (historial)</div>
+                    <div class="text-2xl font-black text-green-400" id="stat-resolved">—</div>
+                </div>
+            </div>
+
+            <div class="vuln-card rounded-2xl overflow-hidden">
+                <div class="p-4 bg-[#161b22] border-b border-gray-800 flex justify-between items-center">
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-indigo-300">Hallazgos verificados</h2>
+                    <span class="text-[10px] text-gray-500" id="last-update">Actualizando...</span>
+                </div>
+                <table class="w-full text-left">
+                    <thead class="text-[10px] text-gray-500 uppercase bg-[#06090f]">
+                        <tr>
+                            <th class="p-4">ID / Recurso</th>
+                            <th class="p-4">Hallazgo</th>
+                            <th class="p-4 text-center">Impacto</th>
+                            <th class="p-4 text-center">Confianza</th>
+                            <th class="p-4 text-center">Estado</th>
+                            <th class="p-4 text-right">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vuln-tbody" class="divide-y divide-gray-800 font-mono text-xs">
+                        <tr><td colspan="6" class="p-10 text-center text-gray-600 italic">Cargando análisis...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div class="analyst-panel" id="analyst-panel">
+        <button onclick="cerrarPanel()" style="position:absolute;top:12px;right:12px;background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer">&times;</button>
+        <h2 id="panel-title" class="text-lg font-bold text-indigo-300 mb-2">Hallazgo</h2>
+        <div class="panel-meta" id="panel-meta"></div>
+        <div id="panel-sections"></div>
+        <div class="panel-actions">
+            <button class="btn-remediate" onclick="remediarSeleccionado()"><i class="fas fa-wrench"></i> Remediar</button>
+            <button type="button" style="background:#1e293b;color:#a5b4fc;" onclick="NovusAIKernel.consultModule('vulnerabilidades',{finding_id:selectedId})"><i class="fas fa-brain"></i> Consultar Kernel IA</button>
+            <button class="btn-pdf" onclick="descargarInforme()"><i class="fas fa-file-pdf"></i> Informe PDF</button>
+        </div>
+    </div>
+
+    <script>
+        let vulnerabilitiesData = [];
+        let pendientesData = [];
+        let resueltasData = [];
+        let selectedId = null;
+        let reportIds = {};
+
+        async function cargarDatosReales() {
+            try {
+                const res = await fetch('/api/security/vulnerabilities');
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    vulnerabilitiesData = data.vulnerabilities || [];
+                    pendientesData = data.pendientes_verificacion || [];
+                    resueltasData = data.resueltas_historial || [];
+                    actualizarUI(data.audit || {});
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function actualizarUI(audit) {
+            document.getElementById('stat-total').textContent = vulnerabilitiesData.length;
+            document.getElementById('header-count').textContent = vulnerabilitiesData.length;
+            document.getElementById('stat-high').textContent = vulnerabilitiesData.filter(v =>
+                ['Crítico','Critico','Alto','CrÍTICO','ALTO'].includes(v.impacto_nivel)).length;
+            document.getElementById('stat-med').textContent = vulnerabilitiesData.filter(v =>
+                (v.impacto_nivel || '') === 'Medio').length;
+            document.getElementById('stat-resolved').textContent = resueltasData.length;
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+            renderTabla();
+            renderPendientes();
+            if (selectedId) abrirPanel(selectedId, true);
+        }
+
+        function confianzaHtml(v) {
+            const pct = v.confianza_porcentaje;
+            const label = v.confianza_etiqueta || '';
+            if (typeof pct === 'number') {
+                return `<div><strong>${pct}%</strong> ${label}</div>`;
+            }
+            return v.confianza || 'Sin datos disponibles';
+        }
+
+        function renderTabla() {
+            const tbody = document.getElementById('vuln-tbody');
+            if (!vulnerabilitiesData.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-600 italic">No hay vulnerabilidades activas con evidencia verificable.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = vulnerabilitiesData.map(v => `
+                <tr class="vuln-row" onclick="abrirPanel('${v.id}')">
+                    <td class="p-4 text-indigo-400">
+                        <div class="font-bold text-[10px]">${v.id}</div>
+                        <div class="text-gray-500 text-[9px]">${v.recurso_afectado || 'Sin datos disponibles'}</div>
+                    </td>
+                    <td class="p-4 text-gray-300">${v.nombre || 'Sin datos disponibles'}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2 py-1 rounded text-[9px] font-black ${impactClass(v.impacto_nivel)}">${v.impacto_nivel || 'Medio'}</span>
+                    </td>
+                    <td class="p-4 text-center text-gray-400 text-[9px]">${confianzaHtml(v)}</td>
+                    <td class="p-4 text-center">
+                        <span class="text-[9px] text-green-400">${v.estado || 'Activa'}</span>
+                    </td>
+                    <td class="p-4 text-right">
+                        <button onclick="event.stopPropagation(); remediar('${v.id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-[9px] font-black">REMEDIAR</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderPendientes() {
+            let section = document.getElementById('pendientes-section');
+            if (!section) {
+                const container = document.querySelector('.p-8.space-y-6');
+                if (!container) return;
+                section = document.createElement('div');
+                section.id = 'pendientes-section';
+                section.className = 'vuln-card rounded-2xl overflow-hidden';
+                container.appendChild(section);
+            }
+            if (!pendientesData.length) {
+                section.innerHTML = '';
+                return;
+            }
+            section.innerHTML = `
+                <div class="p-4 bg-[#161b22] border-b border-yellow-800/50">
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-yellow-400">Hallazgos pendientes de verificación (${pendientesData.length})</h2>
+                </div>
+                <div class="p-4 text-xs text-gray-400 space-y-2">
+                    ${pendientesData.map(p => `
+                        <div class="border-b border-gray-800 pb-2">
+                            <strong class="text-yellow-300">${p.id}</strong> — ${p.nombre || ''}<br>
+                            <span class="text-[10px]">Campos faltantes: ${(p.campos_faltantes || []).join(', ')}</span>
+                        </div>
+                    `).join('')}
+                </div>`;
+        }
+
+        function impactClass(nivel) {
+            const n = (nivel || '').toLowerCase();
+            if (n.includes('crit')) return 'impact-critico';
+            if (n.includes('alto') || n.includes('high')) return 'impact-alto';
+            if (n.includes('bajo') || n.includes('low')) return 'impact-bajo';
+            return 'impact-medio';
+        }
+
+        async function abrirPanel(id, silent = false) {
+            selectedId = id;
+            window.NovusModuleExtra = { finding_id: id };
+            const v = vulnerabilitiesData.find(x => x.id === id);
+            if (!v) return;
+            if (!silent) document.getElementById('analyst-panel').classList.add('open');
+
+            const confCalc = (v.confianza_calculo || []).map(c => `• ${c}`).join('<br>');
+            const confEv = (v.evidencia_utilizada || []).join(', ');
+
+            document.getElementById('panel-title').textContent = v.nombre || id;
+            document.getElementById('panel-meta').innerHTML = `
+                <span>Motor: ${v.motor || 'Sin datos disponibles'}</span>
+                <span>${v.fecha || ''} ${v.hora || ''}</span>
+                <span>${v.confianza_porcentaje || '?'}% ${v.confianza_etiqueta || ''}</span>
+                <span class="${impactClass(v.impacto_nivel)}">${v.impacto_nivel || 'Medio'}</span>
+            `;
+
+            const hist = v.historial || {};
+            const rems = (hist.remediaciones || []).map(r =>
+                `<p class="text-[10px] text-gray-400">[${r.time}] ${r.result} — ${r.executed_by} — ${r.reason || ''}</p>`
+            ).join('') || '<p class="text-gray-500 text-[10px]">Sin remediaciones registradas.</p>';
+
+            document.getElementById('panel-sections').innerHTML = `
+                <div class="panel-section">
+                    <h4>Qué encontró NOVUS</h4>
+                    <p>${v.descripcion_sencilla || v.descripcion || 'Sin datos disponibles'}</p>
+                    <p class="text-[10px] text-gray-500 mt-2">${v.descripcion_tecnica || ''}</p>
+                </div>
+                <div class="panel-section">
+                    <h4>Causa probable</h4>
+                    <p>${v.causa_probable || 'Sin datos disponibles'}</p>
+                </div>
+                <div class="panel-section">
+                    <h4>Impacto potencial</h4>
+                    <p>${v.impacto_potencial || 'Sin datos disponibles'}</p>
+                </div>
+                <div class="panel-section">
+                    <h4>Recurso afectado</h4>
+                    <p>${v.recurso_afectado || 'Sin datos disponibles'} — Fuente: ${v.fuente_evidencia || v.fuente || 'Sin datos disponibles'}</p>
+                </div>
+                <div class="panel-section">
+                    <h4>Acciones NOVUS</h4>
+                    <p>${(v.acciones_novus || []).map(a => '• ' + a).join('<br>') || 'Sin datos disponibles'}</p>
+                </div>
+                <div class="panel-section">
+                    <h4>Recomendaciones al cliente</h4>
+                    <p>${(v.acciones_cliente || []).map(a => '• ' + a).join('<br>') || 'Sin datos disponibles'}</p>
+                    <p class="text-[10px] text-gray-500 mt-2">Tiempo estimado: ${v.tiempo_correccion || 'Sin datos disponibles'} | Dificultad: ${v.dificultad || 'Sin datos disponibles'}</p>
+                    <p class="text-[10px] text-indigo-400">${v.referencia_tecnica && v.referencia_tecnica !== 'Sin datos disponibles' ? 'Ref: ' + v.referencia_tecnica : ''}</p>
+                </div>
+                <div class="panel-section">
+                    <h4>Nivel de confianza</h4>
+                    <p><strong>${v.confianza_porcentaje || '?'}%</strong> — ${v.confianza_etiqueta || ''}</p>
+                    <p class="text-[10px] text-gray-500 mt-1">Cálculo:<br>${confCalc || 'Sin datos disponibles'}</p>
+                    <p class="text-[10px] text-gray-500">Motores: ${(v.motores_participantes || []).join(', ') || v.motor}</p>
+                    <p class="text-[10px] text-gray-500">Evidencia: ${confEv || (typeof NovusMetrics !== 'undefined' ? NovusMetrics.formatEvidenceObject(v.evidencia || {}) : 'Sin datos disponibles')}</p>
+                </div>
+                <div class="panel-section">
+                    <h4>Historial</h4>
+                    <p class="text-[10px]">Primera detección: ${hist.primera_deteccion || 'Sin datos disponibles'}</p>
+                    <p class="text-[10px]">Última detección: ${hist.ultima_deteccion || 'Sin datos disponibles'} (${hist.veces_detectada || 0} veces)</p>
+                    ${rems}
+                </div>
+            `;
+
+            try {
+                const r = await fetch(`/api/reports/finding/${encodeURIComponent(id)}`);
+                const d = await r.json();
+                if (d.report) reportIds[id] = d.report.id;
+            } catch (e) {}
+        }
+
+        function cerrarPanel() {
+            document.getElementById('analyst-panel').classList.remove('open');
+            selectedId = null;
+        }
+
+        function remediar(id) {
+            NovusRemediation.run(id, 'vulnerability', {
+                title: 'Remediación de vulnerabilidad',
+                description: `Hallazgo: ${id}`,
+                onComplete: () => { cargarDatosReales(); if (selectedId === id) abrirPanel(id, true); },
+            });
+        }
+        function remediarSeleccionado() { if (selectedId) remediar(selectedId); }
+        function descargarInforme() {
+            const rid = reportIds[selectedId];
+            if (rid) window.location.href = `/api/reports/${rid}/pdf`;
+            else alert('Informe en generación — intente tras el próximo escaneo.');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarDatosReales();
+            setInterval(cargarDatosReales, 5000);
+        });
+    </script>
+    {% include 'partials/global_search.html' %}
+    {% include 'partials/ai_kernel_panel.html' %}
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Security Validation Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body{background:#06090f;color:#fff;font-family:'Segoe UI',Tahoma,sans-serif}
+        .ia-card{background:#0c121d;border:1px solid #1e293b;border-radius:10px}
+        .na{color:#94a3b8;font-style:italic}
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="csv_bas_center">
+    {% set active_module = 'csv_bas_center' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header class="flex flex-wrap justify-between items-start gap-4">
+            <div>
+                <h1 class="text-2xl font-bold uppercase tracking-tighter">
+                    <i class="fas fa-vial text-cyan-400 mr-2"></i>Security Validation Center
+                </h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">
+                    CSV / BAS — escenarios controlados · no destructivos · sin detecciones inventadas
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="runAll()" class="px-3 py-1.5 bg-cyan-900 hover:bg-cyan-800 text-xs rounded">Ejecutar catalogo</button>
+                <button onclick="loadDash()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded">Actualizar</button>
+            </div>
+        </header>
+        <div id="kpi" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 text-[10px] text-center"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="ia-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Escenarios</h3>
+                <div id="scenarios" class="text-xs max-h-96 overflow-y-auto space-y-1"></div>
+            </div>
+            <div class="ia-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Cobertura por motor</h3>
+                <div id="coverage" class="text-xs max-h-96 overflow-y-auto space-y-1"></div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="ia-card p-4"><h3 class="text-[10px] text-gray-500 uppercase mb-2">Motores</h3><pre id="engines" class="text-[10px] whitespace-pre-wrap max-h-56 overflow-y-auto"></pre></div>
+            <div class="ia-card p-4"><h3 class="text-[10px] text-gray-500 uppercase mb-2">Detecciones / Timeline</h3><pre id="timeline" class="text-[10px] whitespace-pre-wrap max-h-56 overflow-y-auto"></pre></div>
+            <div class="ia-card p-4"><h3 class="text-[10px] text-gray-500 uppercase mb-2">Playbooks / Controles</h3><pre id="playbooks" class="text-[10px] whitespace-pre-wrap max-h-56 overflow-y-auto"></pre></div>
+        </div>
+        <div class="ia-card p-4">
+            <h3 class="text-xs font-bold text-purple-400 uppercase mb-2"><i class="fas fa-brain mr-1"></i>Kernel IA</h3>
+            <div class="flex flex-wrap gap-2 mb-2">
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué controles fallaron?">Controles fallaron</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué motor no detectó el escenario?">Motor no detectó</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué playbook respondió?">Playbook</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué control necesita fortalecerse?">Fortalecer</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué escenario tuvo peor cobertura?">Peor cobertura</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué ataque produjo mayor correlación?">Mayor correlación</button>
+            </div>
+            <div id="kernel" class="text-xs"></div>
+        </div>
+        <div class="ia-card p-4">
+            <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Limitaciones / Policy</h3>
+            <pre id="meta" class="text-[10px] text-gray-400 whitespace-pre-wrap max-h-48 overflow-y-auto"></pre>
+        </div>
+    </main>
+<script>
+const NA='NO DISPONIBLE';
+function esc(v){ if(v===null||v===undefined||v===''||v==='NO DISPONIBLE'||v==='NOT IMPLEMENTED'||v==='NOT DETECTED'||v==='NOT VERIFIED') return '<span class="na">'+String(v||NA)+'</span>'; if(typeof v==='object') return JSON.stringify(v); return String(v); }
+async function loadDash(){
+  const r=await fetch('/api/csv/dashboard').then(r=>r.json());
+  if(!r.ok) return;
+  const d=r.dashboard||{};
+  const cov=d.coverage||{};
+  document.getElementById('kpi').innerHTML=[
+    ['Escenarios', d.scenarios?.count],
+    ['Con resultados', cov.scenarios_with_results],
+    ['Motores OK', d.engines_available+'/'+d.engines_total],
+    ['Destructivo', d.destructive===false?'false':esc(d.destructive)],
+    ['Ataques reales', d.real_attacks===false?'false':esc(d.real_attacks)],
+    ['Inventado', d.invented===false?'false':esc(d.invented)],
+  ].map(([l,v])=>`<div class="ia-card p-3"><div class="text-sm font-bold">${esc(v)}</div><div class="text-gray-500">${l}</div></div>`).join('');
+  const sc=(d.scenarios?.scenarios)||[];
+  document.getElementById('scenarios').innerHTML=sc.map(s=>`
+    <div class="flex justify-between gap-2 border-b border-slate-800 py-1">
+      <div><span class="text-cyan-400">${esc(s.id)}</span> — ${esc(s.name)}</div>
+      <button onclick="runOne('${s.id}')" class="text-[10px] px-2 py-0.5 border border-cyan-900 rounded">Run</button>
+    </div>`).join('') || '<span class="na">'+NA+'</span>';
+  const by=cov.by_engine||{};
+  document.getElementById('coverage').innerHTML=Object.keys(by).length
+    ? Object.entries(by).map(([e,c])=>`<div><span class="text-amber-400">${esc(e)}</span> ${esc(c.detected_over_evaluated)} (ND=${esc(c.not_detected)} NI=${esc(c.not_implemented)} NV=${esc(c.not_verified)})</div>`).join('')
+    : '<span class="na">Sin resultados LIVE aun</span>';
+  document.getElementById('engines').textContent=JSON.stringify(d.engines||NA,null,2);
+  const latest=d.latest_run;
+  document.getElementById('timeline').textContent=JSON.stringify(latest && latest!==NA ? {
+    run_id:latest.run_id, scenario:latest.scenario_id,
+    timeline:(latest.attack_timeline||[]).slice(0,12),
+    detections:(latest.detections||[]).map(x=>({engine:x.engine,result:x.result}))
+  } : NA, null, 2);
+  document.getElementById('playbooks').textContent=JSON.stringify(latest && latest!==NA ? latest.integration?.sope : NA, null, 2);
+  document.getElementById('meta').textContent=JSON.stringify({policy:d.policy,limitations:d.limitations},null,2);
+}
+async function runOne(id){
+  await fetch('/api/csv/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scenario_id:id})});
+  loadDash();
+}
+async function runAll(){
+  await fetch('/api/csv/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({all:true})});
+  loadDash();
+}
+document.querySelectorAll('.kq').forEach(b=>b.addEventListener('click',async()=>{
+  const r=await fetch('/api/csv/kernel?q='+encodeURIComponent(b.dataset.q)).then(r=>r.json());
+  document.getElementById('kernel').textContent=JSON.stringify(r.kernel||r,null,2);
+}));
+loadDash();
+setInterval(loadDash, 45000);
+</script>
+</body>
+</html>

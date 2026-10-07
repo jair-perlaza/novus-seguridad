@@ -1,0 +1,307 @@
+#!/usr/bin/env python3
+"""Catalogo de escenarios CSV/BAS — controlados, no destructivos."""
+from __future__ import annotations
+from typing import Any, Dict, List, Optional
+
+from services.csv_bas.limitations import CONTROL_ENGINES, NA
+
+# MITRE mappings are catalog metadata (public ATT&CK IDs), not invented detections.
+SCENARIOS: Dict[str, Dict[str, Any]] = {
+    "ransomware_simulation": {
+        "id": "ransomware_simulation",
+        "name": "Ransomware Simulation",
+        "description": "Validacion controlada de indicadores de ransomware (sin cifrado real).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["btde", "threat_intelligence", "imcm", "sope", "forense", "soc", "kernel_ia"],
+        "mitre": {
+            "tactics": ["Impact"],
+            "techniques": [{"id": "T1486", "name": "Data Encrypted for Impact"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:ransomware",
+        "sope_threat": "ransomware",
+    },
+    "credential_theft": {
+        "id": "credential_theft",
+        "name": "Credential Theft",
+        "description": "Validacion de deteccion de robo de credenciales (sin credentials reales).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["ueba", "threat_intelligence", "imcm", "sope", "iapa", "kernel_ia"],
+        "mitre": {
+            "tactics": ["Credential Access"],
+            "techniques": [{"id": "T1003", "name": "OS Credential Dumping"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:credential_theft",
+        "sope_threat": "credential_theft",
+    },
+    "phishing": {
+        "id": "phishing",
+        "name": "Phishing",
+        "description": "Validacion de senales de phishing (sin envio de correos reales).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["threat_intelligence", "imcm", "sope", "ueba", "soc"],
+        "mitre": {
+            "tactics": ["Initial Access"],
+            "techniques": [{"id": "T1566", "name": "Phishing"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:phishing",
+        "sope_threat": "phishing",
+    },
+    "lateral_movement": {
+        "id": "lateral_movement",
+        "name": "Lateral Movement",
+        "description": "Validacion de correlacion de movimiento lateral (sin RDP/SMB real).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["iapa", "ueba", "sdace", "imcm", "sope", "soc"],
+        "mitre": {
+            "tactics": ["Lateral Movement"],
+            "techniques": [{"id": "T1021", "name": "Remote Services"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:lateral_movement",
+        "sope_threat": "lateral_movement",
+    },
+    "persistence": {
+        "id": "persistence",
+        "name": "Persistence",
+        "description": "Validacion de indicadores de persistencia (sin modificar registro/sistema).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["btde", "zdde", "imcm", "sope", "forense"],
+        "mitre": {
+            "tactics": ["Persistence"],
+            "techniques": [{"id": "T1547", "name": "Boot or Logon Autostart Execution"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:persistence",
+        "sope_threat": "critical_threat",
+    },
+    "powershell_abuse": {
+        "id": "powershell_abuse",
+        "name": "PowerShell Abuse",
+        "description": "Validacion de abuso PowerShell (sin ejecutar scripts maliciosos).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["btde", "ueba", "zdde", "imcm", "sope"],
+        "mitre": {
+            "tactics": ["Execution"],
+            "techniques": [{"id": "T1059.001", "name": "PowerShell"}],
+            "subtechniques": [{"id": "T1059.001", "name": "PowerShell"}],
+        },
+        "signal": "csv_bas:powershell_abuse",
+        "sope_threat": "critical_threat",
+    },
+    "living_off_the_land": {
+        "id": "living_off_the_land",
+        "name": "Living off the Land",
+        "description": "Validacion LOLBins (sin invocar binarios del sistema con payloads).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["btde", "zdde", "ueba", "imcm", "sope"],
+        "mitre": {
+            "tactics": ["Execution", "Defense Evasion"],
+            "techniques": [{"id": "T1218", "name": "System Binary Proxy Execution"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:lolbins",
+        "sope_threat": "critical_threat",
+    },
+    "dns_abuse": {
+        "id": "dns_abuse",
+        "name": "DNS Abuse",
+        "description": "Validacion de abuso DNS (sin tuneles DNS reales).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["threat_intelligence", "asm", "sdace", "imcm", "sope"],
+        "mitre": {
+            "tactics": ["Command and Control"],
+            "techniques": [{"id": "T1071.004", "name": "DNS"}],
+            "subtechniques": [{"id": "T1071.004", "name": "DNS"}],
+        },
+        "signal": "csv_bas:dns_abuse",
+        "sope_threat": "critical_threat",
+    },
+    "data_exfiltration": {
+        "id": "data_exfiltration",
+        "name": "Data Exfiltration",
+        "description": "Validacion de senales de exfiltracion (sin transferir datos reales).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["sdace", "ueba", "imcm", "sope", "cryptovault", "soc"],
+        "mitre": {
+            "tactics": ["Exfiltration"],
+            "techniques": [{"id": "T1041", "name": "Exfiltration Over C2 Channel"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:data_exfiltration",
+        "sope_threat": "critical_threat",
+    },
+    "suspicious_process": {
+        "id": "suspicious_process",
+        "name": "Suspicious Process",
+        "description": "Validacion de proceso sospechoso (sin spawn de malware).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["btde", "ueba", "zdde", "imcm", "forense"],
+        "mitre": {
+            "tactics": ["Execution"],
+            "techniques": [{"id": "T1059", "name": "Command and Scripting Interpreter"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:suspicious_process",
+        "sope_threat": "compromised_device",
+    },
+    "malicious_service": {
+        "id": "malicious_service",
+        "name": "Malicious Service",
+        "description": "Validacion de servicio malicioso (sin instalar servicios).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["btde", "imcm", "sope", "forense", "health_engine"],
+        "mitre": {
+            "tactics": ["Persistence"],
+            "techniques": [{"id": "T1543.003", "name": "Windows Service"}],
+            "subtechniques": [{"id": "T1543.003", "name": "Windows Service"}],
+        },
+        "signal": "csv_bas:malicious_service",
+        "sope_threat": "compromised_device",
+    },
+    "beaconing": {
+        "id": "beaconing",
+        "name": "Beaconing",
+        "description": "Validacion de beaconing C2 (sin conexiones C2 reales).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["threat_intelligence", "sdace", "swarm_defense", "imcm", "sope"],
+        "mitre": {
+            "tactics": ["Command and Control"],
+            "techniques": [{"id": "T1071", "name": "Application Layer Protocol"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:beaconing",
+        "sope_threat": "critical_threat",
+    },
+    "ioc_injection": {
+        "id": "ioc_injection",
+        "name": "IOC Injection",
+        "description": "Inyecta IOC de validacion etiquetado en TIE (marcador CSV-BAS).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["threat_intelligence", "sdl", "sdace", "imcm", "sope", "soc"],
+        "mitre": {
+            "tactics": ["Discovery"],
+            "techniques": [{"id": "T1082", "name": "System Information Discovery"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:ioc_injection",
+        "sope_threat": "critical_threat",
+    },
+    "malicious_hash": {
+        "id": "malicious_hash",
+        "name": "Malicious Hash",
+        "description": "Valida correlacion de hash de validacion (hash sintetico etiquetado).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["threat_intelligence", "btde", "imcm", "sope", "forense"],
+        "mitre": {
+            "tactics": ["Defense Evasion"],
+            "techniques": [{"id": "T1036", "name": "Masquerading"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:malicious_hash",
+        "sope_threat": "critical_threat",
+    },
+    "compromised_endpoint": {
+        "id": "compromised_endpoint",
+        "name": "Compromised Endpoint",
+        "description": "Validacion de endpoint comprometido (sin compromiso real).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["btde", "asm", "imcm", "sope", "health_engine", "adaptive_profile"],
+        "mitre": {
+            "tactics": ["Initial Access"],
+            "techniques": [{"id": "T1200", "name": "Hardware Additions"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:compromised_endpoint",
+        "sope_threat": "compromised_device",
+    },
+    "apt_simulation": {
+        "id": "apt_simulation",
+        "name": "APT Simulation",
+        "description": "Cadena APT controlada multi-motor (sin TTPs destructivas).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": [
+            "threat_intelligence", "sdace", "iapa", "imcm", "sope", "swarm_defense", "kernel_ia",
+        ],
+        "mitre": {
+            "tactics": ["Initial Access", "Persistence", "Command and Control"],
+            "techniques": [{"id": "T1583", "name": "Acquire Infrastructure"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:apt_simulation",
+        "sope_threat": "critical_threat",
+    },
+    "botnet_simulation": {
+        "id": "botnet_simulation",
+        "name": "Botnet Simulation",
+        "description": "Validacion de senales botnet (sin peers reales).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["swarm_defense", "swarm_mesh", "threat_intelligence", "imcm", "sope"],
+        "mitre": {
+            "tactics": ["Command and Control"],
+            "techniques": [{"id": "T1090", "name": "Proxy"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:botnet_simulation",
+        "sope_threat": "critical_threat",
+    },
+    "zero_day_behaviour": {
+        "id": "zero_day_behaviour",
+        "name": "Zero-Day Behaviour Simulation",
+        "description": "Validacion de comportamiento zero-day (sin exploits).",
+        "destructive": False,
+        "reversible": True,
+        "expected_engines": ["zdde", "btde", "viem", "imcm", "sope", "forense", "kernel_ia"],
+        "mitre": {
+            "tactics": ["Execution", "Defense Evasion"],
+            "techniques": [{"id": "T1203", "name": "Exploitation for Client Execution"}],
+            "subtechniques": NA,
+        },
+        "signal": "csv_bas:zero_day_behaviour",
+        "sope_threat": "critical_threat",
+    },
+}
+
+
+def list_scenarios() -> Dict[str, Any]:
+    items = []
+    for sid, sc in SCENARIOS.items():
+        items.append({
+            "id": sid,
+            "name": sc["name"],
+            "description": sc["description"],
+            "destructive": sc["destructive"],
+            "reversible": sc["reversible"],
+            "expected_engines": sc["expected_engines"],
+            "mitre": sc.get("mitre") or NA,
+            "signal": sc["signal"],
+        })
+    return {
+        "count": len(items),
+        "scenarios": items,
+        "control_engines": CONTROL_ENGINES,
+        "invented": False,
+    }
+
+
+def get_scenario(scenario_id: str) -> Optional[Dict[str, Any]]:
+    return SCENARIOS.get((scenario_id or "").strip())

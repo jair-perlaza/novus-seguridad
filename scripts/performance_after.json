@@ -1,0 +1,111 @@
+{
+  "label": "after",
+  "cpu_pct": 32.7,
+  "ram_pct": 81.9,
+  "ram_process_mb": 135.9,
+  "ram_process_delta_mb": 27.5,
+  "login_ms": 4,
+  "login_status": 302,
+  "kernel_ia_ms": 29546,
+  "kernel_ia_status": 200,
+  "reports_list_ms": 3,
+  "reports_list_status": 404,
+  "motor_internal_ms": {
+    "ndr_payload": 0.0,
+    "topology_payload": 0.8,
+    "security_summary_cached": 11.6
+  },
+  "endpoints": [
+    {
+      "path": "/dashboard",
+      "status": 200,
+      "ms_min": 17,
+      "ms_avg": 135,
+      "ms_max": 371
+    },
+    {
+      "path": "/api/dashboard/live",
+      "status": 200,
+      "ms_min": 6,
+      "ms_avg": 7,
+      "ms_max": 8
+    },
+    {
+      "path": "/api/security/summary",
+      "status": 200,
+      "ms_min": 22,
+      "ms_avg": 23,
+      "ms_max": 25
+    },
+    {
+      "path": "/api/system/sector-shield/status",
+      "status": 200,
+      "ms_min": 1,
+      "ms_avg": 1,
+      "ms_max": 2
+    },
+    {
+      "path": "/api/system/sector-protection",
+      "status": 200,
+      "ms_min": 1,
+      "ms_avg": 6,
+      "ms_max": 15
+    },
+    {
+      "path": "/api/threat-intel/dashboard",
+      "status": 200,
+      "ms_min": 14,
+      "ms_avg": 34,
+      "ms_max": 72
+    },
+    {
+      "path": "/api/network/nodes",
+      "status": 200,
+      "ms_min": 1,
+      "ms_avg": 1,
+      "ms_max": 2
+    },
+    {
+      "path": "/api/network/ndr",
+      "status": 200,
+      "ms_min": 1,
+      "ms_avg": 2,
+      "ms_max": 3
+    },
+    {
+      "path": "/api/network/topology",
+      "status": 200,
+      "ms_min": 1,
+      "ms_avg": 1,
+      "ms_max": 1
+    },
+    {
+      "path": "/vulnerabilidades",
+      "status": 200,
+      "ms_min": 4,
+      "ms_avg": 4,
+      "ms_max": 5
+    },
+    {
+      "path": "/network",
+      "status": 200,
+      "ms_min": 14,
+      "ms_avg": 19,
+      "ms_max": 24
+    },
+    {
+      "path": "/topology",
+      "status": 200,
+      "ms_min": 3,
+      "ms_avg": 5,
+      "ms_max": 9
+    },
+    {
+      "path": "/inteligencia",
+      "status": 200,
+      "ms_min": 7,
+      "ms_avg": 12,
+      "ms_max": 16
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — Verificador de Evidencias</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background: #06090f; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .card { background: #0c121d; border: 1px solid #1e293b; border-radius: 12px; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="verificador_evidencias">
+    {% set active_module = 'verificador_evidencias' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 p-4 md:p-8 space-y-6 overflow-y-auto">
+        <header>
+            <h1 class="text-2xl font-bold uppercase">Verificador de Evidencias</h1>
+            <p class="text-xs text-gray-500 uppercase tracking-widest">Integridad SHA-256 · Firma Ed25519 · Cadena cronológica</p>
+        </header>
+
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="card p-4">
+                <div class="text-[10px] text-gray-500 uppercase">Registros sellados</div>
+                <div class="text-2xl font-mono text-indigo-300">{{ summary.record_count or 0 }}</div>
+            </div>
+            <div class="card p-4">
+                <div class="text-[10px] text-gray-500 uppercase">Hash</div>
+                <div class="text-sm">{{ summary.hash_algorithm or 'SHA-256' }}</div>
+            </div>
+            <div class="card p-4">
+                <div class="text-[10px] text-gray-500 uppercase">Firma</div>
+                <div class="text-sm">{{ summary.sign_algorithm or 'Ed25519' }}</div>
+            </div>
+        </section>
+
+        <div class="flex flex-wrap gap-2">
+            <button type="button" id="btn-verify-all" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-xs font-bold">VERIFICAR TODO</button>
+        </div>
+
+        <section class="card p-4">
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-2">Resultado</h2>
+            <pre id="out" class="text-xs text-gray-300 whitespace-pre-wrap overflow-x-auto">Pulse «Verificar todo» para ejecutar comprobación real sobre el ledger forense.</pre>
+        </section>
+    </main>
+    <script>
+        document.getElementById('btn-verify-all').addEventListener('click', async () => {
+            const out = document.getElementById('out');
+            out.textContent = 'Verificando…';
+            const res = await fetch('/api/forensic-evidence/verify-all', { method: 'POST', credentials: 'same-origin' });
+            const data = await res.json();
+            out.textContent = JSON.stringify(data, null, 2);
+        });
+    </script>
+</body>
+</html>

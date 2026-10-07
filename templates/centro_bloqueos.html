@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Centro de Bloqueos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #06090f; color: white; font-family: 'Inter', sans-serif; }
+        .block-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 12px; }
+        .status-active { color: #ef4444; }
+        .status-pending_admin { color: #f97316; }
+        .status-revoked, .status-expired { color: #94a3b8; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="centro_bloqueos">
+    {% set active_module = 'centro_bloqueos' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header>
+            <h1 class="text-2xl font-bold uppercase tracking-tighter">Centro de Bloqueos</h1>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest">IPs bloqueadas por intentos de acceso no autorizado — solo evidencia real</p>
+        </header>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-[10px]">
+            <div class="block-card p-3"><div class="text-lg font-bold text-red-400">{{ protection_status.active_blocks }}</div><div class="text-gray-500">Bloqueos activos</div></div>
+            <div class="block-card p-3"><div class="text-lg font-bold text-amber-400">{{ protection_status.elevated_monitoring }}</div><div class="text-gray-500">Monitoreo reforzado</div></div>
+            <div class="block-card p-3"><div class="text-lg font-bold text-white">{{ protection_status.recent_failures_window }}</div><div class="text-gray-500">Fallos recientes</div></div>
+            <div class="block-card p-3"><div class="text-lg font-bold text-indigo-400">{{ protection_status.blocked_ips_total }}</div><div class="text-gray-500">Registros totales</div></div>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            <input id="search-ip" type="text" placeholder="Buscar IP o email objetivo..." class="flex-1 min-w-[200px] bg-[#06090f] border border-gray-800 rounded-lg px-3 py-2 text-sm">
+            <button onclick="searchBlocks()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-xs font-bold">BUSCAR</button>
+            <label class="flex items-center gap-2 text-[10px] text-gray-400">
+                <input type="checkbox" id="include-expired" checked onchange="reloadBlocks()"> Incluir expirados
+            </label>
+        </div>
+
+        <div id="blocks-list" class="space-y-3">
+            {% for b in blocks %}
+            <div class="block-card p-4" data-ip="{{ b.ip }}">
+                <div class="flex flex-wrap justify-between gap-2 items-start">
+                    <div>
+                        <div class="text-sm font-bold font-mono">{{ b.ip }}</div>
+                        <div class="text-[10px] text-gray-500">{{ b.blocked_at or '—' }} · Intentos: {{ b.failed_attempts or 0 }}</div>
+                    </div>
+                    <span class="text-[10px] font-bold uppercase status-{{ b.status }}">{{ b.status }}</span>
+                </div>
+                <p class="text-[11px] text-gray-300 mt-2">{{ b.reason or '—' }}</p>
+                <div class="mt-2 flex flex-wrap gap-3 text-[10px] text-gray-400">
+                    {% if b.target_email %}<span><i class="fas fa-user mr-1"></i>{{ b.target_email }}</span>{% endif %}
+                    {% if b.os_name %}<span><i class="fas fa-desktop mr-1"></i>{{ b.os_name }}</span>{% endif %}
+                    {% if b.blocked_until %}<span><i class="fas fa-hourglass-half mr-1"></i>Expira: {{ b.blocked_until }}</span>{% elif b.requires_admin_review %}<span class="text-orange-400"><i class="fas fa-user-shield mr-1"></i>Revisión administrativa</span>{% endif %}
+                </div>
+                <div class="mt-3 flex gap-2">
+                    <button onclick="showDetail('{{ b.ip }}')" class="text-[10px] bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded">Ver evidencias</button>
+                    {% if b.status in ('active', 'pending_admin') %}
+                    <button onclick="unblockIp('{{ b.ip }}')" class="text-[10px] bg-green-900/40 hover:bg-green-800/50 border border-green-700/50 px-3 py-1 rounded text-green-300">Desbloquear</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-sm">No hay IPs bloqueadas registradas. Los bloqueos aparecen aquí solo tras intentos fallidos reales detectados por el motor de autenticación.</p>
+            {% endfor %}
+        </div>
+
+        <div id="block-detail" class="block-card p-6 hidden">
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-4">Detalle y evidencias</h2>
+            <pre id="detail-json" class="text-[10px] text-gray-300 overflow-x-auto whitespace-pre-wrap max-h-[50vh]"></pre>
+        </div>
+
+        {% include 'partials/global_search.html' %}
+        {% include 'partials/ai_kernel_panel.html' %}
+    </main>
+    <script>
+    async function reloadBlocks() {
+        const q = document.getElementById('search-ip').value.trim();
+        const inc = document.getElementById('include-expired').checked;
+        const url = '/api/system/blocked-ips?limit=100&include_expired=' + (inc ? '1' : '0') + (q ? '&q=' + encodeURIComponent(q) : '');
+        const r = await fetch(url, {credentials: 'same-origin'});
+        const data = await r.json();
+        const list = document.getElementById('blocks-list');
+        if (!data.blocks || !data.blocks.length) {
+            list.innerHTML = '<p class="text-gray-500 text-sm">Sin resultados.</p>';
+            return;
+        }
+        list.innerHTML = data.blocks.map(b => renderBlock(b)).join('');
+    }
+    function renderBlock(b) {
+        const admin = b.requires_admin_review ? '<span class="text-orange-400"><i class="fas fa-user-shield mr-1"></i>Revisión administrativa</span>' : (b.blocked_until ? '<span><i class="fas fa-hourglass-half mr-1"></i>Expira: ' + b.blocked_until + '</span>' : '');
+        const unblock = (b.status === 'active' || b.status === 'pending_admin') ? '<button onclick="unblockIp(\'' + b.ip + '\')" class="text-[10px] bg-green-900/40 hover:bg-green-800/50 border border-green-700/50 px-3 py-1 rounded text-green-300">Desbloquear</button>' : '';
+        return '<div class="block-card p-4"><div class="flex flex-wrap justify-between gap-2"><div><div class="text-sm font-bold font-mono">' + b.ip + '</div><div class="text-[10px] text-gray-500">' + (b.blocked_at||'—') + ' · Intentos: ' + (b.failed_attempts||0) + '</div></div><span class="text-[10px] font-bold uppercase status-' + b.status + '">' + b.status + '</span></div><p class="text-[11px] text-gray-300 mt-2">' + (b.reason||'—') + '</p><div class="mt-2 flex flex-wrap gap-3 text-[10px] text-gray-400">' + (b.target_email ? '<span><i class="fas fa-user mr-1"></i>' + b.target_email + '</span>' : '') + (b.os_name ? '<span><i class="fas fa-desktop mr-1"></i>' + b.os_name + '</span>' : '') + admin + '</div><div class="mt-3 flex gap-2"><button onclick="showDetail(\'' + b.ip + '\')" class="text-[10px] bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded">Ver evidencias</button>' + unblock + '</div></div>';
+    }
+    function searchBlocks() { reloadBlocks(); }
+    async function showDetail(ip) {
+        const el = document.getElementById('block-detail');
+        const pre = document.getElementById('detail-json');
+        el.classList.remove('hidden');
+        pre.textContent = 'Cargando...';
+        const r = await fetch('/api/system/blocked-ips?ip=' + encodeURIComponent(ip), {credentials: 'same-origin'});
+        const data = await r.json();
+        pre.textContent = JSON.stringify(data.block || data, null, 2);
+    }
+    async function unblockIp(ip) {
+        if (!confirm('¿Autorizar desbloqueo manual de ' + ip + '?')) return;
+        const r = await fetch('/api/system/blocked-ips/' + encodeURIComponent(ip) + '/unblock', {method: 'POST', credentials: 'same-origin'});
+        const data = await r.json();
+        alert(data.message || (data.success ? 'Desbloqueado' : 'Error'));
+        reloadBlocks();
+    }
+    </script>
+</body>
+</html>

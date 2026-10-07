@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — Centro de Inteligencia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    {% include 'partials/ai_kernel_panel.html' %}
+    <style>
+        body { background: #06090f; color: #e6edf3; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(13,17,23,0.85); border: 1px solid #30363d; backdrop-filter: blur(10px); }
+        .risk-critico { color: #f85149; }
+        .risk-alto { color: #f0883e; }
+        .risk-medio { color: #d29922; }
+        .risk-bajo { color: #3fb950; }
+        .tl-item { position: relative; padding-left: 1.25rem; border-left: 2px solid #30363d; margin-left: 0.5rem; }
+        .tl-item::before { content: ''; position: absolute; left: -5px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: #6366f1; }
+        .tl-item:last-child { border-left-color: transparent; }
+        .intel-tab { border-bottom: 2px solid transparent; color: #8b949e; transition: all .2s; }
+        .intel-tab.active { color: #818cf8; border-bottom-color: #6366f1; }
+        .intel-panel { display: none; }
+        .intel-panel.active { display: block; }
+        #intel-toast { transition: opacity .3s; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen w-full" data-novus-module="inteligencia">
+{% set active_module = 'inteligencia' %}
+{% include 'partials/novus_nav_sidebar.html' %}
+
+<main class="novus-main flex-1 flex flex-col min-w-0 overflow-y-auto">
+    <header class="border-b border-gray-800 px-4 md:px-8 py-4 md:py-6 bg-[#06090f]/90 backdrop-blur flex flex-wrap justify-between items-start gap-4">
+        <div>
+            <h1 class="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-brain text-indigo-400"></i> Centro de Inteligencia
+            </h1>
+            <p class="text-gray-500 text-xs mt-1">Cerebro operativo · datos reales · Sector: <span class="text-indigo-400">{{ user.sector }}</span></p>
+            <p class="text-[10px] text-gray-600 mt-0.5" id="dash-updated">—</p>
+        </div>
+        <button onclick="refreshDashboard()" id="btn-sync" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-bold shrink-0">
+            <i class="fas fa-sync-alt mr-1"></i> Sincronizar
+        </button>
+    </header>
+
+    <!-- Estado de la empresa -->
+    <section class="px-4 md:px-8 py-4 border-b border-gray-800/60">
+        <h2 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Estado de la empresa</h2>
+        <div id="company-status" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-center">
+            <p class="text-gray-500 text-xs col-span-full">Cargando indicadores...</p>
+        </div>
+    </section>
+
+    <!-- Pestañas -->
+    <nav class="px-4 md:px-8 flex flex-wrap gap-1 border-b border-gray-800 overflow-x-auto" id="intel-tabs">
+        <button type="button" data-tab="resumen" class="intel-tab active px-4 py-3 text-xs font-bold uppercase whitespace-nowrap">Resumen</button>
+        <button type="button" data-tab="casos" class="intel-tab px-4 py-3 text-xs font-bold uppercase whitespace-nowrap">Casos</button>
+        <button type="button" data-tab="cronologia" class="intel-tab px-4 py-3 text-xs font-bold uppercase whitespace-nowrap">Cronología</button>
+        <button type="button" data-tab="tendencias" class="intel-tab px-4 py-3 text-xs font-bold uppercase whitespace-nowrap">Tendencias</button>
+        <button type="button" data-tab="recomendaciones" class="intel-tab px-4 py-3 text-xs font-bold uppercase whitespace-nowrap">Recomendaciones</button>
+        <button type="button" data-tab="aprendizaje" class="intel-tab px-4 py-3 text-xs font-bold uppercase whitespace-nowrap">Aprendizaje</button>
+        <button type="button" data-tab="adaptive" class="intel-tab px-4 py-3 text-xs font-bold uppercase whitespace-nowrap">Adaptive Defense</button>
+        <button type="button" data-tab="aspe" class="intel-tab px-4 py-3 text-xs font-bold uppercase whitespace-nowrap">ASPE / UCE</button>
+    </nav>
+
+    <div class="flex-1 px-4 md:px-8 py-6 space-y-6">
+        <div id="intel-toast" class="hidden fixed top-4 right-4 z-50 max-w-sm px-4 py-3 rounded-lg text-sm font-medium shadow-lg border"></div>
+
+        <!-- RESUMEN -->
+        <div id="panel-resumen" class="intel-panel active space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" id="brief-panel"></div>
+            <div class="glass rounded-xl p-5">
+                <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-4">Indicadores clave</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 text-center" id="exec-summary"></div>
+            </div>
+            <div class="glass rounded-xl p-5">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3">Análisis de patrones</h3>
+                <div id="analysis-panel" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-300"></div>
+            </div>
+            <p class="text-[10px] text-gray-600" id="sources-line"></p>
+        </div>
+
+        <!-- CASOS -->
+        <div id="panel-casos" class="intel-panel space-y-4">
+            <div class="glass rounded-xl p-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <input id="f-q" placeholder="Palabra clave" class="bg-[#0d1117] border border-gray-700 rounded px-3 py-2 text-sm">
+                    <input id="f-fecha" type="date" class="bg-[#0d1117] border border-gray-700 rounded px-3 py-2 text-sm">
+                    <select id="f-tipo" class="bg-[#0d1117] border border-gray-700 rounded px-3 py-2 text-sm">
+                        <option value="">Tipo</option>
+                        <option>vulnerabilidad</option><option>incidente</option><option>amenaza</option><option>playbook</option>
+                    </select>
+                    <select id="f-nivel" class="bg-[#0d1117] border border-gray-700 rounded px-3 py-2 text-sm">
+                        <option value="">Nivel</option>
+                        <option>CRITICO</option><option>ALTO</option><option>MEDIO</option><option>BAJO</option>
+                    </select>
+                    <input id="f-ip" placeholder="IP" class="bg-[#0d1117] border border-gray-700 rounded px-3 py-2 text-sm">
+                    <select id="f-sort" class="bg-[#0d1117] border border-gray-700 rounded px-3 py-2 text-sm">
+                        <option value="fecha_desc">Más recientes</option>
+                        <option value="riesgo_desc">Mayor riesgo</option>
+                        <option value="estado">Estado</option>
+                    </select>
+                </div>
+                <div class="mt-3 flex gap-2">
+                    <button onclick="searchCases()" class="bg-indigo-600 px-4 py-2 rounded text-sm font-bold">Buscar</button>
+                    <button onclick="cleanIntelCenter()" id="btn-clean" class="border border-gray-600 px-4 py-2 rounded text-sm">Limpiar</button>
+                </div>
+            </div>
+            <div class="glass rounded-xl overflow-hidden novus-table-wrap">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-[#161b22] border-b border-gray-800">
+                        <tr>
+                            <th class="px-4 py-3 text-xs text-gray-400 uppercase">ID</th>
+                            <th class="px-4 py-3 text-xs text-gray-400 uppercase">Origen</th>
+                            <th class="px-4 py-3 text-xs text-gray-400 uppercase">Fecha / Hora</th>
+                            <th class="px-4 py-3 text-xs text-gray-400 uppercase">Estado</th>
+                            <th class="px-4 py-3 text-xs text-gray-400 uppercase">Riesgo</th>
+                            <th class="px-4 py-3 text-xs text-gray-400 uppercase">Confianza</th>
+                            <th class="px-4 py-3 text-xs text-gray-400 uppercase">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cases-body" class="divide-y divide-gray-800"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CRONOLOGÍA -->
+        <div id="panel-cronologia" class="intel-panel">
+            <div class="glass rounded-xl p-5 max-h-[70vh] overflow-y-auto">
+                <h3 class="text-xs font-bold text-indigo-400 uppercase mb-4">Línea de tiempo operativa</h3>
+                <div id="timeline-panel" class="space-y-3 text-xs"></div>
+            </div>
+        </div>
+
+        <!-- TENDENCIAS -->
+        <div id="panel-tendencias" class="intel-panel space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="trends-panel">
+                <p class="text-gray-500 text-sm">Calculando tendencias desde historial real...</p>
+            </div>
+        </div>
+
+        <!-- RECOMENDACIONES -->
+        <div id="panel-recomendaciones" class="intel-panel">
+            <div class="glass rounded-xl p-5">
+                <h3 class="text-xs font-bold text-indigo-400 uppercase mb-3">Top 3 prioridades</h3>
+                <div id="recs-panel" class="space-y-3 text-xs"></div>
+            </div>
+        </div>
+
+        <!-- APRENDIZAJE -->
+        <div id="panel-aprendizaje" class="intel-panel">
+            <div class="glass rounded-xl p-5 space-y-4" id="learning-panel">
+                <p class="text-gray-500 text-sm">Extrayendo conocimiento del historial...</p>
+            </div>
+        </div>
+
+        <!-- ADAPTIVE DEFENSE -->
+        <div id="panel-adaptive" class="intel-panel">
+            <div class="glass rounded-xl p-5 space-y-4" id="adaptive-panel">
+                <p class="text-gray-500 text-sm">Cargando Adaptive Defense Engine...</p>
+            </div>
+        </div>
+
+        <!-- ASPE / UCE -->
+        <div id="panel-aspe" class="intel-panel">
+            <div class="glass rounded-xl p-5 space-y-4" id="aspe-panel">
+                <p class="text-gray-500 text-sm">Cargando Adaptive Sector Protection Engine...</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div id="case-modal" class="novus-tw-modal-overlay hidden">
+    <div class="novus-tw-modal wide" role="dialog" aria-modal="true">
+        <div class="novus-tw-modal-header">
+            <h2 id="modal-title" class="text-lg font-bold text-white"></h2>
+            <button type="button" onclick="closeModal()" class="novus-tw-modal-close">&times;</button>
+        </div>
+        <div id="modal-body" class="novus-tw-modal-body text-sm space-y-4 text-gray-300"></div>
+        <div class="novus-tw-modal-footer">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-lg text-xs bg-gray-800 text-gray-400">Cerrar</button>
+            <button type="button" onclick="exportPdf(currentCaseId)" class="px-4 py-2 rounded-lg text-xs bg-indigo-600 text-white font-bold"><i class="fas fa-file-pdf mr-1"></i> PDF</button>
+        </div>
+    </div>
+</div>
+
+<div id="event-modal" class="novus-tw-modal-overlay hidden">
+    <div class="novus-tw-modal" role="dialog" aria-modal="true">
+        <div class="novus-tw-modal-header">
+            <h2 id="event-modal-title" class="text-lg font-bold text-white">Evento</h2>
+            <button type="button" onclick="closeEventModal()" class="novus-tw-modal-close">&times;</button>
+        </div>
+        <div id="event-modal-body" class="novus-tw-modal-body text-sm text-gray-300"></div>
+        <div class="novus-tw-modal-footer">
+            <button type="button" onclick="closeEventModal()" class="px-4 py-2 rounded-lg text-xs bg-gray-800 text-gray-400">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentCaseId = null;
+let allCases = [];
+let dashData = {};
+
+function riskClass(r) { return 'risk-' + (r || 'medio').toLowerCase(); }
+
+document.querySelectorAll('#intel-tabs .intel-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.intel-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.intel-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + tab).classList.add('active');
+    });
+});
+
+function renderCompanyStatus(cs) {
+    if (!cs) return;
+    const li = cs.ultimo_incidente || {};
+    const cells = [
+        ['Seguridad', cs.nivel_seguridad_general, 'text-white'],
+        ['Riesgo', cs.nivel_riesgo, riskClass(cs.nivel_riesgo)],
+        ['Confianza', cs.nivel_confianza, 'text-indigo-300'],
+        ['Endpoints', cs.infraestructura?.endpoints ?? '—', 'text-gray-300'],
+        ['Amenazas', cs.amenazas_activas ?? '—', 'text-red-400'],
+        ['Incidentes abiertos', cs.incidentes_abiertos ?? '—', 'text-yellow-400'],
+        ['Remediaciones', cs.remediaciones_automaticas ?? '—', 'text-emerald-400'],
+        ['Resp. promedio', cs.tiempo_promedio_respuesta_seg != null ? cs.tiempo_promedio_respuesta_seg + 's' : '—', 'text-gray-400'],
+        ['Último incidente', li.tipo ? `${li.tipo} (${li.fecha||'—'})` : '—', 'text-orange-300'],
+        ['Protección', (cs.proteccion_activa||[]).slice(0,2).join(', ') || '—', 'text-xs text-gray-400'],
+    ];
+    document.getElementById('company-status').innerHTML = cells.map(([l,v,c]) => `
+        <div class="glass rounded-lg p-2 md:p-3">
+            <p class="text-[9px] text-gray-500 uppercase truncate">${l}</p>
+            <p class="text-sm font-bold ${c} truncate" title="${v}">${v ?? '—'}</p>
+        </div>`).join('');
+}
+
+function renderBrief(brief) {
+    const items = [
+        { icon: 'fa-eye', q: '¿Qué está ocurriendo?', a: brief.que_ocurre },
+        { icon: 'fa-exclamation-triangle', q: '¿Mayor riesgo?', a: brief.mayor_riesgo },
+        { icon: 'fa-history', q: '¿Qué cambió?', a: brief.cambios_desde_ayer },
+        { icon: 'fa-robot', q: '¿Qué hizo NOVUS?', a: brief.acciones_automaticas },
+        { icon: 'fa-bell', q: '¿Requiere atención?', a: brief.requiere_atencion },
+    ];
+    document.getElementById('brief-panel').innerHTML = items.map(i => `
+        <div class="glass rounded-xl p-4 ${i.q.includes('Mayor') ? 'md:col-span-2 xl:col-span-1 ring-1 ring-indigo-500/30' : ''}">
+            <p class="text-[10px] text-indigo-400 uppercase font-bold mb-1"><i class="fas ${i.icon} mr-1"></i>${i.q}</p>
+            <p class="text-xs text-gray-300 leading-relaxed">${i.a || '—'}</p>
+        </div>`).join('');
+}
+
+function renderExec(s) {
+    const cells = [
+        ['Estado', s.estado_general, 'text-white'],
+        ['Riesgo', s.nivel_riesgo, riskClass(s.nivel_riesgo)],
+        ['Confianza', s.nivel_confianza, 'text-indigo-300'],
+        ['Vulnerabilidades', s.vulnerabilidades_activas ?? '—', 'text-orange-400'],
+        ['Incidentes abiertos', s.incidentes_abiertos, 'text-yellow-400'],
+        ['Playbooks', s.playbooks_ejecutados, 'text-emerald-400'],
+        ['Remediaciones', s.remediaciones_realizadas ?? '—', 'text-green-400'],
+        ['Dispositivos críticos', s.dispositivos_criticos ?? '—', 'text-red-300'],
+    ];
+    document.getElementById('exec-summary').innerHTML = cells.map(([l,v,c]) => `
+        <div class="bg-[#0d1117] rounded-lg p-3 border border-gray-800">
+            <p class="text-[9px] text-gray-500 uppercase">${l}</p>
+            <p class="text-lg font-bold ${c}">${v ?? '—'}</p>
+        </div>`).join('') + `
+        <div class="col-span-full text-left bg-[#0d1117] rounded-lg p-3 border border-gray-800">
+            <p class="text-[9px] text-gray-500 uppercase">Problema principal</p>
+            <p class="text-sm text-white">${s.problema_principal || '—'}</p>
+        </div>`;
+}
+
+function renderTimeline(events) {
+    const el = document.getElementById('timeline-panel');
+    if (!events.length) { el.innerHTML = '<p class="text-gray-500">Sin eventos. Sincronice fuentes reales.</p>'; return; }
+    el.innerHTML = events.map((ev, i) => `
+        <div class="tl-item pb-4 cursor-pointer hover:bg-[#0d1117]/50 rounded pr-2" data-idx="${i}">
+            <p class="text-indigo-400 font-mono text-[10px]">${ev.timestamp || '—'}</p>
+            <p class="font-bold text-white text-xs">${ev.evento}</p>
+            <p class="text-gray-500">${ev.detalle || ''}</p>
+            <span class="text-[9px] text-gray-600">${ev.origen || ''}</span>
+        </div>`).join('');
+    el.querySelectorAll('.tl-item').forEach(node => {
+        node.addEventListener('click', () => {
+            const ev = events[parseInt(node.dataset.idx, 10)];
+            openEvent(ev);
+        });
+    });
+}
+
+function openEvent(ev) {
+    document.getElementById('event-modal-title').textContent = ev.evento || 'Evento';
+    document.getElementById('event-modal-body').innerHTML = `
+        <p><span class="text-gray-500">Timestamp:</span> ${ev.timestamp || '—'}</p>
+        <p><span class="text-gray-500">Detalle:</span> ${ev.detalle || '—'}</p>
+        <p><span class="text-gray-500">Origen:</span> ${ev.origen || '—'}</p>
+        <p><span class="text-gray-500">Referencia:</span> ${ev.ref_tipo || '—'} / ${ev.ref_id || '—'}</p>
+        ${ev.ref_tipo === 'case' && ev.ref_id ? `<button onclick="closeEventModal();viewCase('${ev.ref_id}')" class="mt-3 bg-indigo-600 px-3 py-1 rounded text-xs">Ver caso</button>` : ''}`;
+    document.getElementById('event-modal').classList.remove('hidden');
+}
+function closeEventModal() { document.getElementById('event-modal').classList.add('hidden'); }
+
+function renderAnalysis(a) {
+    const blocks = [
+        ['Ataques repetitivos', a.ataques_repetitivos],
+        ['Patrones', a.patrones],
+        ['Vulnerabilidades recurrentes', a.vulnerabilidades_recurrentes],
+        ['Dispositivos problemáticos', a.dispositivos_problematicos],
+        ['Procesos frecuentes', a.procesos_frecuentes],
+        ['Cambios en red', a.cambios_red],
+    ];
+    document.getElementById('analysis-panel').innerHTML = blocks.map(([title, arr]) => `
+        <div><p class="text-gray-500 font-bold mb-1">${title}</p>
+        <ul class="list-disc pl-4 space-y-0.5">${(arr || []).map(x => `<li>${x}</li>`).join('') || '<li>Sin datos</li>'}</ul></div>`).join('');
+}
+
+function renderTrends(t) {
+    if (!t) { document.getElementById('trends-panel').innerHTML = '<p class="text-gray-500">Sin tendencias calculables.</p>'; return; }
+    const periodHtml = (t.incidentes_por_periodo||[]).map(p =>
+        `<div class="flex justify-between border-b border-gray-800 py-2"><span>${p.periodo}</span><span class="font-bold text-indigo-400">${p.casos} caso(s)</span></div>`
+    ).join('');
+    const devHtml = (t.dispositivos_problematicos||[]).map(d =>
+        `<li>${d.equipo}: ${d.incidencias} incidencia(s)</li>`
+    ).join('') || '<li>Sin datos</li>';
+    const serieHtml = (t.serie_diaria||[]).map(s =>
+        `<span class="inline-block mr-2 mb-1 px-2 py-1 bg-[#0d1117] rounded text-[10px]">${s.fecha}: ${s.casos}</span>`
+    ).join('') || '—';
+    document.getElementById('trends-panel').innerHTML = `
+        <div class="glass rounded-xl p-5">
+            <h4 class="text-xs text-indigo-400 uppercase font-bold mb-3">Incidentes por periodo</h4>${periodHtml}
+        </div>
+        <div class="glass rounded-xl p-5">
+            <h4 class="text-xs text-indigo-400 uppercase font-bold mb-3">Vulnerabilidades</h4>
+            <p class="text-sm text-gray-300">${t.vulnerabilidades_tendencia || '—'}</p>
+            <p class="text-xs text-gray-500 mt-2">Eventos red recientes: ${t.eventos_red_recientes ?? 0} · Playbooks semana: ${t.playbooks_semana ?? 0}</p>
+        </div>
+        <div class="glass rounded-xl p-5 md:col-span-2">
+            <h4 class="text-xs text-indigo-400 uppercase font-bold mb-3">Dispositivos más problemáticos</h4>
+            <ul class="list-disc pl-4 text-sm">${devHtml}</ul>
+        </div>
+        <div class="glass rounded-xl p-5 md:col-span-2">
+            <h4 class="text-xs text-indigo-400 uppercase font-bold mb-3">Serie diaria (14 días)</h4>
+            <div class="flex flex-wrap">${serieHtml}</div>
+        </div>`;
+}
+
+function renderLearning(l) {
+    if (!l) return;
+    const list = (arr, key, val) => (arr||[]).map(x => `<li>${x[key]}: ${x[val]}</li>`).join('') || '<li>Sin datos en historial</li>';
+    document.getElementById('learning-panel').innerHTML = `
+        <p class="text-xs text-gray-500">${l.evidencia || ''}</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div><h4 class="text-indigo-400 text-xs uppercase font-bold mb-2">Vulnerabilidades frecuentes</h4><ul class="list-disc pl-4">${list(l.vulnerabilidades_frecuentes,'tipo','ocurrencias')}</ul></div>
+            <div><h4 class="text-indigo-400 text-xs uppercase font-bold mb-2">Dispositivos con incidencias</h4><ul class="list-disc pl-4">${list(l.dispositivos_incidencias,'equipo','casos')}</ul></div>
+            <div><h4 class="text-indigo-400 text-xs uppercase font-bold mb-2">Playbooks más usados</h4><ul class="list-disc pl-4">${list(l.playbooks_mas_usados,'id','ejecuciones')}</ul></div>
+            <div><h4 class="text-indigo-400 text-xs uppercase font-bold mb-2">Tipos de ataque comunes</h4><ul class="list-disc pl-4">${list(l.ataques_comunes,'tipo','count')}</ul></div>
+            <div><h4 class="text-indigo-400 text-xs uppercase font-bold mb-2">Motores más activos</h4><ul class="list-disc pl-4">${list(l.motores_mas_activos,'motor','usos')}</ul></div>
+            <div><h4 class="text-indigo-400 text-xs uppercase font-bold mb-2">Sector activo</h4><p>${l.sector_activo || '—'}</p>
+            <p class="text-xs text-gray-500 mt-2">Registros aprendizaje playbook: ${l.registros_aprendizaje_playbook ?? 0}</p></div>
+        </div>`;
+}
+
+function renderAdaptive(ad) {
+    if (!ad) {
+        document.getElementById('adaptive-panel').innerHTML = '<p class="text-gray-500">Adaptive Defense sin datos.</p>';
+        return;
+    }
+    const eps = (ad.endpoints || []).map(e => `
+        <div class="flex justify-between border-b border-gray-800 py-2 text-sm">
+            <span>${e.endpoint} <span class="text-gray-500 text-xs">${e.ip||''}</span></span>
+            <span class="font-bold text-indigo-400">${e.proteccion_pct}%</span>
+        </div>`).join('') || '<p class="text-gray-500 text-xs">Sin endpoints en inventario</p>';
+    const accs = (ad.acciones_ejecutadas || []).map(a => `
+        <li class="text-xs text-gray-300"><span class="text-indigo-400">${a.fecha||'—'}</span> [${a.nivel}] ${a.detalle||'—'}</li>`).join('') || '<li class="text-gray-500 text-xs">Sin acciones registradas aún</li>';
+    document.getElementById('adaptive-panel').innerHTML = `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div class="bg-[#0d1117] rounded-lg p-3 border border-gray-800">
+                <p class="text-[9px] text-gray-500 uppercase">Estado</p>
+                <p class="text-sm font-bold text-white">${ad.estado_actual||'—'}</p>
+            </div>
+            <div class="bg-[#0d1117] rounded-lg p-3 border border-gray-800">
+                <p class="text-[9px] text-gray-500 uppercase">Sector</p>
+                <p class="text-sm font-bold text-indigo-300">${ad.sector||'—'}</p>
+            </div>
+            <div class="bg-[#0d1117] rounded-lg p-3 border border-gray-800">
+                <p class="text-[9px] text-gray-500 uppercase">Riesgo reducido</p>
+                <p class="text-sm font-bold text-emerald-400">${ad.riesgo_reducido_acciones??0} acción(es)</p>
+            </div>
+            <div class="bg-[#0d1117] rounded-lg p-3 border border-gray-800">
+                <p class="text-[9px] text-gray-500 uppercase">Tiempo ganado</p>
+                <p class="text-sm font-bold text-yellow-400">${ad.tiempo_ganado_seg??0}s</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div><h4 class="text-indigo-400 text-xs uppercase font-bold mb-2">Servicios protegidos</h4>
+            <ul class="list-disc pl-4 text-gray-300">${(ad.servicios_protegidos||[]).map(s=>`<li>${s}</li>`).join('')||'<li>Ninguno activo</li>'}</ul></div>
+            <div><h4 class="text-indigo-400 text-xs uppercase font-bold mb-2">Procesos contenidos</h4>
+            <ul class="list-disc pl-4 text-gray-300">${(ad.procesos_contenidos||[]).map(p=>`<li>${p}</li>`).join('')||'<li>Ninguno</li>'}</ul></div>
+        </div>
+        <div class="mt-4"><h4 class="text-indigo-400 text-xs uppercase font-bold mb-2">Protección por endpoint</h4>${eps}</div>
+        <div class="mt-4"><h4 class="text-indigo-400 text-xs uppercase font-bold mb-2">Acciones ejecutadas</h4><ul class="list-disc pl-4 space-y-1">${accs}</ul></div>
+        <p class="text-[10px] text-gray-600 mt-3">Contenciones activas: ${ad.contenciones_activas??0} · Motor: ${ad.motor||'Adaptive Defense Engine'}</p>`;
+}
+
+function renderAspe(sp) {
+    if (!sp) {
+        document.getElementById('aspe-panel').innerHTML = '<p class="text-gray-500">ASPE sin datos.</p>';
+        return;
+    }
+    const list = (items, cls) => (items || []).map(m => `
+        <li class="text-xs ${cls}">${m.label || m.id}${m.reason ? ' — ' + m.reason.slice(0,60) : ''}</li>`).join('') || '<li class="text-gray-500 text-xs">Ninguno</li>';
+    const motors = (sp.motor_activations || []).map(a => `
+        <tr class="border-b border-gray-800">
+            <td class="py-2 text-xs text-gray-400">${a.fecha||'—'}</td>
+            <td class="py-2 text-xs">${(a.motores||[]).join(', ')||'—'}</td>
+            <td class="py-2 text-xs text-gray-300">${a.motivo||'—'}</td>
+            <td class="py-2 text-xs text-amber-400">${a.threat_type||'—'}</td>
+            <td class="py-2 text-xs text-emerald-400">${a.riesgo_reducido??0}</td>
+        </tr>`).join('') || '<tr><td colspan="5" class="py-4 text-gray-500 text-xs">Sin activaciones dinámicas registradas</td></tr>';
+    const techs = (sp.infrastructure?.technologies || []).map(t => `<span class="px-2 py-0.5 rounded bg-cyan-900/30 text-cyan-300 text-[10px] border border-cyan-500/20 mr-1 mb-1 inline-block">${t}</span>`).join('') || '<span class="text-gray-500 text-xs">Sin tecnologías detectadas — ejecute escaneo NOVUS</span>';
+    document.getElementById('aspe-panel').innerHTML = `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div class="bg-[#0d1117] rounded-lg p-3 border border-gray-800">
+                <p class="text-[9px] text-gray-500 uppercase">Sector</p>
+                <p class="text-sm font-bold text-cyan-300">${sp.sector_label||sp.sector_key||'—'}</p>
+            </div>
+            <div class="bg-[#0d1117] rounded-lg p-3 border border-gray-800">
+                <p class="text-[9px] text-gray-500 uppercase">Confianza ASPE</p>
+                <p class="text-sm font-bold text-white">${sp.confidence_level||'—'}</p>
+            </div>
+            <div class="bg-[#0d1117] rounded-lg p-3 border border-gray-800">
+                <p class="text-[9px] text-gray-500 uppercase">Adaptive Defense</p>
+                <p class="text-sm font-bold text-indigo-300">${sp.adaptive_defense?.estado||'—'}</p>
+            </div>
+            <div class="bg-[#0d1117] rounded-lg p-3 border border-gray-800">
+                <p class="text-[9px] text-gray-500 uppercase">Infra UCE</p>
+                <p class="text-sm font-bold text-gray-300">${sp.infrastructure?.count??0} tecnología(s)</p>
+            </div>
+        </div>
+        <div class="mb-4"><h4 class="text-cyan-400 text-xs uppercase font-bold mb-2">Infraestructura detectada (UCE)</h4>${techs}</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
+            <div><h4 class="text-emerald-400 text-xs uppercase font-bold mb-2">Protecciones activas</h4><ul class="list-disc pl-4">${list(sp.protecciones_activas,'text-emerald-300')}</ul></div>
+            <div><h4 class="text-gray-400 text-xs uppercase font-bold mb-2">Standby inteligente</h4><ul class="list-disc pl-4">${list(sp.protecciones_standby,'text-gray-400')}</ul></div>
+            <div><h4 class="text-amber-400 text-xs uppercase font-bold mb-2">Activación dinámica</h4><ul class="list-disc pl-4">${list(sp.protecciones_dinamicas,'text-amber-300')}</ul></div>
+        </div>
+        <div><h4 class="text-indigo-400 text-xs uppercase font-bold mb-2">Registro de motores utilizados</h4>
+        <table class="w-full text-left text-sm"><thead class="text-[9px] text-gray-500 uppercase"><tr>
+            <th class="py-1">Fecha</th><th>Motor</th><th>Motivo</th><th>Amenaza</th><th>Riesgo reducido</th>
+        </tr></thead><tbody>${motors}</tbody></table></div>
+        <p class="text-[10px] text-gray-600 mt-3">Motor: ${sp.motor||'ASPE'} · Última orquestación: ${sp.last_orchestration||'—'}</p>`;
+}
+
+function renderRecs(recs) {
+    const top = (recs || []).slice(0, 3);
+    document.getElementById('recs-panel').innerHTML = top.map(r => `
+        <div class="bg-[#0d1117] border border-gray-800 rounded-lg p-4">
+            <p class="font-bold text-white"><span class="text-indigo-400">#${r.prioridad}</span> ${r.titulo}</p>
+            <p class="text-gray-400 mt-2"><b>Por qué:</b> ${r.por_que}</p>
+            <p class="text-gray-500 mt-1"><b>Reduce:</b> ${r.riesgo_reduce} · <b>Prioridad:</b> ${r.prioridad}</p>
+            <p class="text-gray-500"><b>Tiempo:</b> ${r.tiempo_estimado} · <b>Dificultad:</b> ${r.dificultad} · <b>Impacto:</b> ${r.impacto_esperado}</p>
+        </div>`).join('') || '<p class="text-gray-500">Sin recomendaciones pendientes con datos reales.</p>';
+}
+
+function showIntelToast(message, type) {
+    const el = document.getElementById('intel-toast');
+    if (!el) return;
+    el.textContent = message;
+    el.className = 'fixed top-4 right-4 z-50 max-w-sm px-4 py-3 rounded-lg text-sm font-medium shadow-lg border ' +
+        (type === 'success' ? 'bg-emerald-900/90 border-emerald-600 text-emerald-100' :
+         type === 'blocked' ? 'bg-amber-900/90 border-amber-600 text-amber-100' :
+         'bg-red-900/90 border-red-600 text-red-100');
+    el.classList.remove('hidden');
+    clearTimeout(window._intelToastTimer);
+    window._intelToastTimer = setTimeout(() => el.classList.add('hidden'), 5000);
+}
+
+async function cleanIntelCenter() {
+    const btn = document.getElementById('btn-clean');
+    if (btn) btn.disabled = true;
+    try {
+        const r = await fetch('/api/threat-intel/clean', { method: 'POST' });
+        const d = await r.json();
+        if (d.status === 'blocked') {
+            showIntelToast(d.message || 'No es posible limpiar porque existen incidentes pendientes.', 'blocked');
+        } else if (d.status === 'success') {
+            showIntelToast(d.message || 'Centro de Inteligencia actualizado correctamente.', 'success');
+            await refreshDashboard();
+        } else {
+            showIntelToast(d.message || 'Error al limpiar.', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        showIntelToast('Error de conexión al limpiar.', 'error');
+    }
+    if (btn) btn.disabled = false;
+}
+
+async function refreshDashboard() {
+    const btn = document.getElementById('btn-sync');
+    btn.disabled = true;
+    try {
+        await fetch('/api/threat-intel/sync', { method: 'POST' });
+        const r = await fetch('/api/threat-intel/dashboard');
+        const d = await r.json();
+        if (d.status !== 'success') return;
+        dashData = d;
+        document.getElementById('dash-updated').textContent = 'Actualizado: ' + (d.generated_at || '') + ' · Fuentes: ' + (d.sources||[]).length;
+        renderCompanyStatus(d.company_status);
+        renderBrief(d.brief || {});
+        renderExec(d.executive_summary || {});
+        renderTimeline(d.timeline || []);
+        renderAnalysis(d.analysis || {});
+        renderTrends(d.trends);
+        renderLearning(d.learning);
+        renderAdaptive(d.adaptive_defense);
+        renderAspe(d.sector_protection);
+        renderRecs(d.recommendations || []);
+        document.getElementById('sources-line').textContent = 'Fuentes integradas: ' + (d.sources||[]).join(', ');
+        await loadCases();
+    } catch (e) { console.error(e); }
+    btn.disabled = false;
+}
+
+async function loadCases() {
+    const r = await fetch('/api/threat-intel/cases');
+    const d = await r.json();
+    allCases = d.cases || [];
+    sortAndRenderCases(allCases);
+}
+
+function sortAndRenderCases(cases) {
+    const sort = document.getElementById('f-sort')?.value || 'fecha_desc';
+    const sorted = [...cases];
+    if (sort === 'riesgo_desc') sorted.sort((a,b) => (b.nivel_riesgo||'').localeCompare(a.nivel_riesgo||''));
+    else if (sort === 'estado') sorted.sort((a,b) => (a.estado||'').localeCompare(b.estado||''));
+    renderCases(sorted);
+}
+
+function renderCases(cases) {
+    const tb = document.getElementById('cases-body');
+    if (!cases.length) {
+        tb.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">Sin casos. Pulse «Sincronizar».</td></tr>';
+        return;
+    }
+    tb.innerHTML = cases.map(c => {
+        const conf = (c.evidencia?.procesos?.length || c.evidencia?.puertos?.length) ? 'Alta' : 'Media';
+        return `<tr class="hover:bg-[#0d1117] cursor-pointer" onclick="viewCase('${c.id}')">
+            <td class="px-4 py-3 font-mono text-indigo-300 text-xs">${c.id}</td>
+            <td class="px-4 py-3 text-xs text-gray-400">${c.source_ref || c.tipo || '—'}</td>
+            <td class="px-4 py-3 text-gray-400 text-xs">${c.fecha} ${c.hora||''}</td>
+            <td class="px-4 py-3 text-xs">${c.estado}</td>
+            <td class="px-4 py-3 ${riskClass(c.nivel_riesgo)} font-bold text-xs">${c.nivel_riesgo}</td>
+            <td class="px-4 py-3 text-xs text-gray-400">${conf}</td>
+            <td class="px-4 py-3"><button onclick="event.stopPropagation();exportPdf('${c.id}')" class="text-indigo-400 text-xs"><i class="fas fa-file-pdf"></i></button></td>
+        </tr>`;
+    }).join('');
+}
+
+async function searchCases() {
+    const params = new URLSearchParams();
+    const q = document.getElementById('f-q').value;
+    if (q) params.set('q', q);
+    ['fecha','tipo','nivel','ip'].forEach(k => {
+        const el = document.getElementById('f-' + k);
+        if (el?.value) params.set(k === 'fecha' ? 'fecha' : k, el.value);
+    });
+    const r = await fetch('/api/threat-intel/search?' + params.toString());
+    const d = await r.json();
+    sortAndRenderCases(d.cases || []);
+}
+
+async function viewCase(id) {
+    const r = await fetch('/api/threat-intel/cases/' + encodeURIComponent(id));
+    const d = await r.json();
+    if (!d.case) return;
+    const c = d.case;
+    currentCaseId = c.id;
+    window.NovusModuleExtra = { case_id: c.id };
+    document.getElementById('modal-title').textContent = c.id + ' — ' + c.tipo;
+    const lessons = c.lecciones_aprendidas || {};
+    const timeline = (c.timeline || []).map(t =>
+        `<div class="border-l-2 border-indigo-500 pl-3 py-1"><span class="text-indigo-400 font-mono text-xs">${t.timestamp}</span><br><strong>${t.evento}</strong><br><span class="text-gray-500">${t.detalle||''}</span></div>`
+    ).join('');
+    const acciones = (c.acciones || []).map(a => `<li>${a}</li>`).join('');
+    document.getElementById('modal-body').innerHTML = `
+        <div class="grid grid-cols-2 gap-2 text-xs">
+            <div><span class="text-gray-500">Origen:</span> ${c.source_ref || '—'}</div>
+            <div><span class="text-gray-500">Riesgo:</span> <span class="${riskClass(c.nivel_riesgo)}">${c.nivel_riesgo}</span></div>
+            <div><span class="text-gray-500">Estado:</span> ${c.estado}</div>
+            <div><span class="text-gray-500">Resultado:</span> ${c.resultado || '—'}</div>
+            <div><span class="text-gray-500">Correlación:</span> ${c.correlacion_grupo || '—'}</div>
+            <div><span class="text-gray-500">Tiempo resp.:</span> ${c.tiempo_respuesta_sec || '—'}s</div>
+        </div>
+        <div><h3 class="font-bold text-white mt-3 mb-1">Qué ocurrió</h3><p>${lessons.que_ocurrio || '—'}</p></div>
+        <div><h3 class="font-bold text-white mt-3 mb-1">Acciones realizadas</h3><ul class="list-disc pl-4">${acciones || '<li>Sin acciones registradas</li>'}</ul></div>
+        <div><h3 class="font-bold text-white mt-3 mb-1">Historial / Cronología</h3>${timeline || '<p class="text-gray-500">Sin eventos</p>'}</div>
+        <div><h3 class="font-bold text-white mt-3 mb-1">Motores</h3><p class="font-mono text-xs">${(c.motores||[]).join(', ')||'—'}</p></div>`;
+    document.getElementById('case-modal').classList.remove('hidden');
+}
+
+function closeModal() { document.getElementById('case-modal').classList.add('hidden'); }
+function exportPdf(id) { if (id) window.open('/api/threat-intel/cases/' + encodeURIComponent(id) + '/pdf', '_blank'); }
+
+document.getElementById('f-sort')?.addEventListener('change', () => sortAndRenderCases(allCases));
+refreshDashboard();
+</script>
+{% include 'partials/global_search.html' %}
+</body>
+</html>

@@ -1,0 +1,804 @@
+{
+  "sector_audits": {
+    "fintech": {
+      "sector_key": "fintech",
+      "sector_label": "Fintech",
+      "coverage_pct": 100.0,
+      "checks_passed": 10,
+      "checks_total": 10,
+      "checks": {
+        "escudo_sectorial": true,
+        "motores_asignados": true,
+        "cryptovault": true,
+        "kernel_sector_cap": true,
+        "playbooks_sectoriales": true,
+        "dashboard_widget": true,
+        "topology_module": true,
+        "inteligencia_module": true,
+        "reports_module": true,
+        "scan_sector_engine": true
+      },
+      "active_components": {
+        "motors": [
+          "BEC Shield (validate_transactional_integrity)",
+          "ATO Analyzer (analyze_ato_risk)",
+          "Phishing Shield (inspect_email_integrity)",
+          "CryptoVault AES-256-GCM",
+          "API Shield (validate_api_request)"
+        ],
+        "controls": [
+          "Fraude BEC",
+          "Integridad de pagos",
+          "Validación cuenta destino"
+        ],
+        "crypto_models": [
+          "AES-256-GCM (CryptoVault)",
+          "ECC X25519 (identidad)"
+        ],
+        "validations": [
+          "validate_transactional_integrity",
+          "analyze_ato_risk",
+          "inspect_email_integrity",
+          "validate_api_request"
+        ],
+        "detections": [
+          "BEC",
+          "ATO",
+          "Phishing",
+          "API abuse"
+        ],
+        "modules": [
+          "dashboard",
+          "xdr",
+          "vulnerabilidades",
+          "reportes",
+          "inteligencia",
+          "topology",
+          "network",
+          "incidentes",
+          "playbooks"
+        ],
+        "kernel_capabilities": [
+          "security.sector_shield",
+          "security.threats",
+          "security.vulnerabilities",
+          "advanced_detector.malware",
+          "reports.manager",
+          "playbooks.manager"
+        ],
+        "kernel_priorities": [
+          "fraude BEC",
+          "ATO",
+          "phishing",
+          "transacciones",
+          "API"
+        ],
+        "playbooks": [
+          {
+            "id": "PB-SECTOR-FINTECH",
+            "nombre": "SOC Fintech — Escudo y fraude"
+          }
+        ]
+      },
+      "shield_status": {
+        "name": "Escudo Fintech",
+        "status": "Atención requerida",
+        "protection_level": "Alta",
+        "current_risk": "Medio"
+      },
+      "connected": [
+        {
+          "id": "sector_shield_api",
+          "module": "api/system.py",
+          "status": true
+        },
+        {
+          "id": "security_engine_profile",
+          "module": "security_engine.py",
+          "status": true
+        },
+        {
+          "id": "cryptovault",
+          "module": "novus_security_integration",
+          "status": true
+        },
+        {
+          "id": "kernel_sector_shield_cap",
+          "module": "ai_capability_registry",
+          "status": true
+        },
+        {
+          "id": "playbooks_db",
+          "module": "playbook_service.py",
+          "status": true
+        },
+        {
+          "id": "dashboard_shield_widget",
+          "module": "templates/index.html",
+          "status": true
+        },
+        {
+          "id": "topology",
+          "module": "routes/main.py /topology",
+          "status": true
+        },
+        {
+          "id": "inteligencia",
+          "module": "api/threat_intel.py",
+          "status": true
+        },
+        {
+          "id": "reports",
+          "module": "security_report_service",
+          "status": true
+        },
+        {
+          "id": "bec_shield_motor",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "ato_analyzer",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "phishing_shield",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "api_shield",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "mitm_shield",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "network_scanner",
+          "module": "network_scanner",
+          "status": true
+        },
+        {
+          "id": "sim_identity",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "runtime_integrity",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "kernel_sector_memory",
+          "module": "kernel_memory",
+          "status": true
+        }
+      ],
+      "partial": [
+        {
+          "id": "sector_playbooks_full",
+          "module": "playbook_service",
+          "status": "partial"
+        }
+      ],
+      "missing_or_disconnected": [
+        {
+          "id": "sector_telemetry_binding",
+          "module": "security_engine.build_sector_protection",
+          "status": false
+        }
+      ],
+      "risks_detected": [
+        "Telemetría sectorial en build_sector_protection retorna NO_DATA"
+      ],
+      "recommendations": [
+        "Cumplimiento PCI-DSS, monitoreo transaccional y fraude en tiempo real.",
+        "Conectar telemetría real del sector para eliminar NO_DATA en perfiles.",
+        "Completar playbooks automatizados por trigger sectorial."
+      ],
+      "production_ready": true
+    },
+    "logistica": {
+      "sector_key": "logistica",
+      "sector_label": "Logística",
+      "coverage_pct": 100.0,
+      "checks_passed": 10,
+      "checks_total": 10,
+      "checks": {
+        "escudo_sectorial": true,
+        "motores_asignados": true,
+        "cryptovault": true,
+        "kernel_sector_cap": true,
+        "playbooks_sectoriales": true,
+        "dashboard_widget": true,
+        "topology_module": true,
+        "inteligencia_module": true,
+        "reports_module": true,
+        "scan_sector_engine": true
+      },
+      "active_components": {
+        "motors": [
+          "IoT Guard (validate_iot_telemetry)",
+          "Network Scanner",
+          "MITM Shield (verify_tunnel_integrity)",
+          "CryptoVault AES-256-GCM",
+          "Advanced Process Detector"
+        ],
+        "controls": [
+          "Integridad IoT",
+          "GPS spoofing",
+          "Autenticación telemetría"
+        ],
+        "crypto_models": [
+          "AES-256-GCM (CryptoVault)",
+          "ECC X25519 (identidad)"
+        ],
+        "validations": [
+          "validate_iot_telemetry",
+          "verify_tunnel_integrity"
+        ],
+        "detections": [
+          "IoT anomaly",
+          "GPS spoofing",
+          "MITM",
+          "Network pivot"
+        ],
+        "modules": [
+          "dashboard",
+          "network",
+          "topology",
+          "xdr",
+          "vulnerabilidades",
+          "reportes",
+          "inteligencia",
+          "incidentes",
+          "playbooks"
+        ],
+        "kernel_capabilities": [
+          "security.sector_shield",
+          "network.scanner",
+          "network.radar",
+          "topology.view",
+          "security.threats",
+          "security.vulnerabilities",
+          "reports.manager",
+          "playbooks.manager"
+        ],
+        "kernel_priorities": [
+          "IoT",
+          "cadena de suministro",
+          "topología",
+          "telemetría",
+          "MITM"
+        ],
+        "playbooks": [
+          {
+            "id": "PB-SECTOR-LOGISTICA",
+            "nombre": "SOC Logística — IoT y topología"
+          }
+        ]
+      },
+      "shield_status": {
+        "name": "Escudo Logistico",
+        "status": "Atención requerida",
+        "protection_level": "Alta",
+        "current_risk": "Medio"
+      },
+      "connected": [
+        {
+          "id": "sector_shield_api",
+          "module": "api/system.py",
+          "status": true
+        },
+        {
+          "id": "security_engine_profile",
+          "module": "security_engine.py",
+          "status": true
+        },
+        {
+          "id": "cryptovault",
+          "module": "novus_security_integration",
+          "status": true
+        },
+        {
+          "id": "kernel_sector_shield_cap",
+          "module": "ai_capability_registry",
+          "status": true
+        },
+        {
+          "id": "playbooks_db",
+          "module": "playbook_service.py",
+          "status": true
+        },
+        {
+          "id": "dashboard_shield_widget",
+          "module": "templates/index.html",
+          "status": true
+        },
+        {
+          "id": "topology",
+          "module": "routes/main.py /topology",
+          "status": true
+        },
+        {
+          "id": "inteligencia",
+          "module": "api/threat_intel.py",
+          "status": true
+        },
+        {
+          "id": "reports",
+          "module": "security_report_service",
+          "status": true
+        },
+        {
+          "id": "iot_guard_motor",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "ato_analyzer",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "phishing_shield",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "api_shield",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "mitm_shield",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "network_scanner",
+          "module": "network_scanner",
+          "status": true
+        },
+        {
+          "id": "sim_identity",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "runtime_integrity",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "kernel_sector_memory",
+          "module": "kernel_memory",
+          "status": true
+        }
+      ],
+      "partial": [
+        {
+          "id": "sector_playbooks_full",
+          "module": "playbook_service",
+          "status": "partial"
+        }
+      ],
+      "missing_or_disconnected": [
+        {
+          "id": "sector_telemetry_binding",
+          "module": "security_engine.build_sector_protection",
+          "status": false
+        }
+      ],
+      "risks_detected": [
+        "Telemetría sectorial en build_sector_protection retorna NO_DATA"
+      ],
+      "recommendations": [
+        "Protección de flota, telemetría IoT y cadena de suministro.",
+        "Conectar telemetría real del sector para eliminar NO_DATA en perfiles.",
+        "Completar playbooks automatizados por trigger sectorial."
+      ],
+      "production_ready": true
+    },
+    "aplicaciones_moviles": {
+      "sector_key": "aplicaciones_moviles",
+      "sector_label": "Aplicaciones móviles",
+      "coverage_pct": 90.0,
+      "checks_passed": 9,
+      "checks_total": 10,
+      "checks": {
+        "escudo_sectorial": true,
+        "motores_asignados": true,
+        "cryptovault": true,
+        "kernel_sector_cap": true,
+        "playbooks_sectoriales": true,
+        "dashboard_widget": true,
+        "topology_module": false,
+        "inteligencia_module": true,
+        "reports_module": true,
+        "scan_sector_engine": true
+      },
+      "active_components": {
+        "motors": [
+          "UI Shield (detect_overlay_threat)",
+          "Clickjacking Guard (validate_ui_interaction)",
+          "SIM Identity (verify_sim_and_identity)",
+          "Runtime Integrity (verify_runtime_integrity)",
+          "CryptoVault AES-256-GCM"
+        ],
+        "controls": [
+          "Anti-clickjacking",
+          "Integridad interfaz",
+          "Protección sesión"
+        ],
+        "crypto_models": [
+          "AES-256-GCM (CryptoVault)",
+          "ECC X25519 (identidad)"
+        ],
+        "validations": [
+          "detect_overlay_threat",
+          "validate_ui_interaction",
+          "verify_sim_and_identity",
+          "verify_runtime_integrity"
+        ],
+        "detections": [
+          "Overlay",
+          "Clickjacking",
+          "SIM swap",
+          "Runtime tampering"
+        ],
+        "modules": [
+          "dashboard",
+          "endpoints",
+          "xdr",
+          "vulnerabilidades",
+          "reportes",
+          "inteligencia",
+          "incidentes",
+          "playbooks"
+        ],
+        "kernel_capabilities": [
+          "security.sector_shield",
+          "security.vulnerabilities",
+          "security.threats",
+          "advanced_detector.processes",
+          "endpoints.live",
+          "reports.manager",
+          "playbooks.manager"
+        ],
+        "kernel_priorities": [
+          "overlay UI",
+          "SIM swap",
+          "runtime",
+          "sesión móvil",
+          "API"
+        ],
+        "playbooks": [
+          {
+            "id": "PB-SECTOR-MOVIL",
+            "nombre": "SOC Apps Móviles — UI y runtime"
+          }
+        ]
+      },
+      "shield_status": {
+        "name": "Escudo Apps Digitales/Moviles",
+        "status": "Atención requerida",
+        "protection_level": "Alta",
+        "current_risk": "Medio"
+      },
+      "connected": [
+        {
+          "id": "sector_shield_api",
+          "module": "api/system.py",
+          "status": true
+        },
+        {
+          "id": "security_engine_profile",
+          "module": "security_engine.py",
+          "status": true
+        },
+        {
+          "id": "cryptovault",
+          "module": "novus_security_integration",
+          "status": true
+        },
+        {
+          "id": "kernel_sector_shield_cap",
+          "module": "ai_capability_registry",
+          "status": true
+        },
+        {
+          "id": "playbooks_db",
+          "module": "playbook_service.py",
+          "status": true
+        },
+        {
+          "id": "dashboard_shield_widget",
+          "module": "templates/index.html",
+          "status": true
+        },
+        {
+          "id": "topology",
+          "module": "routes/main.py /topology",
+          "status": true
+        },
+        {
+          "id": "inteligencia",
+          "module": "api/threat_intel.py",
+          "status": true
+        },
+        {
+          "id": "reports",
+          "module": "security_report_service",
+          "status": true
+        },
+        {
+          "id": "ui_shield_motor",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "ato_analyzer",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "phishing_shield",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "api_shield",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "mitm_shield",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "network_scanner",
+          "module": "network_scanner",
+          "status": true
+        },
+        {
+          "id": "sim_identity",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "runtime_integrity",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "kernel_sector_memory",
+          "module": "kernel_memory",
+          "status": true
+        }
+      ],
+      "partial": [
+        {
+          "id": "sector_playbooks_full",
+          "module": "playbook_service",
+          "status": "partial"
+        }
+      ],
+      "missing_or_disconnected": [
+        {
+          "id": "sector_telemetry_binding",
+          "module": "security_engine.build_sector_protection",
+          "status": false
+        }
+      ],
+      "risks_detected": [
+        "Telemetría sectorial en build_sector_protection retorna NO_DATA"
+      ],
+      "recommendations": [
+        "Seguridad de apps móviles, SDK y protección de sesión en dispositivo.",
+        "Conectar telemetría real del sector para eliminar NO_DATA en perfiles.",
+        "Completar playbooks automatizados por trigger sectorial."
+      ],
+      "production_ready": true
+    },
+    "otros": {
+      "sector_key": "otros",
+      "sector_label": "Otros",
+      "coverage_pct": 90.0,
+      "checks_passed": 9,
+      "checks_total": 10,
+      "checks": {
+        "escudo_sectorial": true,
+        "motores_asignados": true,
+        "cryptovault": true,
+        "kernel_sector_cap": true,
+        "playbooks_sectoriales": true,
+        "dashboard_widget": true,
+        "topology_module": false,
+        "inteligencia_module": true,
+        "reports_module": true,
+        "scan_sector_engine": true
+      },
+      "active_components": {
+        "motors": [
+          "Runtime Hardening",
+          "Monitoreo de integridad",
+          "CryptoVault AES-256-GCM",
+          "Advanced Process Detector"
+        ],
+        "controls": [
+          "Hardening runtime",
+          "Monitoreo integridad",
+          "Aislamiento sesión"
+        ],
+        "crypto_models": [
+          "AES-256-GCM (CryptoVault)",
+          "ECC X25519 (identidad)"
+        ],
+        "validations": [
+          "monitor_filesystem_activity",
+          "verify_runtime_integrity"
+        ],
+        "detections": [
+          "Procesos sospechosos",
+          "Puertos expuestos",
+          "Hallazgos genéricos"
+        ],
+        "modules": [
+          "dashboard",
+          "xdr",
+          "vulnerabilidades",
+          "reportes",
+          "inteligencia",
+          "network",
+          "incidentes",
+          "playbooks"
+        ],
+        "kernel_capabilities": [
+          "security.sector_shield",
+          "security.threats",
+          "security.vulnerabilities",
+          "system.metrics",
+          "incidents.manager",
+          "reports.manager",
+          "playbooks.manager"
+        ],
+        "kernel_priorities": [
+          "postura general",
+          "procesos",
+          "vulnerabilidades",
+          "incidentes"
+        ],
+        "playbooks": [
+          {
+            "id": "PB-SECTOR-OTROS",
+            "nombre": "SOC Corporativo — Postura base"
+          }
+        ]
+      },
+      "shield_status": {
+        "name": "Escudo Base Corporativo",
+        "status": "Atención requerida",
+        "protection_level": "Alta",
+        "current_risk": "Medio"
+      },
+      "connected": [
+        {
+          "id": "sector_shield_api",
+          "module": "api/system.py",
+          "status": true
+        },
+        {
+          "id": "security_engine_profile",
+          "module": "security_engine.py",
+          "status": true
+        },
+        {
+          "id": "cryptovault",
+          "module": "novus_security_integration",
+          "status": true
+        },
+        {
+          "id": "kernel_sector_shield_cap",
+          "module": "ai_capability_registry",
+          "status": true
+        },
+        {
+          "id": "playbooks_db",
+          "module": "playbook_service.py",
+          "status": true
+        },
+        {
+          "id": "dashboard_shield_widget",
+          "module": "templates/index.html",
+          "status": true
+        },
+        {
+          "id": "topology",
+          "module": "routes/main.py /topology",
+          "status": true
+        },
+        {
+          "id": "inteligencia",
+          "module": "api/threat_intel.py",
+          "status": true
+        },
+        {
+          "id": "reports",
+          "module": "security_report_service",
+          "status": true
+        },
+        {
+          "id": "ato_analyzer",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "phishing_shield",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "api_shield",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "mitm_shield",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "network_scanner",
+          "module": "network_scanner",
+          "status": true
+        },
+        {
+          "id": "sim_identity",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "runtime_integrity",
+          "module": "security_engine",
+          "status": true
+        },
+        {
+          "id": "kernel_sector_memory",
+          "module": "kernel_memory",
+          "status": true
+        }
+      ],
+      "partial": [
+        {
+          "id": "sector_playbooks_full",
+          "module": "playbook_service",
+          "status": "partial"
+        }
+      ],
+      "missing_or_disconnected": [
+        {
+          "id": "sector_telemetry_binding",
+          "module": "security_engine.build_sector_protection",
+          "status": false
+        }
+      ],
+      "risks_detected": [
+        "Telemetría sectorial en build_sector_protection retorna NO_DATA"
+      ],
+      "recommendations": [
+        "Hardening corporativo base y monitoreo continuo.",
+        "Conectar telemetría real del sector para eliminar NO_DATA en perfiles.",
+        "Completar playbooks automatizados por trigger sectorial."
+      ],
+      "production_ready": true
+    }
+  },
+  "client_verification_error": "HTTPConnectionPool(host='10.196.213.166', port=5000): Max retries exceeded with url: /login (Caused by NewConnectionError(\"HTTPConnection(host='10.196.213.166', port=5000): Failed to establish a new connection: [WinError 10061] No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión\"))",
+  "client_verification": []
+}

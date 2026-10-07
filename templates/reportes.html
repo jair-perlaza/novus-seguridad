@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta name="novus-reports-build" content="reports-executive-presentation-20260722">
+    <meta name="novus-project-root" content="C-NOVUS">
+    <title>NOVUS - Centro de Reportes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/novus-reports.css') }}">
+    <style>
+        :root { --bg-dark: #06090f; --accent: #5d5fef; }
+        body { background-color: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; }
+        .report-card { background: #0c121d; border: 1px solid #1e293b; }
+        .sev-critico { color: #f87171; }
+        .sev-alto { color: #fb923c; }
+        .sev-medio { color: #fbbf24; }
+        .sev-bajo { color: #86efac; }
+        .sev-info { color: #94a3b8; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen w-full overflow-y-auto" data-novus-module="reportes" id="novus-reports-root" data-novus-admin="{{ '1' if user.role in ['super_admin', 'company_admin'] else '0' }}">
+    {% set active_module = 'reportes' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 flex flex-col min-w-0">
+        <header class="p-4 md:p-8 border-b border-gray-800 flex flex-wrap justify-between items-center gap-4 bg-[#06090f]/50 backdrop-blur">
+            <div>
+                <h1 class="text-2xl font-bold">CENTRO DE REPORTES</h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Informes persistidos · evidencia verificable</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="{{ url_for('main.ruta_configuracion') }}" class="text-gray-400 hover:text-white text-sm no-underline">
+                    <i class="fas fa-cog mr-1"></i>Configuración
+                </a>
+                <a href="{{ url_for('auth.logout_seguro') }}" class="text-gray-400 hover:text-red-500 text-sm no-underline">
+                    <i class="fas fa-sign-out-alt mr-1"></i>Cerrar Sesión
+                </a>
+            </div>
+        </header>
+
+        <div class="p-4 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            <div class="report-card p-6 rounded-2xl">
+                <h2 class="text-xs font-bold text-indigo-400 mb-4 uppercase tracking-widest">Resumen operativo</h2>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between border-b border-gray-800 pb-2">
+                        <span class="text-gray-400">Dispositivos escaneados</span>
+                        <span class="font-bold">{{ resumen.dispositivos_protegidos }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-800 pb-2">
+                        <span class="text-gray-400">Vulnerabilidades detectadas</span>
+                        <span class="font-bold text-red-400">{{ resumen.vulnerabilidades_detectadas }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-800 pb-2">
+                        <span class="text-gray-400">Amenazas bloqueadas</span>
+                        <span class="font-bold text-orange-400">{{ resumen.amenazas_bloqueadas }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Nivel de riesgo</span>
+                        <span class="font-black text-green-500">{{ resumen.nivel_riesgo }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="report-card p-6 rounded-2xl md:col-span-2">
+                <h2 class="text-xs font-bold text-indigo-400 mb-4 uppercase tracking-widest">Informes en archivo</h2>
+                <p class="text-3xl font-black text-white">{{ historial|length }}</p>
+                <p class="text-xs text-gray-500 mt-1">Cada fila corresponde a un informe almacenado por NOVUS tras el análisis.</p>
+            </div>
+        </div>
+
+        <div class="px-4 md:px-8 pb-8">
+            <div class="bg-[#0c121d] rounded-2xl border border-gray-800 overflow-hidden shadow-2xl">
+                <div class="p-4 bg-[#161b22] border-b border-gray-800 flex justify-between items-center">
+                    <span class="text-[10px] font-bold uppercase text-gray-400">Historial de informes</span>
+                    <span class="text-[9px] text-gray-600">{{ historial|length }} registros</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-[#111827] text-gray-500 uppercase">
+                            <tr>
+                                <th class="px-4 py-3">Fecha</th>
+                                <th class="px-4 py-3">ID</th>
+                                <th class="px-4 py-3">Tipo</th>
+                                <th class="px-4 py-3">Severidad</th>
+                                <th class="px-4 py-3">Estado</th>
+                                <th class="px-4 py-3">Equipo</th>
+                                <th class="px-4 py-3 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-800">
+                            {% if historial %}
+                                {% for rep in historial %}
+                                <tr class="hover:bg-indigo-500/5 transition-all">
+                                    <td class="px-4 py-3 text-gray-400 font-mono">{{ rep.fecha }}</td>
+                                    <td class="px-4 py-3 text-indigo-400 font-mono">{{ rep.id }}</td>
+                                    <td class="px-4 py-3 text-white">{{ rep.tipo }}</td>
+                                    <td class="px-4 py-3 font-bold
+                                        {% if rep.severidad == 'Crítico' %}sev-critico
+                                        {% elif rep.severidad == 'Alto' %}sev-alto
+                                        {% elif rep.severidad == 'Medio' %}sev-medio
+                                        {% elif rep.severidad == 'Bajo' %}sev-bajo
+                                        {% else %}sev-info{% endif %}">
+                                        {{ rep.severidad or 'Sin datos' }}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-2 py-0.5 rounded bg-gray-800 text-gray-300">{{ rep.estado or 'Activo' }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-300">{{ rep.equipo_afectado or 'Sin datos' }}</td>
+                                    <td class="px-4 py-3 text-right">
+                                        <div class="novus-report-actions">
+                                            <button type="button" class="novus-report-action novus-report-action-details" data-report-id="{{ rep.id }}">Ver Detalles</button>
+                                            <button type="button" class="novus-report-action novus-report-action-pdf" data-report-id="{{ rep.id }}">Descargar PDF</button>
+                                            <button type="button" class="novus-report-action novus-report-action-kernel" data-report-id="{{ rep.id }}"><i class="fas fa-brain"></i> Consultar Kernel IA</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="px-6 py-12 text-center text-gray-500 italic">
+                                        Sin informes almacenados. Los informes aparecen aquí cuando los motores NOVUS completan un análisis.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include 'partials/reports_detail_panel.html' %}
+    {% include 'partials/global_search_only.html' %}
+    {% include 'partials/ai_kernel_panel.html' %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.novus-report-action-details').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    NovusReports.openDetail(btn.getAttribute('data-report-id'));
+                });
+            });
+            document.querySelectorAll('.novus-report-action-pdf').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    NovusReports.downloadPdf(btn.getAttribute('data-report-id'));
+                });
+            });
+            document.querySelectorAll('.novus-report-action-kernel').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    NovusReports.consultKernel(btn.getAttribute('data-report-id'));
+                });
+            });
+        });
+    </script>
+</body>
+</html>

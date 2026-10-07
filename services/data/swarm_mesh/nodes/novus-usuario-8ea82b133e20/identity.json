@@ -1,0 +1,7 @@
+{
+  "node_id": "novus-usuario-8ea82b133e20",
+  "algorithm": "Ed25519",
+  "fingerprint": "f7623d05528c624090f9cf6ff08e2084",
+  "created_at": "2026-07-27T18:53:23.140379+00:00",
+  "public_pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA7lZ6RgU8niZmMf5pz5WoNarVxZgoP1uHYLgOAzi5Q0o=\n-----END PUBLIC KEY-----\n"
+}

@@ -1,0 +1,232 @@
+{
+  "version": "1.0",
+  "principle": "Alertas solo con evidencia verificable del motor NOVUS. Sin telemetría = standby documentado.",
+  "sectors": ["fintech", "logistica", "aplicaciones_moviles", "otros"],
+  "categories": {
+    "auth_credentials": {
+      "label": "Ataques de autenticación y credenciales",
+      "aspe_type": "credential_stuffing",
+      "motors": ["auth_protection_service", "novus_security_integration._detect_auth_anomalies", "ato_analyzer"],
+      "capabilities": {"detect": true, "prevent": true, "contain": true, "remediate_auto": true, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["failed_attempts", "ip", "verified"],
+      "limitations": ["Bloqueo por origen, no global"],
+      "sectors": ["fintech", "logistica", "aplicaciones_moviles", "otros"]
+    },
+    "api_attacks": {
+      "label": "Ataques contra APIs",
+      "aspe_type": "api_attack",
+      "motors": ["api_security_service", "security_engine.validate_api_request", "api_shield"],
+      "capabilities": {"detect": true, "prevent": true, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["rate_limit_exceeded", "sqli_pattern", "endpoint"],
+      "limitations": ["Rate limit por IP; sin WAF externo"],
+      "sectors": ["fintech", "otros"]
+    },
+    "web_app": {
+      "label": "Ataques contra aplicaciones web",
+      "aspe_type": "api_attack",
+      "motors": ["api_security_service.scan_query_params", "security_engine._execute_sqli_response", "sqli_shield"],
+      "capabilities": {"detect": true, "prevent": true, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["malicious_patterns", "query_blocked"],
+      "limitations": ["Solo rutas Flask/API NOVUS"],
+      "sectors": ["fintech", "otros"]
+    },
+    "mobile_app": {
+      "label": "Ataques contra aplicaciones móviles",
+      "aspe_type": "mobile_threat",
+      "motors": ["ui_shield", "clickjacking_guard", "sim_identity", "runtime_integrity"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["overlay_signal", "sim_anomaly"],
+      "limitations": ["Sin agente/SDK móvil — heurísticas host desktop"],
+      "sectors": ["aplicaciones_moviles"]
+    },
+    "network": {
+      "label": "Ataques contra redes",
+      "aspe_type": "lateral_movement",
+      "motors": ["network_ndr_service", "network_scanner", "network_event_log"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["ndr_alert", "ip", "mac"],
+      "limitations": ["ARP/tráfico host; sin inspección paquetes completa"],
+      "sectors": ["logistica", "otros"]
+    },
+    "endpoints": {
+      "label": "Ataques contra endpoints",
+      "aspe_type": "privilege_escalation",
+      "motors": ["advanced_detector_service", "platform_metrics_service", "adaptive_defense_engine"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": true, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["suspicious_process", "pid"],
+      "limitations": ["Host local únicamente"],
+      "sectors": ["fintech", "logistica", "aplicaciones_moviles", "otros"]
+    },
+    "iot": {
+      "label": "Ataques contra dispositivos IoT compatibles",
+      "aspe_type": "iot_anomaly",
+      "motors": ["iot_guard", "network_ndr_service", "network_device_inventory"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["telemetry_inconsistent", "device_id"],
+      "limitations": ["Requiere telemetría IoT/GPS real para confianza alta"],
+      "sectors": ["logistica"]
+    },
+    "enterprise_infra": {
+      "label": "Ataques contra infraestructura empresarial",
+      "aspe_type": "generic",
+      "motors": ["universal_compatibility_engine", "novus_security_integration.scan_vulnerabilities", "sector_shield_service"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": true, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["vulnerability_id", "open_port"],
+      "limitations": ["Escaneo host local + red LAN"],
+      "sectors": ["otros", "fintech", "logistica"]
+    },
+    "lateral_movement": {
+      "label": "Movimiento lateral",
+      "aspe_type": "lateral_movement",
+      "motors": ["network_ndr_service", "threat_intelligence_service", "adaptive_sector_protection_engine"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["ndr_alert", "correlation"],
+      "limitations": ["Heurística ARP/conexiones; no EDR multi-host"],
+      "sectors": ["logistica", "otros"]
+    },
+    "privilege_escalation": {
+      "label": "Escalada de privilegios",
+      "aspe_type": "privilege_escalation",
+      "motors": ["vulnerability_analyst_service", "advanced_detector_service", "adaptive_defense_engine"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": true, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["vulnerability", "suspicious_process"],
+      "limitations": ["Sin monitor kernel-mode dedicado"],
+      "sectors": ["fintech", "otros"]
+    },
+    "persistence": {
+      "label": "Persistencia",
+      "aspe_type": "generic",
+      "motors": ["advanced_detector_service", "security_engine.threat_registry"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": true, "remediate_assisted": true, "audit": true, "kernel": false},
+      "evidence_required": ["suspicious_process", "persistence_indicator"],
+      "limitations": ["Indicadores heurísticos de procesos"],
+      "sectors": ["otros"]
+    },
+    "exfiltration": {
+      "label": "Exfiltración de datos",
+      "aspe_type": "exfiltration",
+      "motors": ["network_ndr_service", "mitm_shield", "threat_intelligence_service"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["traffic_anomaly", "connection_count"],
+      "limitations": ["Sin DLP de red completo"],
+      "sectors": ["fintech", "logistica"]
+    },
+    "ransomware": {
+      "label": "Ransomware",
+      "aspe_type": "ransomware",
+      "motors": ["security_engine.monitor_filesystem_activity", "ransom_sentinel", "adaptive_defense_engine"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": true, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["entropy", "mass_rename", "verified"],
+      "limitations": ["Monitor FS local; reconciliación de falsos positivos"],
+      "sectors": ["fintech", "logistica", "otros"]
+    },
+    "trojan": {
+      "label": "Troyanos",
+      "aspe_type": "generic",
+      "motors": ["advanced_detector_service", "security_engine"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": true, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["process_name", "cmdline_pattern"],
+      "limitations": ["Sin clasificador AV dedicado"],
+      "sectors": ["otros"]
+    },
+    "spyware": {
+      "label": "Spyware",
+      "aspe_type": "generic",
+      "motors": ["advanced_detector_service"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": true, "remediate_assisted": true, "audit": true, "kernel": false},
+      "evidence_required": ["keylogger_pattern", "suspicious_process"],
+      "limitations": ["Patrones cmdline conocidos"],
+      "sectors": ["otros"]
+    },
+    "rootkit": {
+      "label": "Rootkits",
+      "aspe_type": "privilege_escalation",
+      "motors": ["advanced_detector_service", "runtime_integrity"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": false},
+      "evidence_required": ["runtime_violation", "hidden_process_signal"],
+      "limitations": ["Heurística runtime; sin escaneo ring-0"],
+      "sectors": ["otros"]
+    },
+    "botnet": {
+      "label": "Botnets",
+      "aspe_type": "lateral_movement",
+      "motors": ["network_ndr_service", "advanced_detector_service"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": false},
+      "evidence_required": ["elevated_connections", "c2_pattern"],
+      "limitations": ["Umbral conexiones salientes"],
+      "sectors": ["otros"]
+    },
+    "cryptojacking": {
+      "label": "Cryptojacking",
+      "aspe_type": "generic",
+      "motors": ["advanced_detector_service"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": true, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["miner_process", "cpu_spike"],
+      "limitations": ["Lista procesos miner conocidos"],
+      "sectors": ["otros"]
+    },
+    "backdoor": {
+      "label": "Backdoors",
+      "aspe_type": "api_attack",
+      "motors": ["novus_security_integration.scan_open_ports", "advanced_detector_service"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": true, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["open_port", "unexpected_listener"],
+      "limitations": ["Puertos locales/remotos escaneados"],
+      "sectors": ["otros"]
+    },
+    "phishing": {
+      "label": "Ataques de phishing",
+      "aspe_type": "phishing",
+      "motors": ["phishing_shield", "security_engine.inspect_email_integrity"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["email_headers", "sender_anomaly"],
+      "limitations": ["Requiere OAuth Gmail para telemetría real"],
+      "sectors": ["fintech"]
+    },
+    "bec": {
+      "label": "Ataques BEC",
+      "aspe_type": "phishing",
+      "motors": ["bec_shield", "security_engine.validate_transactional_integrity"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["transaction_anomaly", "sender_domain"],
+      "limitations": ["Requiere flujo email/transaccional real"],
+      "sectors": ["fintech"]
+    },
+    "mitm": {
+      "label": "Ataques MITM",
+      "aspe_type": "exfiltration",
+      "motors": ["mitm_shield", "security_engine.verify_tunnel_integrity", "network_ndr_service"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["tunnel_anomaly", "cert_pin_mismatch"],
+      "limitations": ["Pin TLS opcional NOVUS_EXPECTED_CERT_PIN"],
+      "sectors": ["logistica", "fintech"]
+    },
+    "ddos_compatible": {
+      "label": "Ataques DDoS compatibles",
+      "aspe_type": "api_attack",
+      "motors": ["database.db_security.check_rate_limit", "auth_protection_service", "api_security_service"],
+      "capabilities": {"detect": true, "prevent": true, "contain": true, "remediate_auto": true, "remediate_assisted": false, "audit": true, "kernel": true},
+      "evidence_required": ["rate_limited", "origin_blocked"],
+      "limitations": ["Rate limit aplicación; no mitigación volumétrica ISP"],
+      "sectors": ["fintech", "otros"]
+    },
+    "supply_chain": {
+      "label": "Ataques Supply Chain",
+      "aspe_type": "zero_day",
+      "motors": ["advanced_detector_service.scan_file_reputation", "remediation_orchestrator"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": false},
+      "evidence_required": ["file_hash", "virustotal_result"],
+      "limitations": ["VirusTotal solo si VIRUSTOTAL_API_KEY configurada"],
+      "sectors": ["otros"]
+    },
+    "apt_compatible": {
+      "label": "Amenazas APT compatibles",
+      "aspe_type": "zero_day",
+      "motors": ["threat_intelligence_service", "adaptive_defense_engine", "ndci_service"],
+      "capabilities": {"detect": true, "prevent": false, "contain": true, "remediate_auto": false, "remediate_assisted": true, "audit": true, "kernel": true},
+      "evidence_required": ["correlation", "multi_signal", "timeline"],
+      "limitations": ["Correlación multi-motor; sin sandbox APT dedicado"],
+      "sectors": ["fintech", "logistica", "otros"]
+    }
+  }
+}

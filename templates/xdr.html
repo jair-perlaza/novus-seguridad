@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - XDR Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <script src="{{ url_for('static', filename='js/novus-metrics.js') }}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #06090f;
+            --panel-dark: #0c121d;
+            --accent-blue: #5d5fef;
+            --text-gray: #8a92a6;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+        .xdr-card {
+            background: rgba(13, 20, 32, 0.8);
+            border: 1px solid #1e293b;
+        }
+        .glow-red { box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); }
+        .grid-bg {
+            background-image: radial-gradient(circle, #1a1f2e 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen w-full grid-bg" data-novus-module="xdr">
+    {% if monitoring_not_configured %}
+    <div class="w-full bg-amber-500/10 border-b border-amber-500/40 text-amber-100 text-sm text-center py-3 px-4">
+        {{ monitoring_message or 'El monitoreo de red aún no está configurado para esta empresa.' }}
+    </div>
+    {% endif %}
+
+    {% set active_module = 'xdr' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+
+    <main class="novus-main flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="flex flex-wrap items-center justify-between gap-3 px-4 md:px-8 py-4 md:py-6 border-b border-gray-800 bg-[#06090f]/80 backdrop-blur">
+            <div>
+                <h1 class="text-2xl font-bold">XDR / Amenazas Correlacionadas</h1>
+                <p class="text-xs text-gray-500 uppercase tracking-widest">Sector: <span class="text-indigo-400">{{ user.sector }}</span></p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="{{ url_for('auth.logout_seguro') }}" class="text-gray-400 hover:text-red-500 text-sm no-underline">
+                    <i class="fas fa-sign-out-alt mr-1"></i>Cerrar Sesión
+                </a>
+                <div class="text-right">
+                    <div class="text-[10px] text-gray-500 uppercase">Estado del Motor</div>
+                    <div class="text-xs font-bold text-green-500 italic">CORRELACIONANDO EN VIVO</div>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-indigo-600/20 border border-indigo-500 flex items-center justify-center text-indigo-400">
+                    <i class="fas fa-microchip animate-pulse"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="p-4 md:p-8 space-y-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <div class="xdr-card p-4 rounded-xl">
+                    <div class="text-[10px] text-gray-500 uppercase">Eventos Totales</div>
+                    <div id="xdr-total-eventos" class="text-2xl font-bold">{{ resumen.total_eventos }}</div>
+                </div>
+                <div class="xdr-card p-4 rounded-xl border-red-500/30">
+                    <div class="text-[10px] text-red-500 uppercase">Críticos</div>
+                    <div id="xdr-criticos" class="text-2xl font-bold text-red-500">{{ resumen.nivel_critico }}</div>
+                </div>
+                <div class="xdr-card p-4 rounded-xl">
+                    <div class="text-[10px] text-gray-500 uppercase">Amenazas detectadas</div>
+                    <div id="xdr-amenazas" class="text-2xl font-bold text-blue-400">{{ resumen.amenazas_detectadas }}</div>
+                </div>
+                <div class="xdr-card p-4 rounded-xl cursor-pointer hover:border-indigo-500/50 transition-colors" id="xdr-conexiones-card" title="Clic para ver desglose técnico">
+                    <div class="text-[10px] text-gray-500 uppercase">Sockets de red (IPv4/IPv6)</div>
+                    <div id="xdr-conexiones" class="text-2xl font-bold text-indigo-400">{{ resumen.conexiones_activas }}</div>
+                    <div id="xdr-conexiones-hint" class="text-[9px] text-gray-600 mt-1">Host NOVUS · psutil · clic para detalle</div>
+                </div>
+            </div>
+
+            <div class="xdr-card rounded-2xl overflow-hidden shadow-2xl">
+                <div class="p-4 border-b border-gray-800 bg-[#0c121d] flex justify-between items-center">
+                    <span class="text-xs font-bold uppercase tracking-widest">Log de Correlación XDR</span>
+                    <span class="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded">DETECCIONES EN TIEMPO REAL</span>
+                </div>
+                <table class="w-full text-left">
+                    <thead class="text-xs text-gray-500 uppercase bg-[#06090f]">
+                        <tr>
+                            <th class="p-4">Identificador</th>
+                            <th class="p-4">Entidad Afectada</th>
+                            <th class="p-4">Vector de Ataque</th>
+                            <th class="p-4">Gravedad</th>
+                            <th class="p-4 text-right">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="xdr-events-body" class="text-sm divide-y divide-gray-800">
+                        {% for evento in eventos %}
+                        <tr class="hover:bg-gray-800/30 transition-all {% if evento.gravedad == 'CRITICAL' %}glow-red bg-red-500/5{% endif %}">
+                            <td class="p-4 font-mono text-xs text-indigo-400">{{ evento.id }}</td>
+                            <td class="p-4">
+                                <div class="font-bold">{{ evento.dispositivo }}</div>
+                                <div class="text-[10px] text-gray-500">{{ evento.ip }}</div>
+                            </td>
+                            <td class="p-4">
+                                <div class="text-gray-200">{{ evento.amenaza }}</div>
+                                <div class="text-[9px] text-indigo-500 uppercase font-bold">Prioridad: {{ evento.sector_focus }}</div>
+                            </td>
+                            <td class="p-4">
+                                <span class="px-2 py-1 rounded text-[10px] font-bold {% if evento.gravedad == 'CRITICAL' %}bg-red-500 text-white{% else %}bg-yellow-500/20 text-yellow-500 border border-yellow-500/50{% endif %}">
+                                    {{ evento.gravedad }}
+                                </span>
+                            </td>
+                            <td class="p-4 text-right">
+                                <button type="button" data-event-id="{{ evento.id }}" onclick="verTrazaDesdeFila(this)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-[10px] font-bold transition-all">
+                                    VER TRAZA
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    <script>
+        function verTraza(evento) {
+            const detalle = [
+                `ID: ${evento.id || 'Sin datos disponibles'}`,
+                `Dispositivo: ${evento.dispositivo || 'Sin datos disponibles'}`,
+                `IP: ${evento.ip || 'Sin datos disponibles'}`,
+                `Amenaza: ${evento.amenaza || 'Sin datos disponibles'}`,
+                `Gravedad: ${evento.gravedad || 'Sin datos disponibles'}`,
+                `Sector: ${evento.sector_focus || 'Sin datos disponibles'}`,
+            ].join('\n');
+            NovusAction.open({ title: 'Traza de amenaza', description: evento.amenaza || 'Detalle del evento' });
+            document.getElementById('novus-modal-status-value').textContent = evento.gravedad || 'Detectado';
+            document.getElementById('novus-modal-progress').style.width = '100%';
+            document.getElementById('novus-modal-log').innerHTML = detalle.split('\n').map(line =>
+                `<div class="novus-log-line done">${line}</div>`
+            ).join('');
+            document.getElementById('novus-modal-result').textContent = 'Traza registrada en motor XDR en vivo.';
+        }
+
+        function verTrazaDesdeFila(buttonEl) {
+            const row = buttonEl.closest('tr');
+            if (!row) return;
+            const cells = row.querySelectorAll('td');
+            verTraza({
+                id: cells[0]?.textContent?.trim(),
+                dispositivo: cells[1]?.querySelector('.font-bold')?.textContent?.trim(),
+                ip: cells[1]?.querySelector('.text-gray-500')?.textContent?.trim(),
+                amenaza: cells[2]?.querySelector('.text-gray-200')?.textContent?.trim(),
+                sector_focus: cells[2]?.querySelector('.text-indigo-500')?.textContent?.replace('Prioridad:', '').trim(),
+                gravedad: cells[3]?.textContent?.trim(),
+            });
+            window.NovusModuleExtra = {
+                threat_id: cells[0]?.textContent?.trim(),
+                ip: cells[1]?.querySelector('.text-gray-500')?.textContent?.trim(),
+            };
+        }
+
+        window.xdrEventos = window.xdrEventos || [];
+
+        function renderXdrRows(eventos) {
+            const tbody = document.getElementById('xdr-events-body');
+            if (!tbody) return;
+            if (!eventos.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-500">Sin datos disponibles. Esperando detecciones del motor de seguridad...</td></tr>';
+                return;
+            }
+            tbody.innerHTML = eventos.map(evento => `
+                <tr class="hover:bg-gray-800/30 transition-all ${evento.gravedad === 'CRITICAL' ? 'glow-red bg-red-500/5' : ''}">
+                    <td class="p-4 font-mono text-xs text-indigo-400">${evento.id}</td>
+                    <td class="p-4"><div class="font-bold">${evento.dispositivo}</div><div class="text-[10px] text-gray-500">${evento.ip}</div></td>
+                    <td class="p-4"><div class="text-gray-200">${evento.amenaza}</div><div class="text-[9px] text-indigo-500 uppercase font-bold">Prioridad: ${evento.sector_focus}</div></td>
+                    <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-bold ${evento.gravedad === 'CRITICAL' ? 'bg-red-500 text-white' : 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/50'}">${evento.gravedad}</span></td>
+                    <td class="p-4 text-right"><button type="button" onclick="verTrazaDesdeFila(this)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-[10px] font-bold transition-all">VER TRAZA</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function refreshXdrData() {
+            try {
+                const [alertsResponse, liveResponse, summaryResponse] = await Promise.all([
+                    fetch('/api/security/alerts?limit=80'),
+                    fetch('/api/dashboard/live'),
+                    fetch('/api/security/summary'),
+                ]);
+                const alertsData = await alertsResponse.json();
+                const liveData = await liveResponse.json();
+                const summaryData = await summaryResponse.json();
+                const counters = summaryData.counters || {};
+                const eventos = [];
+
+                (alertsData.alerts || []).forEach((alert) => {
+                    eventos.push({
+                        id: alert.id || `ALT-${eventos.length + 1}`,
+                        dispositivo: alert.motor || 'Motor NOVUS',
+                        ip: alert.origin || alert.origin_ip || 'Sin datos disponibles',
+                        amenaza: alert.threat_type || alert.evidence_summary || 'Amenaza detectada',
+                        sector_focus: 'SEGURIDAD',
+                        gravedad: String(alert.risk_level || 'DETECTADO').toUpperCase(),
+                        timestamp: alert.timestamp || `${alert.date || ''} ${alert.time || ''}`.trim(),
+                        evidence_summary: alert.evidence_summary,
+                    });
+                });
+
+                const total = eventos.length;
+                const criticos = eventos.filter(e => e.gravedad === 'CRITICAL').length;
+                document.getElementById('xdr-total-eventos').textContent = total;
+                document.getElementById('xdr-criticos').textContent = criticos;
+                document.getElementById('xdr-amenazas').textContent =
+                    (typeof counters.threats_total === 'number')
+                        ? counters.threats_total
+                        : (typeof summaryData.total_threats === 'number'
+                            ? summaryData.total_threats
+                            : 'Sin datos disponibles');
+                document.getElementById('xdr-conexiones').textContent =
+                    typeof liveData.conexiones === 'number' ? liveData.conexiones : 'Sin datos disponibles';
+                const hint = document.getElementById('xdr-conexiones-hint');
+                if (hint && liveData.conexiones_meta && liveData.conexiones_meta.label) {
+                    hint.textContent = liveData.conexiones_meta.label + ' · actualizado ' + (liveData.conexiones_meta.updated_at || liveData.timestamp || '');
+                }
+                window._novusConexionesMeta = liveData.conexiones_meta || {};
+                renderXdrRows(eventos);
+                window.xdrEventos = eventos;
+            } catch (error) {
+                console.error('XDR refresh error:', error);
+            }
+        }
+
+        refreshXdrData();
+        setInterval(refreshXdrData, 5000);
+        const connCard = document.getElementById('xdr-conexiones-card');
+        if (connCard && typeof NovusMetrics !== 'undefined') {
+            connCard.addEventListener('click', function () {
+                NovusMetrics.openConnectionsDetailPanel(window._novusConexionesMeta || {});
+            });
+        }
+    </script>
+    {% include 'partials/metric_connections_modal.html' %}
+    {% include 'partials/global_search.html' %}
+    {% include 'partials/ai_kernel_panel.html' %}
+</body>
+</html>

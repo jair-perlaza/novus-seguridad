@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — Autorización de registros</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-[#06090f] text-white min-h-screen p-6">
+    <header class="mb-6">
+        <h1 class="text-2xl font-bold"><i class="fas fa-user-check text-indigo-400 mr-2"></i>Autorización de registros</h1>
+        <p class="text-gray-500 text-sm">Administrador principal — aprobar o rechazar solicitudes de nuevos clientes</p>
+    </header>
+
+    {% if message %}<div class="mb-4 p-3 bg-green-900/40 border border-green-700 rounded">{{ message }}</div>{% endif %}
+    {% if error %}<div class="mb-4 p-3 bg-red-900/40 border border-red-700 rounded">{{ error }}</div>{% endif %}
+    {% if setup_url %}
+    <div class="mb-4 p-3 bg-indigo-900/40 border border-indigo-700 rounded text-sm">
+        Enlace de registro (compartir si el correo no llegó):<br>
+        <code class="break-all text-indigo-200">{{ setup_url }}</code>
+    </div>
+    {% endif %}
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-gray-800">
+            <thead class="bg-[#0c121d] text-gray-400 uppercase text-xs">
+                <tr>
+                    <th class="p-2 text-left">Empresa</th>
+                    <th class="p-2 text-left">Email</th>
+                    <th class="p-2 text-left">NIT</th>
+                    <th class="p-2 text-left">Estado</th>
+                    <th class="p-2 text-left">Fecha</th>
+                    <th class="p-2 text-left">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in requests %}
+                <tr class="border-t border-gray-800">
+                    <td class="p-2">{{ r.company_name }}</td>
+                    <td class="p-2">{{ r.email }}</td>
+                    <td class="p-2">{{ r.nit }}</td>
+                    <td class="p-2"><span class="px-2 py-0.5 rounded text-xs bg-gray-800">{{ r.status }}</span></td>
+                    <td class="p-2 text-gray-500">{{ r.created_at }}</td>
+                    <td class="p-2">
+                        {% if r.status == 'pending' %}
+                        <form method="post" class="inline-flex gap-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="request_id" value="{{ r.id }}">
+                            <button name="action" value="approve" class="px-2 py-1 bg-green-700 rounded text-xs">Autorizar</button>
+                            <button name="action" value="reject" class="px-2 py-1 bg-red-800 rounded text-xs">Rechazar</button>
+                        </form>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="p-4 text-gray-500 text-center">Sin solicitudes</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <p class="mt-6 text-gray-600 text-xs">Fuente: SQLite registration_requests · Solo super_admin</p>
+</body>
+</html>

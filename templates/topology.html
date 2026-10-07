@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Network Topology</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{ url_for('static', filename='js/novus-metrics.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/novus-adaptive-poll.js') }}"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#06090f; --panel:#0c121d; --accent:#5d5fef; --border:#1e293b; }
+        body { background:var(--bg); color:#fff; font-family:'Inter',sans-serif; overflow:hidden; }
+        .grid-bg { background-image:radial-gradient(circle,#1a1f2e 1px,transparent 1px); background-size:28px 28px; }
+        .topo-node {
+            background:rgba(13,20,32,.92); border:1px solid var(--border);
+            border-radius:12px; padding:10px 12px; min-width:130px; cursor:pointer;
+            transition:border-color .2s,box-shadow .2s; text-align:left;
+        }
+        .topo-node:hover { border-color:#6366f1; }
+        .topo-node.selected { border-color:var(--accent); box-shadow:0 0 16px rgba(93,95,239,.35); }
+        .topo-node.risk-critico { border-left:3px solid #ef4444; }
+        .topo-node.risk-riesgo { border-left:3px solid #f97316; }
+        .topo-node.risk-observacion { border-left:3px solid #eab308; }
+        .topo-node.risk-seguro { border-left:3px solid #22c55e; }
+        .cat-section { margin-bottom:16px; }
+        .cat-title { font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px; }
+        .cat-row { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+        .side-panel { transform:translateX(100%); transition:transform .28s ease; }
+        .side-panel.open { transform:translateX(0); }
+        .filter-chip { font-size:9px; padding:4px 10px; border-radius:999px; border:1px solid var(--border); cursor:pointer; color:#94a3b8; }
+        .filter-chip.active { background:#1e293b; border-color:#6366f1; color:#a5b4fc; }
+        .panel-row { display:flex; justify-content:space-between; gap:8px; padding:5px 0; border-bottom:1px solid #111827; font-size:10px; }
+        .panel-label { color:#64748b; flex-shrink:0; }
+        .panel-value { color:#e2e8f0; text-align:right; word-break:break-all; }
+        .action-btn { width:100%; padding:7px; border-radius:8px; font-size:9px; font-weight:700; border:1px solid; cursor:pointer; margin-top:6px; }
+        .action-btn.primary { background:rgba(93,95,239,.2); border-color:rgba(93,95,239,.5); color:#a5b4fc; }
+        .topo-node.is-gateway { border:2px solid #6366f1; box-shadow:0 0 20px rgba(99,102,241,.4); }
+        .topo-node.is-new { animation:nodeAppear .8s ease-out; }
+        .topo-node.recent-change { box-shadow:0 0 12px rgba(56,189,248,.35); }
+        .badge-new { font-size:7px; background:#1e3a5f; color:#38bdf8; padding:1px 5px; border-radius:4px; margin-left:4px; }
+        .badge-unknown { font-size:7px; background:#422006; color:#fbbf24; padding:1px 5px; border-radius:4px; }
+        .traffic-line { stroke-linecap:round; }
+        @keyframes nodeAppear { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:scale(1)} }
+        @keyframes flowDash { to{stroke-dashoffset:-20} }
+        .field-reason { font-size:8px; color:#64748b; display:block; margin-top:2px; }
+        .log-explanation { font-size:9px; color:#94a3b8; margin:4px 0; padding-left:8px; border-left:1px solid #334155; }
+        .twin-strip { display:flex; flex-wrap:wrap; gap:8px; font-size:9px; color:#64748b; }
+        .twin-chip { padding:3px 8px; border-radius:6px; border:1px solid #1e293b; background:#0a0f18; }
+        .action-btn.secondary { background:#111827; border-color:#334155; color:#94a3b8; }
+    </style>
+</head>
+<body class="flex flex-col h-screen w-full" data-novus-module="topology">
+
+    <!-- HEADER COMPACTO -->
+    <header class="flex items-center justify-between px-5 py-3 bg-[#06090f] border-b border-gray-800 flex-shrink-0 z-30">
+        <div class="flex items-center gap-4">
+            <a href="/dashboard" class="text-[10px] text-indigo-400 hover:text-indigo-300 no-underline flex items-center gap-1">
+                <i class="fas fa-arrow-left"></i> Dashboard
+            </a>
+            <div>
+                <h1 class="text-base font-semibold leading-none">Topology</h1>
+                <p class="text-[9px] text-gray-500 mt-0.5">Arquitectura real de su red</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap justify-end">
+            <div class="hidden sm:flex gap-3 text-[9px] text-gray-500" id="summary-strip">
+                <span><b id="sum-devices" class="text-white">—</b> dispositivos observados</span>
+                <span><b id="sum-unknown" class="text-yellow-400">—</b> pendientes AIE</span>
+                <span><b id="sum-critical" class="text-red-400">—</b> críticos</span>
+                <span><b id="sum-vuln" class="text-orange-400">—</b> con vulns</span>
+                <span><b id="sum-connections" class="text-indigo-300">—</b> enlaces</span>
+            </div>
+            <input type="text" id="topology-search" placeholder="Buscar IP, MAC, nombre..."
+                class="bg-[#0c121d] border border-gray-800 rounded-full px-3 py-1 text-[10px] w-36 focus:outline-none focus:border-indigo-500">
+            <button type="button" id="btn-filters" onclick="toggleFilters()" class="text-[10px] px-3 py-1 rounded-lg border border-gray-700 text-gray-400">
+                <i class="fas fa-filter"></i> Filtros
+            </button>
+            <button type="button" id="btn-realtime" onclick="toggleRealtime()" class="text-[10px] px-3 py-1 rounded-lg border border-gray-700 text-gray-400">
+                <i class="fas fa-broadcast-tower"></i> Tiempo real
+            </button>
+            <button type="button" onclick="refreshTopology(true)" class="text-[10px] px-3 py-1 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-300">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button type="button" onclick="consultKernelIA('topology', window.NovusModuleExtra || {})" class="text-[10px] px-3 py-1 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-indigo-300">
+                <i class="fas fa-brain"></i> Consultar Kernel IA
+            </button>
+        </div>
+    </header>
+
+    <!-- GEMELO DIGITAL -->
+    <div id="twin-bar" class="px-5 py-2 border-b border-gray-800 bg-[#0a0f18] flex-shrink-0 hidden">
+        <div class="twin-strip" id="twin-strip"></div>
+    </div>
+
+    <!-- FILTROS -->
+    <div id="filters-bar" class="hidden px-5 py-2 border-b border-gray-800 bg-[#0a0f18] flex flex-wrap gap-2 flex-shrink-0">
+        <button type="button" class="filter-chip" data-filter="all" onclick="setFilter('all',this)">Todos</button>
+        <button type="button" class="filter-chip" data-filter="critico" onclick="setFilter('critico',this)">Críticos</button>
+        <button type="button" class="filter-chip" data-filter="servidor" onclick="setFilter('servidor',this)">Servidores</button>
+        <button type="button" class="filter-chip" data-filter="pendiente" onclick="setFilter('pendiente',this)">Pendientes AIE</button>
+        <button type="button" class="filter-chip" data-filter="vulnerabilidades" onclick="setFilter('vulnerabilidades',this)">Con vulnerabilidades</button>
+        <button type="button" class="filter-chip active" data-filter="activos" onclick="setFilter('activos',this)">Activos</button>
+        <button type="button" class="filter-chip" data-filter="trafico" onclick="setFilter('trafico',this)">Mayor tráfico</button>
+    </div>
+
+    <!-- MAPA PRINCIPAL -->
+    <div class="flex-1 flex overflow-hidden relative">
+        <div class="flex-1 relative grid-bg overflow-auto" id="map-container">
+            <svg id="topology-svg" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index:1;min-height:100%"></svg>
+            <div id="topology-map" class="relative p-6 min-h-full" style="z-index:2">
+                <div class="text-xs text-gray-500 text-center py-20">Cargando topología...</div>
+            </div>
+            <div class="absolute left-4 bottom-4 flex flex-col gap-1 z-10">
+                <button type="button" onclick="topologyZoom(1.12)" class="w-7 h-7 bg-gray-900 border border-gray-700 rounded text-[10px]">+</button>
+                <button type="button" onclick="topologyZoom(0.88)" class="w-7 h-7 bg-gray-900 border border-gray-700 rounded text-[10px]">−</button>
+            </div>
+        </div>
+
+        <!-- PANEL LATERAL -->
+        <aside id="side-panel" class="side-panel w-80 max-w-[90vw] bg-[#0c121d] border-l border-gray-800 flex flex-col flex-shrink-0 absolute right-0 top-0 bottom-0 z-20">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+                <h2 class="text-xs font-bold text-gray-300 uppercase tracking-wider">Detalle del dispositivo</h2>
+                <button type="button" onclick="closePanel()" class="text-gray-500 hover:text-white text-lg leading-none">&times;</button>
+            </div>
+            <div id="panel-content" class="flex-1 overflow-y-auto p-4 text-[10px]">
+                <p class="text-gray-500">Seleccione un nodo en el mapa.</p>
+            </div>
+            <div id="panel-actions" class="p-4 border-t border-gray-800 hidden"></div>
+        </aside>
+    </div>
+
+    <!-- BARRA INFERIOR -->
+    <footer class="px-5 py-1.5 border-t border-gray-800 flex justify-between text-[9px] text-gray-500 flex-shrink-0">
+        <span><i class="far fa-clock mr-1"></i> Actualizado: <span id="last-update">—</span></span>
+        <span>Gateway: <span id="gateway-label">—</span></span>
+        <span id="realtime-indicator" class="text-green-500">● Tiempo real activo</span>
+    </footer>
+
+<script>
+const NO_DATA = 'Sin datos disponibles';
+let topoData = { nodes: [], connections: [], categories: [], summary: {} };
+let selectedIp = null;
+let activeFilter = 'activos';
+let searchQuery = '';
+let realtimeEnabled = true;
+let refreshTimer = null;
+let topoScale = 1;
+let nodePositions = {};
+let lastNodeHash = '';
+
+const DEVICE_ICONS = {
+    Gateway:'fa-route', Router:'fa-wifi', Switch:'fa-network-wired', Servidor:'fa-server',
+    PC:'fa-desktop', Laptop:'fa-laptop', Celular:'fa-mobile-alt', Tablet:'fa-tablet-alt',
+    IoT:'fa-microchip', Impresora:'fa-print', 'Smart TV':'fa-tv', Otro:'fa-hdd',
+};
+
+function fmt(v) { return (v === null || v === undefined || v === '') ? NO_DATA : v; }
+
+function toggleFilters() {
+    document.getElementById('filters-bar').classList.toggle('hidden');
+}
+
+function toggleRealtime() {
+    realtimeEnabled = !realtimeEnabled;
+    const btn = document.getElementById('btn-realtime');
+    const ind = document.getElementById('realtime-indicator');
+    btn.className = realtimeEnabled
+        ? 'text-[10px] px-3 py-1 rounded-lg border border-green-700/50 bg-green-900/20 text-green-400'
+        : 'text-[10px] px-3 py-1 rounded-lg border border-gray-700 text-gray-400';
+    ind.textContent = realtimeEnabled ? '● Tiempo real activo' : '○ Tiempo real pausado';
+    ind.className = realtimeEnabled ? 'text-green-500' : 'text-gray-500';
+}
+
+function setFilter(name, el) {
+    activeFilter = name;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+    renderMap();
+}
+
+function nodePassesFilter(node) {
+    if (searchQuery) {
+        const hay = `${node.hostname||''} ${node.name||''} ${node.ip||''} ${node.mac||''} ${node.device_type||''}`.toLowerCase();
+        if (!hay.includes(searchQuery)) return false;
+    }
+    switch (activeFilter) {
+        case 'all': return true;
+        case 'critico': return node.risk_level === 'critico' || node.risk_level === 'riesgo';
+        case 'servidor': return (node.device_type||'').toLowerCase() === 'servidor';
+        case 'pendiente': return node.is_pending_approval === true || node.asset_status === 'pendiente_aprobacion';
+        case 'desconocido': return node.is_pending_approval === true;
+        case 'vulnerabilidades': return (node.vulnerabilities_count||0) > 0;
+        case 'activos': return !!node.ip;
+        case 'trafico': {
+            const conn = node.traffic?.connections_active;
+            return typeof conn === 'number' && conn > 0;
+        }
+        default: return true;
+    }
+}
+
+function topologyZoom(f) {
+    topoScale = Math.min(1.8, Math.max(0.5, topoScale * f));
+    const map = document.getElementById('topology-map');
+    if (map) map.style.transform = `scale(${topoScale})`;
+    requestAnimationFrame(drawConnections);
+}
+
+function hashNodes(nodes) {
+    return nodes.map(n => `${n.ip}|${n.risk_level}|${n.vulnerabilities_count}|${n.last_seen}`).join(';');
+}
+
+let appearAnim = {};
+let prevIps = new Set();
+
+function displayVal(v) {
+    if (v && typeof v === 'object' && v.display !== undefined) return v.display;
+    return fmt(v);
+}
+
+function renderNodeCard(node) {
+    const ip = node.ip || '';
+    const risk = node.risk_level || 'seguro';
+    const icon = DEVICE_ICONS[node.device_type] || DEVICE_ICONS.Otro;
+    const sel = selectedIp === ip ? 'selected' : '';
+    const gw = node.is_gateway ? 'is-gateway' : '';
+    const neu = node.is_new ? 'is-new' : '';
+    const chg = node.recent_change ? 'recent-change' : '';
+    const name = node.hostname !== NO_DATA ? node.hostname : (node.name !== NO_DATA ? node.name : ip);
+    return `
+    <div class="topo-node risk-${risk} ${sel} ${gw} ${neu} ${chg}" data-ip="${ip}" onclick="selectNode('${ip}')">
+        <div class="flex items-center gap-2 mb-1 flex-wrap">
+            <span class="text-sm">${node.risk_emoji||'🟢'}</span>
+            <i class="fas ${icon} text-indigo-400 text-xs"></i>
+            <span class="text-[10px] font-bold truncate">${fmt(name)}</span>
+            ${node.is_new ? '<span class="badge-new">NUEVO</span>' : ''}
+            ${node.is_pending_approval ? '<span class="badge-unknown" title="Pendiente AIE">⏳</span>' : ''}
+            ${node.trust_score != null ? `<span class="text-[8px] text-indigo-300">${node.trust_score}%</span>` : ''}
+            ${node.is_gateway ? '<span class="badge-new">GW</span>' : ''}
+        </div>
+        <div class="text-[8px] text-gray-500">${ip}</div>
+        <div class="text-[8px] text-gray-600">${fmt(node.device_type)} · ${fmt(node.risk_label)}${(node.vulnerabilities_count||0)>0?' · ⚠'+node.vulnerabilities_count:''}</div>
+    </div>`;
+}
+
+function drawConnections() {
+    const svg = document.getElementById('topology-svg');
+    const edges = topoData.connections || [];
+    if (!svg || !edges.length) { if (svg) svg.innerHTML = ''; return; }
+
+    const mapEl = document.getElementById('topology-map');
+    const mapRect = mapEl.getBoundingClientRect();
+    const pos = {};
+    mapEl.querySelectorAll('.topo-node[data-ip]').forEach(el => {
+        const r = el.getBoundingClientRect();
+        pos[el.dataset.ip] = {
+            x: r.left + r.width / 2 - mapRect.left,
+            y: r.top + r.height / 2 - mapRect.top,
+        };
+    });
+
+    let lines = '';
+    const gw = (topoData.summary || {}).gateway;
+    if (gw && !pos[gw]) {
+        const gwY = 40;
+        const gwX = mapEl.scrollWidth / 2;
+        pos[gw] = { x: gwX, y: gwY };
+        lines += `<circle cx="${gwX}" cy="${gwY}" r="8" fill="#6366f1" opacity="0.9"/>
+            <text x="${gwX}" y="${gwY-14}" fill="#a5b4fc" font-size="9" text-anchor="middle">Gateway ${gw}</text>`;
+    }
+
+    edges.forEach((e, i) => {
+        const a = pos[e.from], b = pos[e.to];
+        if (!a || !b) return;
+        const measured = e.traffic_measured === true && e.traffic_intensity != null;
+        const intensity = measured ? e.traffic_intensity : null;
+        const width = measured ? (1 + Math.min(4, intensity / 25)) : 1;
+        const opacity = measured ? (0.35 + Math.min(0.55, intensity / 100)) : 0.22;
+        const color = measured ? (e.type === 'active_flow' ? '#38bdf8' : '#6366f1') : '#64748b';
+        lines += `<line class="traffic-line" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"
+            stroke="${color}" stroke-width="${width}" opacity="${opacity}"
+            stroke-dasharray="${measured ? (e.type==='active_flow'?'6 4':'none') : '4 6'}"
+            ${measured ? 'style="animation:flowDash 1.2s linear infinite"' : ''}/>`;
+    });
+    svg.setAttribute('width', mapEl.scrollWidth);
+    svg.setAttribute('height', mapEl.scrollHeight);
+    svg.innerHTML = lines;
+}
+
+function panelRow(label, value, isReason) {
+    if (isReason) return `<div class="panel-row"><span class="panel-label">${label}</span><span class="panel-value field-reason">${value}</span></div>`;
+    return `<div class="panel-row"><span class="panel-label">${label}</span><span class="panel-value">${fmt(value)}</span></div>`;
+}
+
+async function selectNode(ip) {
+    selectedIp = ip;
+    window.NovusModuleExtra = { ip };
+    renderMap();
+    document.getElementById('side-panel').classList.add('open');
+    const content = document.getElementById('panel-content');
+    const actions = document.getElementById('panel-actions');
+    content.innerHTML = '<p class="text-gray-500">Cargando ficha técnica...</p>';
+    actions.classList.add('hidden');
+
+    try {
+        const r = await fetch(`/api/network/topology/device/${encodeURIComponent(ip)}`);
+        const d = await r.json();
+        if (d.status === 'not_found' || !d.panel) {
+            content.innerHTML = '<p class="text-red-400">Dispositivo no encontrado en telemetría actual.</p>';
+            return;
+        }
+        const p = d.panel;
+        const conf = p.nivel_confianza || {};
+        const ports = (p.puertos_detectados||[]).map(x => `${x.port||x} (${x.service||x.state||'TCP'})`).slice(0,8).join(', ');
+        const svcs = (p.servicios_detectados||[]).map(s => s.service || s).slice(0,5).join(', ');
+        const vulns = (p.vulnerabilidades||[]).map(v =>
+            `<li>${v.title||v.id||v.nombre}: ${v.severity||v.impacto_nivel||''}</li>`).join('')
+            || '<li>Ninguna vinculada a esta IP en el último escaneo NOVUS.</li>';
+        const alerts = (p.alertas||[]).map(a =>
+            `<div class="log-explanation"><strong>${a.title}</strong><br>${a.plain_explanation||a.evidence||''}</div>`).join('')
+            || '<div class="text-gray-600">Sin alertas con evidencia.</div>';
+
+        content.innerHTML = `
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">${p.riesgo_emoji}</span>
+                <div>
+                    <div class="text-sm font-bold">${displayVal(p.nombre)}</div>
+                    <div class="text-[9px] text-gray-500">${displayVal(p.tipo_dispositivo)} · ${p.riesgo_nivel}</div>
+                </div>
+            </div>
+            <div class="text-[9px] text-indigo-400 uppercase font-bold mb-2">Identificación</div>
+            ${panelRow('IP', displayVal(p.ip))}${panelRow('MAC', displayVal(p.mac))}
+            ${panelRow('Fabricante', displayVal(p.fabricante))}
+            ${panelRow('Sistema operativo', displayVal(p.sistema_operativo))}
+            ${panelRow('Tipo', displayVal(p.tipo_dispositivo))}
+            ${panelRow('Función en red', p.funcion_red)}
+            ${panelRow('Gateway', p.gateway_asociado)}${panelRow('Segmento', p.segmento)}
+            <div class="panel-row"><span class="panel-label">VLAN</span><span class="panel-value field-reason">${p.vlan}</span></div>
+            ${panelRow('Estado', displayVal(p.estado))}
+            ${panelRow('Confianza', `${conf.label||conf.nivel||'?'} (${conf.score||conf.porcentaje||'?'}%)`)}
+            ${panelRow('Conectado desde', displayVal(p.tiempo_conectado))}
+            ${panelRow('Última actividad', displayVal(p.ultima_actividad))}
+            ${panelRow('Latencia', displayVal(p.latencia))}
+            <div class="text-[9px] text-indigo-400 uppercase font-bold mt-3 mb-2">Tráfico</div>
+            ${panelRow('Recibido', displayVal(p.trafico?.bytes_recibidos))}
+            ${panelRow('Enviado', displayVal(p.trafico?.bytes_enviados))}
+            ${panelRow('Ancho de banda', displayVal(p.trafico?.ancho_banda_mbps))}
+            ${panelRow('Conexiones', p.trafico?.conexiones_activas)}
+            ${panelRow('Fuente', p.trafico?.fuente)}
+            <div class="text-[9px] text-indigo-400 uppercase font-bold mt-3 mb-2">Seguridad</div>
+            ${panelRow('Puertos', ports || 'No detectados en último escaneo activo.')}
+            ${panelRow('Servicios', svcs || 'Sin servicios identificados.')}
+            <div class="mt-2 mb-1 text-[9px] text-gray-500 uppercase font-bold">Vulnerabilidades</div>
+            <ul class="text-[9px] text-gray-400 list-disc pl-4">${vulns}</ul>
+            <div class="mt-2 mb-1 text-[9px] text-gray-500 uppercase font-bold">Alertas</div>${alerts}
+            <div class="mt-2 mb-1 text-[9px] text-gray-500 uppercase font-bold">Adaptive Defense</div>
+            ${panelRow('Actuando', (p.adaptive_defense||{}).display || ((p.adaptive_defense||{}).active ? 'Sí' : 'No'))}
+            <div class="mt-2 mb-1 text-[9px] text-gray-500 uppercase font-bold">Recomendaciones</div>
+            ${(p.recomendaciones||[]).map(r=>`<div class="log-explanation">• ${r}</div>`).join('') || '<div class="text-gray-600">Sin acciones urgentes.</div>'}
+            <div class="mt-2 mb-1 text-[9px] text-gray-500 uppercase font-bold">Historial (${(p.historial||[]).length})</div>
+            <div class="text-[8px] text-gray-600 max-h-24 overflow-y-auto">
+                ${(p.historial||[]).slice(-5).reverse().map(h =>
+                    `<div class="py-0.5">${h.time||''} — ${h.ip||''} ${h.device_type||''}</div>`
+                ).join('') || 'Sin historial acumulado.'}
+            </div>`;
+
+        actions.classList.remove('hidden');
+        actions.innerHTML = `
+            <button class="action-btn primary" data-action="investigate" onclick="investigateDevice('${ip}')"><i class="fas fa-microscope"></i> Investigar</button>
+            <button class="action-btn primary" onclick="consultKernel('${ip}')"><i class="fas fa-brain"></i> Consultar Kernel IA</button>
+            <button class="action-btn secondary" onclick="refreshDevice('${ip}')"><i class="fas fa-sync"></i> Actualizar</button>
+            <button class="action-btn secondary" onclick="generateReport('${ip}')"><i class="fas fa-file-alt"></i> Generar reporte</button>
+            <button class="action-btn secondary" onclick="openNetwork('${ip}')"><i class="fas fa-external-link-alt"></i> Abrir en Network NDR</button>
+        `;
+    } catch (e) {
+        content.innerHTML = `<p class="text-red-400">Error: ${e.message}</p>`;
+    }
+}
+
+async function investigateDevice(ip) {
+    const btn = document.querySelector('[data-action="investigate"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Investigando...';
+    }
+    try {
+        const res = await fetch(`/api/network/ndr/device/${encodeURIComponent(ip)}/investigate`, { method: 'POST' });
+        const data = await res.json();
+        if (data.status !== 'success') {
+            alert(data.message || 'No se pudo investigar el dispositivo.');
+            return;
+        }
+        await refreshTopology(true);
+        await selectNode(ip);
+    } catch (e) {
+        alert('Error de conexión al investigar dispositivo.');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-microscope"></i> Investigar';
+        }
+    }
+}
+
+async function consultKernel(ip) {
+    if (typeof consultKernelIA === 'function') {
+        await consultKernelIA('topology', { ip });
+        return;
+    }
+    if (typeof NovusAIKernel === 'undefined') {
+        alert('Kernel IA no disponible en esta vista.');
+        return;
+    }
+    await NovusAIKernel.consultModule('topology', { ip });
+}
+
+function updateSummary(summary, twin) {
+    document.getElementById('sum-devices').textContent = summary.device_count ?? '—';
+    document.getElementById('sum-unknown').textContent = summary.pending_count ?? summary.unknown_count ?? '—';
+    document.getElementById('sum-critical').textContent = summary.critical_count ?? '—';
+    document.getElementById('sum-vuln').textContent = summary.with_vulnerabilities ?? '—';
+    document.getElementById('sum-connections').textContent = summary.connection_count ?? '—';
+    document.getElementById('gateway-label').textContent = summary.gateway ?? '—';
+    document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+    const bar = document.getElementById('twin-bar');
+    const strip = document.getElementById('twin-strip');
+    if (twin && Object.keys(twin).length) {
+        bar.classList.remove('hidden');
+        strip.innerHTML = `
+            <span class="twin-chip">Estado: <b class="text-white">${twin.overall_status||'—'}</b></span>
+            <span class="twin-chip">Salud: <b class="text-green-400">${twin.network_health||'—'}</b></span>
+            <span class="twin-chip">Segmento: ${twin.segment||'—'}</span>
+            <span class="twin-chip">Protección: ${twin.protection_level||'—'}</span>
+            <span class="twin-chip" title="${twin.communication_model||''}">Modelo de comunicación documentado</span>`;
+    }
+}
+
+async function refreshTopology(force) {
+    try {
+        const url = force ? '/api/network/topology?force=true' : '/api/network/topology';
+        const r = await fetch(url);
+        const data = await r.json();
+        if (NovusMetrics.isMonitoringNotConfigured(data)) {
+            document.getElementById('topology-map').innerHTML = NovusMetrics.monitoringNotConfiguredHtml(
+                NovusMetrics.monitoringNotConfiguredMessage(data)
+            );
+            return;
+        }
+        if (data.status === 'error') throw new Error(data.message);
+
+        const currentIps = new Set((data.nodes||[]).map(n => n.ip));
+        (data.nodes||[]).forEach(n => {
+            if (!prevIps.has(n.ip)) appearAnim[n.ip] = true;
+        });
+        prevIps = currentIps;
+
+        const newHash = hashNodes(data.nodes || []);
+        const changed = newHash !== lastNodeHash;
+        lastNodeHash = newHash;
+
+        topoData = data;
+        updateSummary(data.summary || {}, data.digital_twin || {});
+
+        if (changed || !document.getElementById('topology-map').querySelector('.topo-node')) {
+            renderMap();
+        } else {
+            (data.nodes||[]).forEach(node => {
+                const el = document.querySelector(`.topo-node[data-ip="${node.ip}"]`);
+                if (!el) return;
+                const risk = node.risk_level || 'seguro';
+                let cls = `topo-node risk-${risk}`;
+                if (selectedIp === node.ip) cls += ' selected';
+                if (node.is_gateway) cls += ' is-gateway';
+                if (node.recent_change) cls += ' recent-change';
+                el.className = cls;
+            });
+            drawConnections();
+        }
+    } catch (e) {
+        console.error('Topology refresh error:', e);
+        if (!topoData.nodes?.length) {
+            document.getElementById('topology-map').innerHTML =
+                `<div class="text-xs text-red-400 text-center py-20">Error: ${e.message}</div>`;
+        }
+    }
+}
+
+function renderMap() {
+    const container = document.getElementById('topology-map');
+    const nodes = (topoData.nodes || []).filter(nodePassesFilter);
+    if (!nodes.length) {
+        container.innerHTML = '<div class="text-xs text-gray-500 text-center py-20">Sin dispositivos que coincidan con el filtro.</div>';
+        document.getElementById('topology-svg').innerHTML = '';
+        return;
+    }
+
+    const byCat = {};
+    nodes.forEach(n => {
+        const cat = n.device_type || 'Otro';
+        if (!byCat[cat]) byCat[cat] = [];
+        byCat[cat].push(n);
+    });
+    const order = ['Gateway','Router','Switch','Servidor','PC','Laptop','Celular','Tablet','IoT','Impresora','Smart TV','Otro'];
+    let html = '';
+    order.forEach(cat => {
+        if (!byCat[cat]?.length) return;
+        html += `<div class="cat-section" data-category="${cat}">
+            <div class="cat-title">${cat} (${byCat[cat].length})</div>
+            <div class="cat-row">${byCat[cat].map(renderNodeCard).join('')}</div>
+        </div>`;
+    });
+    container.innerHTML = html;
+    requestAnimationFrame(drawConnections);
+}
+
+function closePanel() {
+    document.getElementById('side-panel').classList.remove('open');
+    selectedIp = null;
+    renderMap();
+}
+
+async function refreshDevice(ip) {
+    await refreshTopology(true);
+    if (selectedIp === ip) selectNode(ip);
+}
+
+function openNetwork(ip) {
+    window.location.href = '/network';
+}
+
+function generateReport(ip) {
+    const node = (topoData.nodes||[]).find(n => n.ip === ip);
+    if (!node) return;
+    const lines = [
+        'NOVUS — Reporte Gemelo Digital Topology', '========================================',
+        `Generado: ${new Date().toLocaleString()}`, `IP: ${node.ip}`, `MAC: ${fmt(node.mac)}`,
+        `Nombre: ${fmt(node.hostname||node.name)}`, `Fabricante: ${fmt(node.vendor)}`,
+        `Tipo: ${fmt(node.device_type)}`, `Función: ${node.network_function||''}`,
+        `Riesgo: ${fmt(node.risk_label)}`, `Segmento: ${fmt(node.segment)}`,
+        `Estado AIE: ${node.asset_status_label || node.status_display || '—'}`,
+        `Trust Score: ${node.trust_score ?? '—'}%`,
+        `Puertos: ${(node.open_ports||[]).map(p=>p.port).join(', ')||'No detectados'}`,
+        `Vulnerabilidades: ${node.vulnerabilities_count||0}`,
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `NOVUS-topology-${ip}.txt`;
+    a.click();
+}
+
+document.getElementById('topology-search').addEventListener('input', e => {
+    searchQuery = (e.target.value || '').toLowerCase();
+    renderMap();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    refreshTopology(false);
+    refreshMonitorAndTopology();
+    refreshTimer = NovusAdaptivePoll
+        ? NovusAdaptivePoll.create(() => { if (realtimeEnabled) refreshMonitorAndTopology(); }, { baseMs: 8000, minMs: 5000, maxMs: 30000, revisionKey: '_topoMonitorRev' })
+        : setInterval(() => { if (realtimeEnabled) refreshMonitorAndTopology(); }, 8000);
+    window.addEventListener('resize', () => requestAnimationFrame(drawConnections));
+});
+
+async function refreshMonitorAndTopology() {
+    let force = false;
+    try {
+        const r = await fetch('/api/network/monitor/status', { credentials: 'same-origin' });
+        const d = await r.json();
+        const m = d.monitor || {};
+        if (m.mode === 'intensive') force = true;
+        if (m.revision && m.revision !== window._topoMonitorRev) {
+            window._topoMonitorRev = m.revision;
+            force = true;
+        }
+    } catch (_) {}
+    await refreshTopology(force);
+}
+</script>
+{% include 'partials/global_search.html' %}
+{% include 'partials/ai_kernel_panel.html' %}
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Acceso Sectorial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e0e6ed;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 123, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .login-container {
+            background: rgba(15, 20, 25, 0.9);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            max-width: 500px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.8), transparent);
+            animation: scan 3s linear infinite;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            color: #00ff88;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            letter-spacing: 2px;
+        }
+        
+        .logo p {
+            color: #8892b0;
+            font-size: 1.1em;
+            text-shadow: 0 0 10px rgba(136, 146, 176, 0.3);
+        }
+        
+        .sector-selector {
+            margin-bottom: 25px;
+        }
+        
+        .sector-selector label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .sector-selector select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        
+        .sector-selector select:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(30, 60, 114, 0.3);
+        }
+        
+        .security-notice {
+            margin-top: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #ffc107;
+            border-radius: 5px;
+        }
+        
+        .security-notice h4 {
+            color: #856404;
+            margin-bottom: 8px;
+        }
+        
+        .security-notice p {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .sector-info {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .sector-info h4 {
+            color: #004085;
+            margin-bottom: 8px;
+        }
+        
+        .sector-info p {
+            color: #004085;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>NOVUS</h1>
+            <p>Sistema de Acceso Sectorial Seguro</p>
+        </div>
+        
+        {% if error_param %}
+        <div class="error-message">
+            {% if error_param == 'dispositivo_no_valido' %}
+            Dispositivo no válido. Por favor, inicie sesión nuevamente.
+            {% else %}
+            Error de autenticación. Verifique sus credenciales.
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <form method="post" action="/sector-auth">
+            <div class="sector-selector">
+                <label for="sector">Seleccionar Sector:</label>
+                <select name="sector" id="sector" required>
+                    <option value="">-- Seleccione un sector --</option>
+                    <option value="fintech">Sector Fintech</option>
+                    <option value="logistica_movil">Sector Logística/Movilidad</option>
+                </select>
+            </div>
+            
+            <div class="sector-info" id="sectorInfo" style="display: none;">
+                <h4 id="sectorTitle"></h4>
+                <p id="sectorDescription"></p>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Corporativo:</label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="ejemplo@novus.local">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Ingrese su contraseña">
+            </div>
+            
+            <button type="submit" class="login-btn">Acceder al Sector</button>
+        </form>
+        
+        <div class="security-notice">
+            <h4>🔐 Aviso de Seguridad</h4>
+            <p>
+                Este sistema utiliza validación de dispositivo. Cada usuario está vinculado a un dispositivo específico. 
+                Cualquier intento de acceso no autorizado será registrado y generará una alerta de seguridad crítica.
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        const sectorSelect = document.getElementById('sector');
+        const sectorInfo = document.getElementById('sectorInfo');
+        const sectorTitle = document.getElementById('sectorTitle');
+        const sectorDescription = document.getElementById('sectorDescription');
+        
+        const sectorData = {
+            'fintech': {
+                title: 'Sector Fintech',
+                description: 'Acceso exclusivo para CISO y CTO. Operaciones financieras y transaccionales.'
+            },
+            'logistica_movil': {
+                title: 'Sector Logística/Movilidad',
+                description: 'Acceso exclusivo para CPO y CSO. Operaciones logísticas y aplicaciones móviles.'
+            }
+        };
+        
+        sectorSelect.addEventListener('change', function() {
+            const selectedSector = this.value;
+            
+            if (selectedSector && sectorData[selectedSector]) {
+                sectorTitle.textContent = sectorData[selectedSector].title;
+                sectorDescription.textContent = sectorData[selectedSector].description;
+                sectorInfo.style.display = 'block';
+            } else {
+                sectorInfo.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

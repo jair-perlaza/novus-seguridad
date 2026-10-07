@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "sensitivity": "balanced",
+  "mode": "block",
+  "block_threshold": 70,
+  "warn_threshold": 45,
+  "whitelist_domains": [],
+  "blacklist_domains": [
+    "evil-proof-swarm.example"
+  ],
+  "allowed_download_extensions": [],
+  "quarantine_enabled": true,
+  "monitor_downloads": true,
+  "monitor_hosts_proxy_dns": true,
+  "cycle_interval_sec": 8,
+  "max_events_per_cycle": 20
+}

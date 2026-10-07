@@ -1,0 +1,316 @@
+.novus-report-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    background: rgba(3, 6, 12, 0.88);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+}
+.novus-report-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+.novus-report-overlay.hidden {
+    display: flex;
+}
+.novus-report-dialog {
+    width: min(960px, 96vw);
+    max-height: 90vh;
+    background: #0c121d;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 80px rgba(93, 95, 239, 0.15);
+}
+.novus-report-dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #1e293b;
+}
+.novus-report-dialog-header h2 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0;
+    color: #e2e8f0;
+}
+.novus-report-meta {
+    font-size: 0.65rem;
+    color: #64748b;
+    margin-top: 0.35rem;
+}
+.novus-report-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+}
+.novus-report-dialog-body {
+    padding: 1.25rem 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+}
+.novus-report-section {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #1e293b;
+}
+.novus-report-section h3 {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #818cf8;
+    margin: 0 0 0.5rem;
+}
+.novus-report-section ul {
+    margin: 0.5rem 0 0 1rem;
+    padding: 0;
+}
+.novus-report-section li {
+    margin-bottom: 0.35rem;
+}
+.novus-report-muted {
+    color: #64748b;
+    font-style: italic;
+}
+.novus-report-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #1e293b;
+}
+.novus-report-btn {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+.novus-report-btn.secondary {
+    background: #1e293b;
+    color: #94a3b8;
+}
+.novus-report-btn.primary {
+    background: #4f46e5;
+    color: #fff;
+}
+.novus-report-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: flex-end;
+}
+.novus-report-action {
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0.35rem 0.55rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.novus-report-action-details {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+.novus-report-action-details:hover {
+    background: #4f46e5;
+}
+.novus-report-action-pdf {
+    background: #1e293b;
+    color: #fecaca;
+}
+.novus-report-action-pdf:hover {
+    background: #b91c1c;
+    color: #fff;
+}
+.novus-report-action-kernel {
+    background: rgba(79, 70, 229, 0.2);
+    border: 1px solid rgba(129, 140, 248, 0.4);
+    color: #c7d2fe;
+}
+.novus-report-action-kernel:hover {
+    background: #4f46e5;
+    color: #fff;
+}
+
+.novus-report-tabs {
+    display: flex;
+    gap: 0.35rem;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid #1e293b;
+}
+.novus-report-tab {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.55rem 0.85rem;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+.novus-report-tab.active {
+    color: #c7d2fe;
+    border-bottom-color: #6366f1;
+}
+.novus-report-tab.hidden {
+    display: none;
+}
+.novus-report-doc-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #e2e8f0;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.novus-report-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+.novus-report-kpi {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 0.5rem 0.65rem;
+}
+.novus-report-kpi-label {
+    display: block;
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.05em;
+}
+.novus-report-kpi-value {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+.novus-report-callout {
+    background: rgba(79, 70, 229, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
+    color: #cbd5e1;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+.novus-report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.68rem;
+    margin-top: 0.35rem;
+}
+.novus-report-table th,
+.novus-report-table td {
+    border: 1px solid #1e293b;
+    padding: 0.35rem 0.45rem;
+    text-align: left;
+    vertical-align: top;
+}
+.novus-report-table th {
+    background: #111827;
+    color: #94a3b8;
+    font-weight: 700;
+}
+.novus-report-finding {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 0.75rem;
+    margin-bottom: 0.65rem;
+}
+.novus-report-finding header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+.novus-report-finding h4 {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #e2e8f0;
+}
+.novus-report-badge {
+    font-size: 0.58rem;
+    font-weight: 800;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    background: #1e293b;
+}
+.novus-report-meta-line {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    margin: 0.25rem 0;
+}
+.novus-report-rec {
+    font-size: 0.68rem;
+    color: #a5b4fc;
+    margin: 0.35rem 0 0;
+}
+.novus-report-kernel {
+    font-size: 0.75rem;
+    line-height: 1.5;
+}
+.novus-report-priority-block h4 {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: #818cf8;
+    margin: 0.5rem 0 0.25rem;
+}
+.novus-report-evidence-list {
+    margin: 0.35rem 0 0 1rem;
+    padding: 0;
+}
+.novus-sev-critico { color: #f87171 !important; }
+.novus-sev-alto { color: #fb923c !important; }
+.novus-sev-medio { color: #fbbf24 !important; }
+.novus-sev-bajo { color: #86efac !important; }
+.novus-sev-info { color: #94a3b8 !important; }
+.novus-report-tech-note {
+    font-size: 0.65rem;
+    color: #fbbf24;
+    margin-bottom: 0.5rem;
+}
+.novus-report-tech-pre {
+    font-size: 0.58rem;
+    max-height: 50vh;
+    overflow: auto;
+    background: #020617;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 0.75rem;
+    color: #94a3b8;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.hidden {
+    display: none !important;
+}

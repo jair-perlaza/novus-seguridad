@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Centro de Evidencias</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #06090f; color: white; font-family: 'Inter', sans-serif; }
+        .ev-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 12px; }
+        .risk-critico { color: #ef4444; }
+        .risk-alto { color: #f97316; }
+        .risk-medio { color: #eab308; }
+        .risk-bajo { color: #94a3b8; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="centro_evidencias">
+    {% set active_module = 'centro_evidencias' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header>
+            <h1 class="text-2xl font-bold uppercase tracking-tighter">Centro de Evidencias</h1>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest">Trazabilidad unificada — solo eventos reales de motores NOVUS</p>
+        </header>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-[10px]">
+            <div class="ev-card p-3"><div id="ev-total" class="text-lg font-bold text-indigo-400">{{ summary.total }}</div><div class="text-gray-500">Evidencias totales</div></div>
+            <div class="ev-card p-3"><div id="ev-amenazas" class="text-lg font-bold text-red-400">{{ summary.by_category.get('amenaza_detectada', 0) }}</div><div class="text-gray-500">Amenazas</div></div>
+            <div class="ev-card p-3"><div id="ev-bloqueos" class="text-lg font-bold text-orange-400">{{ summary.by_category.get('ip_bloqueada', 0) + summary.by_category.get('dispositivo_bloqueado', 0) }}</div><div class="text-gray-500">Bloqueos</div></div>
+            <div class="ev-card p-3"><div id="ev-remediaciones" class="text-lg font-bold text-green-400">{{ summary.by_category.get('remediacion_ejecutada', 0) }}</div><div class="text-gray-500">Remediaciones</div></div>
+        </div>
+
+        <div id="forensic-integrity-panel" class="ev-card p-4 hidden">
+            <h2 class="text-xs font-bold uppercase text-gray-400 mb-2"><i class="fas fa-link mr-1"></i>Integridad forense (LIVE)</h2>
+            <div id="forensic-integrity-body" class="text-[11px] text-gray-300"></div>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            <select id="filter-categoria" class="bg-[#06090f] border border-gray-800 rounded-lg px-3 py-2 text-xs" onchange="reloadEvidence()">
+                <option value="">Todas las categorías</option>
+                <option value="amenaza_detectada">Amenaza detectada</option>
+                <option value="ip_bloqueada">IP bloqueada</option>
+                <option value="vulnerabilidad_detectada">Vulnerabilidad</option>
+                <option value="remediacion_ejecutada">Remediación</option>
+                <option value="dispositivo_autorizado">Dispositivo autorizado</option>
+                <option value="dispositivo_bloqueado">Dispositivo bloqueado</option>
+                <option value="comportamiento_anomalo">Comportamiento anómalo</option>
+                <option value="incidente_generado">Incidente</option>
+            </select>
+            <input id="filter-motor" type="text" placeholder="Filtrar por motor..." class="bg-[#06090f] border border-gray-800 rounded-lg px-3 py-2 text-xs flex-1 min-w-[160px]">
+            <button onclick="reloadEvidence()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-xs font-bold">FILTRAR</button>
+            <button onclick="backfillEvidence()" class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-xs">Importar histórico</button>
+        </div>
+
+        <div id="evidence-list" class="space-y-3">
+            {% for ev in evidence %}
+            <div class="ev-card p-4">
+                <div class="flex flex-wrap justify-between gap-2 items-start">
+                    <div>
+                        <div class="text-[10px] text-gray-500">{{ ev.fecha }} {{ ev.hora }} · {{ ev.motor }}</div>
+                        <div class="text-sm font-bold mt-1">{{ ev.categoria_label or ev.categoria }}</div>
+                    </div>
+                    <span class="text-[10px] font-bold uppercase risk-{{ ev.nivel_riesgo }}">{{ ev.nivel_riesgo }}</span>
+                </div>
+                <p class="text-[11px] text-gray-300 mt-2">{{ ev.descripcion }}</p>
+                <div class="mt-2 flex flex-wrap gap-4 text-[10px] text-gray-400">
+                    <span><i class="fas fa-bolt mr-1"></i>{{ ev.accion_ejecutada or '—' }}</span>
+                    <span><i class="fas fa-check mr-1"></i>{{ ev.resultado or ev.estado or '—' }}</span>
+                    {% if ev.nivel_confianza %}<span><i class="fas fa-shield mr-1"></i>Confianza: {{ ev.nivel_confianza }}</span>{% endif %}
+                    <span class="font-mono text-gray-600">{{ ev.id }}</span>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-sm">Sin evidencias registradas aún. Las evidencias se generan automáticamente cuando los motores detectan amenazas, bloquean IPs, ejecutan remediaciones u otras acciones de defensa.</p>
+            {% endfor %}
+        </div>
+
+        {% include 'partials/global_search.html' %}
+        {% include 'partials/ai_kernel_panel.html' %}
+    </main>
+    <script>
+    function renderEvidence(ev) {
+        const conf = ev.nivel_confianza ? `<span><i class="fas fa-shield mr-1"></i>Confianza: ${ev.nivel_confianza}</span>` : '';
+        return `<div class="ev-card p-4">
+            <div class="flex flex-wrap justify-between gap-2 items-start">
+                <div><div class="text-[10px] text-gray-500">${ev.fecha} ${ev.hora} · ${ev.motor}</div>
+                <div class="text-sm font-bold mt-1">${ev.categoria_label || ev.categoria}</div></div>
+                <span class="text-[10px] font-bold uppercase risk-${ev.nivel_riesgo}">${ev.nivel_riesgo}</span>
+            </div>
+            <p class="text-[11px] text-gray-300 mt-2">${ev.descripcion || '—'}</p>
+            <div class="mt-2 flex flex-wrap gap-4 text-[10px] text-gray-400">
+                <span><i class="fas fa-bolt mr-1"></i>${ev.accion_ejecutada || '—'}</span>
+                <span><i class="fas fa-check mr-1"></i>${ev.resultado || ev.estado || '—'}</span>
+                ${conf}
+                <span class="font-mono text-gray-600">${ev.id}</span>
+            </div>
+        </div>`;
+    }
+    async function reloadEvidence() {
+        const cat = document.getElementById('filter-categoria').value;
+        const mot = document.getElementById('filter-motor').value.trim();
+        let url = '/api/system/evidence-center?limit=100';
+        if (cat) url += '&categoria=' + encodeURIComponent(cat);
+        if (mot) url += '&motor=' + encodeURIComponent(mot);
+        const r = await fetch(url, {credentials: 'same-origin'});
+        const data = await r.json();
+        if (data.status !== 'success') return;
+        const s = data.summary || {};
+        document.getElementById('ev-total').textContent = s.total || 0;
+        document.getElementById('ev-amenazas').textContent = (s.by_category || {}).amenaza_detectada || 0;
+        const bloq = ((s.by_category || {}).ip_bloqueada || 0) + ((s.by_category || {}).dispositivo_bloqueado || 0);
+        document.getElementById('ev-bloqueos').textContent = bloq;
+        document.getElementById('ev-remediaciones').textContent = (s.by_category || {}).remediacion_ejecutada || 0;
+        const list = document.getElementById('evidence-list');
+        const items = data.evidence || [];
+        list.innerHTML = items.length ? items.map(renderEvidence).join('') : '<p class="text-gray-500 text-sm">Sin evidencias para el filtro seleccionado.</p>';
+    }
+    async function backfillEvidence() {
+        await fetch('/api/system/evidence-center?backfill=1&limit=50', {credentials: 'same-origin'});
+        reloadEvidence();
+    }
+    async function loadForensicIntegrity() {
+        try {
+            const r = await fetch('/api/forensic-evidence/summary', {credentials:'same-origin'});
+            if (!r.ok) return;
+            const d = await r.json();
+            if (d.status !== 'success') return;
+            const panel = document.getElementById('forensic-integrity-panel');
+            const body = document.getElementById('forensic-integrity-body');
+            panel.classList.remove('hidden');
+            body.innerHTML = `
+                <div>Ledger records: ${d.ledger_records ?? 'N/A'}</div>
+                <div>Verified: ${d.verified_count ?? 'N/A'} · Compromised: ${d.compromised_count ?? 'N/A'}</div>
+                <div>Chain status: ${d.chain_status ?? 'N/A'}</div>
+                <div class="text-gray-500 mt-1">source: /api/forensic-evidence/summary</div>`;
+        } catch (e) { /* RBAC o no disponible */ }
+    }
+    loadForensicIntegrity();
+    setInterval(reloadEvidence, 30000);
+    </script>
+</body>
+</html>

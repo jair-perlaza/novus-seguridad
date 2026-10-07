@@ -1,0 +1,66 @@
+<script type="application/json" id="novus-membership-catalog">{{ catalog | tojson }}</script>
+<script>
+(function () {
+    const catalogEl = document.getElementById('novus-membership-catalog');
+    const catalog = catalogEl ? JSON.parse(catalogEl.textContent) : { plans: [], addons: [] };
+
+    window.NOVUS_MEMBERSHIP_CATALOG = catalog;
+
+    window.selectPlan = function (planId, element) {
+        document.querySelectorAll('.nv-plan-card').forEach(c => c.classList.remove('selected'));
+        if (element) element.classList.add('selected');
+        const hidden = document.getElementById('plan_seleccionado');
+        if (hidden) hidden.value = planId;
+        const sel = document.getElementById('kernel-plan-select');
+        if (sel) sel.value = planId;
+    };
+
+    function explainPlan(planId) {
+        const plan = (catalog.plans || []).find(p => p.id === planId);
+        if (!plan) return 'Plan no encontrado.';
+        const lines = [
+            'Plan: ' + plan.name + ' (' + plan.price_label + ')',
+            'Cliente ideal: ' + (plan.client_type || ''),
+            'Equipos: ' + (plan.endpoints_label || ''),
+            '',
+            'Resumen: ' + (plan.kernel_summary || ''),
+            '',
+            'Ideal para: ' + (plan.ideal_for || ''),
+            '',
+            'Capacidades verificadas (' + (plan.feature_count || 0) + '):'
+        ];
+        (plan.features || []).forEach(f => lines.push('• ' + f.label + (f.note ? ' [' + f.note + ']' : '')));
+        if (catalog.enterprise_not_implemented && planId === 'enterprise') {
+            lines.push('', 'No incluido (no implementado en software):');
+            catalog.enterprise_not_implemented.forEach(g => lines.push('— ' + g.name + ': ' + g.reason));
+        }
+        lines.push('', catalog.disclaimer || '');
+        return lines.join('\n');
+    }
+
+    window.updateKernelPreview = function () {
+        const sel = document.getElementById('kernel-plan-select');
+        const body = document.getElementById('kernel-answer-body');
+        if (!body) return;
+        const planId = sel ? sel.value : (document.getElementById('plan_seleccionado') || {}).value || 'essential';
+        body.textContent = explainPlan(planId);
+    };
+
+    window.consultKernelMembership = function () {
+        const modal = document.getElementById('nv-kernel-modal');
+        if (!modal) return;
+        modal.classList.add('open');
+        const planId = (document.getElementById('plan_seleccionado') || {}).value || 'business';
+        const sel = document.getElementById('kernel-plan-select');
+        if (sel) sel.value = planId;
+        updateKernelPreview();
+    };
+
+    window.closeKernelModal = function () {
+        const modal = document.getElementById('nv-kernel-modal');
+        if (modal) modal.classList.remove('open');
+    };
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeKernelModal(); });
+})();
+</script>

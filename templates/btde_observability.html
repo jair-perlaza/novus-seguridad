@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <title>BTDE — Behavioral Threat Detection</title>
+  <style>
+    :root { --bg:#0f1419; --fg:#e7ecf1; --muted:#8b9aab; --acc:#3dd68c; --card:#1a222c; }
+    body { margin:0; font-family: "Segoe UI", system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+    main { max-width:960px; margin:0 auto; padding:2rem 1.25rem; }
+    pre { background:var(--card); border:1px solid #2a3542; border-radius:8px; padding:12px; overflow:auto; font-size:.8rem; }
+    a { color:var(--acc); }
+  </style>
+  {% include 'partials/responsive_assets.html' %}
+</head>
+<body>
+<main>
+  <h1>BTDE — Behavioral Threat Detection Engine</h1>
+  <p class="sub" style="color:#8b9aab">Estado LIVE vía API — sin datos inventados.</p>
+  <pre id="raw">Cargando…</pre>
+  <p><a href="/dashboard">Dashboard</a> · <a href="/api/btde/status">API status</a></p>
+</main>
+<script>
+async function load() {
+  try {
+    const r = await (window.NovusFetch ? NovusFetch.fetchJson('/api/btde/status') : fetch('/api/btde/status', {credentials:'same-origin'}).then(x=>x.json()));
+    document.getElementById('raw').textContent = JSON.stringify(r, null, 2);
+  } catch (e) {
+    document.getElementById('raw').textContent = 'NOT VERIFIED: ' + e.message;
+  }
+}
+load();
+setInterval(load, 15000);
+</script>
+</body>
+</html>

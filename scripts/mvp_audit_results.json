@@ -1,0 +1,242 @@
+{
+  "modules": {
+    "page_dashboard": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "page_network": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "page_xdr": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "page_incidentes": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "page_vulnerabilidades": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "page_reportes": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "page_configuracion": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "page_topology": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "page_inteligencia": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "page_siem": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "page_endpoints": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "page_automatizacion": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "page_layout_novus": {
+      "pass": false,
+      "detail": "HTTP 302 0.0s"
+    },
+    "api_dashboard_live": {
+      "pass": false,
+      "detail": "HTTP 401 0.14s"
+    },
+    "api_network_nodes": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    },
+    "api_network_info": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    },
+    "api_security_summary": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    },
+    "api_security_threats": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    },
+    "api_reports_list": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    },
+    "api_playbooks": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    },
+    "api_search": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    },
+    "api_ai_status": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    },
+    "api_ai_context": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    },
+    "api_threat_intel": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    },
+    "api_audit_sources": {
+      "pass": false,
+      "detail": "HTTP 401 0.03s"
+    },
+    "api_sector_shield": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    },
+    "api_vault_summary": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    },
+    "api_endpoints_live": {
+      "pass": false,
+      "detail": "HTTP 401 0.04s"
+    }
+  },
+  "kernel": {
+    "deep_scan": {
+      "pass": false,
+      "detail": "0.04s err=False"
+    },
+    "vulns": {
+      "pass": false,
+      "detail": "0.04s err=False"
+    },
+    "sistema": {
+      "pass": false,
+      "detail": "0.04s err=False"
+    },
+    "devices": {
+      "pass": false,
+      "detail": "0.04s err=False"
+    },
+    "network": {
+      "pass": false,
+      "detail": "0.08s err=False"
+    },
+    "slow_pc": {
+      "pass": false,
+      "detail": "0.05s err=False"
+    }
+  },
+  "security": {},
+  "db": {
+    "database_exists": {
+      "pass": true,
+      "detail": ""
+    },
+    "table_usuarios": {
+      "pass": true,
+      "detail": "presente"
+    },
+    "table_alertas": {
+      "pass": true,
+      "detail": "presente"
+    },
+    "table_vulnerabilidades": {
+      "pass": true,
+      "detail": "presente"
+    },
+    "table_playbooks": {
+      "pass": true,
+      "detail": "presente"
+    },
+    "table_logs": {
+      "pass": true,
+      "detail": "presente"
+    },
+    "table_inteligencia_casos": {
+      "pass": true,
+      "detail": "presente"
+    },
+    "rows_usuarios": {
+      "pass": true,
+      "detail": "32"
+    },
+    "rows_alertas": {
+      "pass": true,
+      "detail": "1803"
+    },
+    "rows_vulnerabilidades": {
+      "pass": true,
+      "detail": "4"
+    },
+    "rows_playbooks": {
+      "pass": true,
+      "detail": "10"
+    },
+    "rows_logs": {
+      "pass": true,
+      "detail": "32815"
+    },
+    "rows_inteligencia_casos": {
+      "pass": true,
+      "detail": "707"
+    }
+  },
+  "performance": {
+    "dashboard_api_ms": {
+      "pass": true,
+      "detail": "100"
+    },
+    "kernel_plan_ms": {
+      "pass": true,
+      "detail": "48"
+    },
+    "cpu_pct": {
+      "pass": true,
+      "detail": "60.2"
+    },
+    "ram_pct": {
+      "pass": true,
+      "detail": "82.6"
+    }
+  },
+  "scores": {
+    "stability_pct": 27.8,
+    "functional_operational_pct": 0.0,
+    "integration_pct": 0.0,
+    "real_data_pct": 78.4,
+    "functional_coverage_pct": 0.0,
+    "module_pages_pct": 0.0,
+    "kernel_pct": 0.0,
+    "database_pct": 100.0
+  },
+  "data_audit": {
+    "counts": {
+      "REAL": 29,
+      "SIN FUENTE": 2,
+      "SIMULADO": 0,
+      "PENDIENTE": 3,
+      "NO IMPLEMENTADO": 2,
+      "ELIMINADO": 1
+    },
+    "total": 37,
+    "real_pct": 78.4
+  },
+  "mvp_ready": false,
+  "critical_blockers": [
+    "Kernel IA < 80%",
+    "Módulos < 70%"
+  ]
+}

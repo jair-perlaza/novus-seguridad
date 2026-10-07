@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS | Centro de Operaciones</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/novus-metrics.js') }}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        :root {
+            --bg-dark: #05080a;
+            --panel-bg: rgba(13, 25, 41, 0.8);
+            --neon-blue: #00f2ff;
+            --neon-green: #39ff14;
+            --neon-red: #ff3131;
+            --neon-orange: #ff9d00;
+            --text-gray: #a0aab4;
+            --border: rgba(0, 242, 255, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background-color: var(--bg-dark); 
+            color: white; 
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            padding: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 0 10px;
+        }
+
+        .brand { font-size: 20px; font-weight: 800; color: var(--neon-blue); text-shadow: 0 0 10px rgba(0,242,255,0.5); }
+        .system-time { color: var(--text-gray); font-family: monospace; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: auto 400px auto;
+            gap: 15px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .kpi-box {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-box::before {
+            content: ""; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--neon-blue);
+        }
+
+        .kpi-title { font-size: 11px; color: var(--text-gray); text-transform: uppercase; margin-bottom: 8px; display: block; }
+        .kpi-value { font-size: 22px; font-weight: bold; font-family: 'Courier New', monospace; }
+
+        .main-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .col-span-2 { grid-column: span 2; }
+        .col-span-3 { grid-column: span 3; }
+        .col-span-4 { grid-column: span 4; }
+
+        h2 { 
+            font-size: 13px; margin-bottom: 15px; color: var(--text-gray); 
+            text-transform: uppercase; display: flex; align-items: center; gap: 10px;
+        }
+        h2 i { color: var(--neon-blue); }
+
+        .btn-network {
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            text-transform: uppercase;
+            font-size: 12px;
+            margin-top: auto;
+        }
+
+        .btn-network:hover {
+            background: var(--neon-blue);
+            color: black;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        .event-list { 
+            font-family: 'Courier New', monospace; 
+            font-size: 12px; 
+            overflow-y: auto;
+            max-height: 250px;
+        }
+        .event-item { 
+            padding: 8px 5px; 
+            border-bottom: 1px solid rgba(255,255,255,0.03); 
+            display: flex; 
+            justify-content: space-between; 
+        }
+        .timestamp { color: #555; margin-right: 10px; }
+
+        @media (max-width: 1000px) {
+            .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+            .col-span-2, .col-span-3, .col-span-4 { grid-column: span 2; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand">NOVUS <span style="font-weight: 200; font-size: 14px;">| CYBER-GUARD</span></div>
+    <div class="system-time" id="clock">00:00:00</div>
+</header>
+
+<div id="novus-auto-monitor" class="main-card col-span-4" style="margin-bottom: 12px; max-width: 1600px; margin-left: auto; margin-right: auto; display: none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div>
+            <span class="kpi-title">Monitoreo automático</span>
+            <div id="novus-monitor-status-text" style="font-size:13px;color:var(--text-gray);margin-top:4px;">Iniciando…</div>
+        </div>
+        <div style="flex:1;min-width:200px;max-width:480px;">
+            <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+                <div id="novus-monitor-progress-bar" style="height:100%;width:0%;background:var(--neon-blue);transition:width 0.4s;"></div>
+            </div>
+            <div id="novus-monitor-phase-label" style="font-size:10px;color:var(--text-gray);margin-top:4px;"></div>
+        </div>
+        <a id="novus-monitor-report-link" href="/reportes" style="font-size:11px;color:var(--neon-blue);text-decoration:none;display:none;">Ver informe →</a>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div class="kpi-box">
+        <span class="kpi-title">Infraestructura</span>
+        <span class="kpi-value" id="status-val" style="color: var(--neon-green);">Esperando datos reales...</span>
+    </div>
+    <div class="kpi-box">
+        <span class="kpi-title">Nodos Activos</span>
+        <span class="kpi-value" id="nodos-val">Esperando datos reales...</span>
+    </div>
+    <div class="kpi-box">
+        <span class="kpi-title">Tráfico (Actual)</span>
+        <span class="kpi-value" id="trafico-val">Esperando datos reales...</span>
+    </div>
+    <div class="kpi-box" style="border-color: var(--neon-red);">
+        <span class="kpi-title">Amenazas Bloqueadas</span>
+        <span class="kpi-value" id="amenazas-val" style="color: var(--neon-red);">Esperando datos reales...</span>
+    </div>
+
+    <div class="main-card col-span-4" id="web-shield-panel">
+        <h2><i class="fas fa-globe-americas"></i> Web Shield</h2>
+        <p style="font-size: 11px; color: var(--text-gray); margin-bottom: 12px;">
+            Motor de protección web — contadores desde eventos reales (<code>/api/web-shield/status</code>).
+        </p>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 12px; margin-bottom: 12px;">
+            <div>Analizados: <strong id="dash-ws-sites">—</strong></div>
+            <div>Bloqueados: <strong id="dash-ws-blocked">—</strong></div>
+            <div>Descargas: <strong id="dash-ws-dl">—</strong></div>
+            <div>Cuarentena: <strong id="dash-ws-q">—</strong></div>
+        </div>
+        <div style="font-size: 10px; color: #666;">Estado: <span id="dash-ws-state">—</span> · <span id="dash-ws-upd">—</span></div>
+        <button type="button" onclick="window.location.href='/web-shield'" class="btn-network" style="margin-top: 12px; max-width: 280px;">
+            Abrir panel Web Shield
+        </button>
+    </div>
+
+    <div class="main-card col-span-4" id="mail-shield-panel">
+        <h2><i class="fas fa-envelope-open-text"></i> Mail Shield</h2>
+        <p style="font-size: 11px; color: var(--text-gray); margin-bottom: 12px;">Correo corporativo — métricas solo tras OAuth y análisis real.</p>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 12px; margin-bottom: 12px;">
+            <div>Analizados: <strong id="dash-ms-analyzed">—</strong></div>
+            <div>Cuarentena: <strong id="dash-ms-q">—</strong></div>
+            <div>Phishing: <strong id="dash-ms-phish">—</strong></div>
+            <div>Integración: <strong id="dash-ms-integ">—</strong></div>
+        </div>
+        <button type="button" onclick="window.location.href='/mail-shield'" class="btn-network" style="margin-top: 8px; max-width: 280px;">Abrir Mail Shield</button>
+    </div>
+
+    <div class="main-card col-span-3">
+        <h2><i class="fas fa-chart-line"></i> Tráfico de Red (tiempo real)</h2>
+        <div style="flex-grow: 1;">
+            <canvas id="trafficChart"></canvas>
+        </div>
+    </div>
+
+    <div class="main-card">
+        <h2><i class="fas fa-shield-alt"></i> Seguridad Activa</h2>
+        <p style="font-size: 12px; color: var(--text-gray); margin-bottom: 15px;">Monitor de integridad ejecutando validaciones en tiempo real.</p>
+        <div style="margin-bottom: 20px;">
+            <div style="display:flex; justify-content:space-between; font-size: 11px; margin-bottom: 5px;">
+                <span>Carga del Sistema</span>
+                <span id="carga-texto">0%</span>
+            </div>
+            <div style="height: 4px; background: #1a1a1a; width: 100%;">
+                <div id="carga-bar" style="height: 100%; background: var(--neon-blue); width: 0%;"></div>
+            </div>
+        </div>
+        <button onclick="window.location.href='{{ url_for('network.network_route') }}'" class="btn-network">
+            Visualizar Network Map
+        </button>
+    </div>
+
+    <div class="main-card col-span-4">
+        <h2><i class="fas fa-microchip"></i> Registro de Incidentes Recientes</h2>
+        <div class="event-list" id="event-log">
+            <!-- Los eventos reales se insertarán aquí -->
+            <div class="event-item">Espereando datos del núcleo...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Reloj del Sistema
+    function updateClock() {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+
+    // 2. Configuración Inicial del Gráfico (Vacío)
+    const ctx = document.getElementById('trafficChart').getContext('2d');
+    const trafficChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [], 
+            datasets: [{
+                label: 'Tráfico',
+                data: [],
+                borderColor: '#00f2ff',
+                backgroundColor: 'rgba(0, 242, 255, 0.05)',
+                fill: true,
+                tension: 0.4,
+                borderWidth: 2,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#555' } },
+                x: { grid: { display: false }, ticks: { color: '#555' } }
+            }
+        }
+    });
+
+    // 3. FUNCIÓN PARA CARGAR DATOS REALES
+    // Reemplaza 'TU_URL_API' con la dirección de tu servidor NOVUS
+   async function fetchNovusData() {
+    try {
+
+        // =========================
+        // PETICIONES REALES
+        // =========================
+        const [
+            networkResponse,
+            securityResponse,
+            dashboardResponse,
+            webShieldResponse,
+            mailShieldResponse
+        ] = await Promise.all([
+            fetch('/api/network/nodes'),
+            fetch('/api/security/summary'),
+            fetch('/api/dashboard/live'),
+            fetch('/api/web-shield/status').catch(() => null),
+            fetch('/api/mail-shield/status').catch(() => null)
+        ]);
+
+        const networkData = await networkResponse.json();
+        const securityData = await securityResponse.json();
+        const dashboardData = await dashboardResponse.json();
+        let webShieldData = null;
+        if (webShieldResponse && webShieldResponse.ok) {
+            webShieldData = await webShieldResponse.json();
+        }
+        let mailShieldData = null;
+        if (mailShieldResponse && mailShieldResponse.ok) {
+            mailShieldData = await mailShieldResponse.json();
+        }
+
+        if (webShieldData && webShieldData.stats) {
+            const ws = webShieldData.stats;
+            document.getElementById('dash-ws-sites').textContent = ws.sites_analyzed ?? '0';
+            document.getElementById('dash-ws-blocked').textContent = ws.sites_blocked ?? '0';
+            document.getElementById('dash-ws-dl').textContent = ws.downloads_inspected ?? '0';
+            document.getElementById('dash-ws-q').textContent = ws.files_quarantined ?? '0';
+            document.getElementById('dash-ws-state').textContent = webShieldData.enabled ? 'Activo' : 'Desactivado';
+            document.getElementById('dash-ws-upd').textContent = ws.last_event_at || webShieldData.updated_at || '—';
+        } else {
+            ['dash-ws-sites','dash-ws-blocked','dash-ws-dl','dash-ws-q'].forEach(id => {
+                document.getElementById(id).textContent = 'Sin datos disponibles';
+            });
+            document.getElementById('dash-ws-state').textContent = 'Sin datos disponibles';
+        }
+
+        if (mailShieldData && mailShieldData.stats && mailShieldData.stats.has_data) {
+            const ms = mailShieldData.stats;
+            document.getElementById('dash-ms-analyzed').textContent = ms.emails_analyzed;
+            document.getElementById('dash-ms-q').textContent = ms.emails_quarantined;
+            document.getElementById('dash-ms-phish').textContent = ms.phishing_detected;
+            document.getElementById('dash-ms-integ').textContent = (mailShieldData.integrations && mailShieldData.integrations.summary_message) || '—';
+        } else {
+            ['dash-ms-analyzed','dash-ms-q','dash-ms-phish'].forEach(id => {
+                document.getElementById(id).textContent = 'No existen datos disponibles';
+            });
+            document.getElementById('dash-ms-integ').textContent = (mailShieldData && mailShieldData.integrations && mailShieldData.integrations.summary_message) || 'Integración no configurada';
+        }
+
+        // =========================
+        // DATOS REALES
+        // =========================
+        const nodosReales = networkData.nodes || [];
+        const threatsBlock = securityData.threats || {};
+        const amenazas = (securityData.total_threats ?? threatsBlock.total_threats);
+        const amenazasDisplay = (amenazas === null || amenazas === undefined)
+            ? 'Sin datos disponibles'
+            : amenazas;
+
+        const traficoReal = (typeof NovusMetrics !== 'undefined')
+            ? NovusMetrics.sumTrafficMb(dashboardData.traffic_recv, dashboardData.traffic_sent)
+            : 'Sin datos disponibles';
+        const cpuReal = (typeof dashboardData.cpu === 'number') ? dashboardData.cpu : null;
+
+        document.getElementById('status-val').innerText =
+            dashboardData.status === 'success'
+                ? (nodosReales.length > 0 ? `${nodosReales.length} nodo(s) ARP` : 'Sin nodos ARP detectados')
+                : 'Sin datos disponibles';
+
+        document.getElementById('nodos-val').innerText =
+            nodosReales.length > 0 ? nodosReales.length : 'Sin nodos ARP detectados';
+
+        document.getElementById('trafico-val').innerHTML =
+            traficoReal !== 'Sin datos disponibles'
+                ? `${traficoReal} <small>MB</small>`
+                : 'Sin datos disponibles';
+
+        document.getElementById('amenazas-val').innerText = amenazasDisplay;
+
+        if (cpuReal !== null && cpuReal !== undefined) {
+            document.getElementById('carga-texto').innerText = `${cpuReal}%`;
+            document.getElementById('carga-bar').style.width = `${cpuReal}%`;
+        } else {
+            document.getElementById('carga-texto').innerText = 'Sin datos disponibles';
+            document.getElementById('carga-bar').style.width = '0%';
+        }
+
+        const nowLabel = new Date().toLocaleTimeString();
+        const prevLabels = trafficChart.data.labels.slice(-19);
+        const prevData = trafficChart.data.datasets[0].data.slice(-19);
+        const trafficPoint = (typeof dashboardData.cpu === 'number' && traficoReal !== 'Sin datos disponibles')
+            ? Number(traficoReal)
+            : null;
+
+        trafficChart.data.labels = trafficPoint !== null
+            ? [...prevLabels, nowLabel]
+            : (prevLabels.length ? prevLabels : ['Sin datos disponibles']);
+
+        trafficChart.data.datasets[0].label = 'Tráfico acumulado (Mbps)';
+        trafficChart.data.datasets[0].data = trafficPoint !== null
+            ? [...prevData, trafficPoint]
+            : (prevData.length ? prevData : []);
+
+        trafficChart.update();
+
+        // =========================
+        // LOGS REALES
+        // =========================
+        const logContainer = document.getElementById('event-log');
+
+        if (nodosReales.length > 0) {
+
+            logContainer.innerHTML = nodosReales.map(node => `
+                <div class="event-item">
+                    <span>
+                        <span class="timestamp">
+                            [${new Date().toLocaleTimeString()}]
+                        </span>
+
+                        Nodo detectado:
+                        ${node.ip}
+                        ${node.mac ? '(' + node.mac + ')' : ''}
+                    </span>
+
+                    <span style="color: var(--neon-blue)">
+                        ${node.status || 'Detectado (ARP)'}
+                    </span>
+                </div>
+            `).join('');
+
+        } else {
+
+            logContainer.innerHTML = `
+                <div class="event-item">
+                    No se detectaron nodos reales
+                </div>
+            `;
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Error obteniendo datos reales de NOVUS:",
+            error
+        );
+
+    }
+}
+
+// =========================
+// ACTUALIZACION AUTOMATICA
+// =========================
+fetchNovusData();
+
+setInterval(fetchNovusData, 10000);
+
+</script>
+<script src="{{ url_for('static', filename='js/novus-continuous-monitor.js') }}"></script>
+
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Historial de Accesos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #06090f; color: white; font-family: 'Inter', sans-serif; }
+        .session-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 12px; }
+        .status-clean { color: #22c55e; }
+        .status-warning { color: #eab308; }
+        .status-alert { color: #ef4444; }
+        .status-pending { color: #94a3b8; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="accesos">
+    {% set active_module = 'accesos' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header>
+            <h1 class="text-2xl font-bold uppercase tracking-tighter">Historial de Accesos</h1>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest">Auditoría de sesiones y verificación post-login</p>
+        </header>
+
+        <div id="session-list" class="space-y-3">
+            {% for s in sessions %}
+            <div class="session-card p-4 cursor-pointer hover:border-indigo-500/50 transition-colors" data-session-id="{{ s.id }}" onclick="loadDetail('{{ s.id }}')">
+                <div class="flex flex-wrap justify-between gap-2 items-start">
+                    <div>
+                        <div class="text-sm font-bold text-white">{{ s.user_email }}</div>
+                        <div class="text-[10px] text-gray-500">{{ s.login_at }} · IP {{ s.ip_address }}</div>
+                    </div>
+                    <span class="text-[10px] font-bold uppercase status-{{ s.security_status }}">{{ s.security_status }}</span>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-3 text-[10px] text-gray-400">
+                    <span><i class="fas fa-desktop mr-1"></i>{{ s.device_type or '—' }}</span>
+                    <span><i class="fab fa-chrome mr-1"></i>{{ s.browser or '—' }}</span>
+                    <span><i class="fas fa-server mr-1"></i>{{ s.os_name or '—' }}</span>
+                    <span><i class="fas fa-redo mr-1"></i>{{ s.attempt_count }} intento(s)</span>
+                    {% if s.duration_seconds is not none %}
+                    <span><i class="fas fa-clock mr-1"></i>{{ s.duration_seconds }}s</span>
+                    {% elif s.active %}
+                    <span class="text-green-500"><i class="fas fa-circle mr-1"></i>Activa</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-sm">No hay sesiones registradas aún.</p>
+            {% endfor %}
+        </div>
+
+        <div id="session-detail" class="session-card p-6 hidden">
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-4">Detalle de sesión</h2>
+            <pre id="detail-json" class="text-[10px] text-gray-300 overflow-x-auto whitespace-pre-wrap max-h-[50vh]"></pre>
+        </div>
+
+        {% include 'partials/global_search.html' %}
+        {% include 'partials/ai_kernel_panel.html' %}
+    </main>
+    <script>
+    async function loadDetail(id) {
+        const el = document.getElementById('session-detail');
+        const pre = document.getElementById('detail-json');
+        el.classList.remove('hidden');
+        pre.textContent = 'Cargando...';
+        try {
+            const r = await fetch('/api/system/login-sessions?id=' + encodeURIComponent(id), {credentials: 'same-origin'});
+            const data = await r.json();
+            pre.textContent = JSON.stringify(data.session || data, null, 2);
+        } catch (e) {
+            pre.textContent = 'Error: ' + e;
+        }
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Vulnerability Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #06090f; color: white; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .vi-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 10px; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="viem_center">
+    {% set active_module = 'viem_center' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header class="flex flex-wrap justify-between items-start gap-4">
+            <div>
+                <h1 class="text-2xl font-bold uppercase tracking-tighter">
+                    <i class="fas fa-bug text-red-400 mr-2"></i>Vulnerability Intelligence Center
+                </h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">
+                    Exposure Management — vulnerabilidades reales · sin CVE inventados
+                </p>
+            </div>
+            <button onclick="runScan()" class="px-3 py-1 bg-red-700 hover:bg-red-600 text-xs rounded">
+                <i class="fas fa-search mr-1"></i>Full Scan
+            </button>
+        </header>
+        <div id="stats-row" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="vi-card p-4 lg:col-span-2">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3"><i class="fas fa-exclamation-triangle mr-1 text-red-400"></i>Top Risk Vulnerabilities</h3>
+                <div id="vulns-list" class="space-y-1 text-xs max-h-72 overflow-y-auto"></div>
+            </div>
+            <div class="vi-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3"><i class="fas fa-tools mr-1 text-green-400"></i>Remediaciones</h3>
+                <div id="remediation-list" class="space-y-1 text-xs max-h-48 overflow-y-auto"></div>
+            </div>
+            <div class="vi-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3"><i class="fas fa-history mr-1 text-blue-400"></i>Historial</h3>
+                <div id="history-list" class="space-y-1 text-xs max-h-48 overflow-y-auto"></div>
+            </div>
+        </div>
+    </main>
+    <script>
+    const API='/api/viem';
+    async function load(){
+        try{
+            const r=await fetch(API+'/dashboard');const j=await r.json();if(!j.ok)return;
+            const d=j.dashboard;const s=d.summary||{};
+            document.getElementById('stats-row').innerHTML=[
+                st('Total',s.total,'fa-bug','red'),
+                st('Critico',s.critical,'fa-skull','rose'),
+                st('Alto',s.high,'fa-fire','amber'),
+                st('Medio',s.medium,'fa-minus','blue'),
+                st('Bajo',s.low,'fa-check','green'),
+                st('Remediaciones',(d.remediation_history||[]).length,'fa-tools','teal'),
+            ].join('');
+            rl('vulns-list',(d.top_risk_vulnerabilities||[]).map(v=>
+                `<span class="text-${v.risk_level==='CRITICO'?'red':v.risk_level==='ALTO'?'amber':'blue'}-400">[${v.risk_level}]</span> `+
+                `<span class="text-white">${v.title||''}</span> `+
+                `<span class="text-gray-500">risk=${(v.risk_score||0).toFixed(2)}</span> `+
+                `<span class="text-gray-600">${v.remediation_priority||''}</span>`
+            ));
+            rl('remediation-list',(d.remediation_history||[]).map(r=>`<span class="text-gray-500">${r.timestamp_utc||''}</span> <span class="text-green-400">${r.action}</span> ${r.vuln_id||''}`));
+            rl('history-list',(d.scan_history||[]).reverse().map(h=>`<span class="text-gray-500">${h.timestamp_utc||''}</span> <span class="text-blue-400">${h.event}</span> vulns=${h.vulns_found||''}`));
+        }catch(e){console.error(e);}
+    }
+    function st(l,v,i,c){return `<div class="vi-card p-2 text-center"><i class="fas ${i} text-${c}-400"></i><div class="text-lg font-bold">${v??'-'}</div><div class="text-[8px] text-gray-500 uppercase">${l}</div></div>`;}
+    function rl(id,items){document.getElementById(id).innerHTML=items.length?items.map(i=>`<div class="border-b border-gray-800 py-1">${i}</div>`).join(''):'<div class="text-gray-600">Sin datos</div>';}
+    async function runScan(){await fetch(API+'/scan',{method:'POST'});load();}
+    load();setInterval(load,30000);
+    </script>
+</body>
+</html>

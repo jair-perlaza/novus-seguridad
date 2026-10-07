@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — Casos de Estudio (NDCI)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background: #06090f; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .ndci-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 12px; }
+        .risk-CRITICO { color: #ef4444; }
+        .risk-ALTO { color: #f97316; }
+        .risk-MEDIO { color: #eab308; }
+        .risk-BAJO { color: #22c55e; }
+        .detail-panel { display: none; }
+        .detail-panel.open { display: block; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen w-full" data-novus-module="casos_estudio">
+
+{% set active_module = 'casos_estudio' %}
+{% include 'partials/novus_nav_sidebar.html' %}
+
+<main class="novus-main flex-1 flex flex-col min-w-0 overflow-y-auto p-6 lg:p-8">
+    <header class="mb-6 flex flex-wrap justify-between items-start gap-4">
+        <div>
+            <h1 class="text-2xl font-black uppercase tracking-tight text-indigo-300">
+                Casos de Estudio
+            </h1>
+            <p class="text-xs text-gray-500 mt-1 uppercase tracking-widest">
+                NOVUS Digital Case Intelligence (NDCI) — expedientes técnicos inmutables
+            </p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+            <button type="button" id="btn-nuevo-caso"
+                class="px-4 py-2 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 text-white text-xs font-black border border-emerald-500/50">
+                <i class="fas fa-plus-circle"></i> NUEVO CASO DE ESTUDIO
+            </button>
+            <input id="ndci-search" type="search" placeholder="Buscar caso, sector, ID..."
+                class="bg-[#0a0f18] border border-gray-700 rounded-lg px-3 py-2 text-sm w-56">
+            <button type="button" id="btn-compare-cases"
+                class="px-3 py-2 rounded-lg bg-gray-800 text-gray-300 text-xs font-bold border border-gray-700"
+                title="Comparar dos casos">
+                <i class="fas fa-balance-scale"></i> Comparar
+            </button>
+            <button type="button" onclick="NovusAIKernel.consultModule('casos_estudio')"
+                class="px-4 py-2 rounded-lg bg-indigo-600/30 text-indigo-300 text-xs font-bold border border-indigo-500/40">
+                <i class="fas fa-brain"></i> Consultar Kernel IA
+            </button>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-1 space-y-3" id="ndci-list">
+            {% if cases %}
+                {% for c in cases %}
+                <div class="ndci-card p-4 cursor-pointer hover:border-indigo-500/50 transition ndci-item"
+                     data-id="{{ c.id }}" onclick="loadCase('{{ c.id }}')">
+                    <div class="text-[10px] text-gray-500">{{ c.id }}</div>
+                    <div class="font-bold text-sm mt-1">{{ c.titulo }}</div>
+                    <div class="flex justify-between mt-2 text-[10px] text-gray-400">
+                        <span>{{ c.fecha }} {{ c.hora }}</span>
+                        <span class="risk-{{ c.nivel_riesgo }}">{{ c.nivel_riesgo }}</span>
+                    </div>
+                    <div class="text-[10px] text-gray-600 mt-1">{{ c.origen }} · {{ c.sector or '—' }}</div>
+                    {% if c.origen == 'manual' %}<span class="text-[9px] text-emerald-500 font-bold">MANUAL</span>{% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="ndci-card p-6 text-sm text-gray-500">
+                    No hay casos de estudio almacenados.
+                    Pulse <strong>NUEVO CASO DE ESTUDIO</strong> para generar uno manualmente, o complete un Deep Scan
+                    y use <strong>Crear Caso de Estudio</strong> al finalizar (generación automática).
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="xl:col-span-2">
+            <div id="ndci-detail" class="ndci-card p-6 detail-panel">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 id="ndci-title" class="text-lg font-bold text-white"></h2>
+                        <p id="ndci-meta" class="text-xs text-gray-500 mt-1"></p>
+                    </div>
+                    <div class="flex gap-2">
+                        <a id="ndci-pdf" href="#" class="text-xs px-3 py-2 rounded bg-red-900/30 text-red-300 border border-red-800/50">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                        <button type="button" id="ndci-reanalyze" class="text-xs px-3 py-2 rounded bg-indigo-900/30 text-indigo-300 border border-indigo-800/50">
+                            <i class="fas fa-redo"></i> Analizar con Kernel
+                        </button>
+                    </div>
+                </div>
+                <div id="ndci-sections" class="space-y-4 text-sm"></div>
+            </div>
+            <div id="ndci-empty" class="ndci-card p-8 text-center text-gray-500 text-sm">
+                Seleccione un caso de estudio para ver el expediente completo.
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Asistente creación manual -->
+<div id="ndci-wizard-modal" class="novus-tw-modal-overlay hidden">
+    <div class="novus-tw-modal max-w-lg" role="dialog" aria-modal="true">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-sm font-black uppercase text-emerald-400">Nuevo Caso de Estudio</h2>
+            <button type="button" onclick="closeNdciWizard()" class="novus-tw-modal-close" aria-label="Cerrar">&times;</button>
+        </div>
+        <p class="text-xs text-gray-500 mb-4">Seleccione el tipo de análisis. NOVUS ejecutará motores reales y generará un expediente profesional completo.</p>
+        <label class="text-[10px] uppercase text-gray-500 font-bold">Tipo de análisis</label>
+        <select id="ndci-wiz-type" class="w-full mt-1 mb-4 bg-[#0a0f18] border border-gray-700 rounded-lg px-3 py-2 text-sm">
+        </select>
+        <div id="ndci-wiz-device" class="hidden mb-4">
+            <label class="text-[10px] uppercase text-gray-500 font-bold">Dispositivo (IP)</label>
+            <select id="ndci-wiz-device-ip" class="w-full mt-1 bg-[#0a0f18] border border-gray-700 rounded-lg px-3 py-2 text-sm"></select>
+        </div>
+        <div id="ndci-wiz-vuln" class="hidden mb-4">
+            <label class="text-[10px] uppercase text-gray-500 font-bold">Vulnerabilidad</label>
+            <select id="ndci-wiz-vuln-id" class="w-full mt-1 bg-[#0a0f18] border border-gray-700 rounded-lg px-3 py-2 text-sm"></select>
+        </div>
+        <div id="ndci-wiz-incident" class="hidden mb-4">
+            <label class="text-[10px] uppercase text-gray-500 font-bold">Incidente</label>
+            <select id="ndci-wiz-incident-id" class="w-full mt-1 bg-[#0a0f18] border border-gray-700 rounded-lg px-3 py-2 text-sm"></select>
+        </div>
+        <div id="ndci-wiz-compare" class="hidden mb-4">
+            <label class="text-[10px] uppercase text-gray-500 font-bold">Caso de referencia</label>
+            <select id="ndci-wiz-compare-id" class="w-full mt-1 bg-[#0a0f18] border border-gray-700 rounded-lg px-3 py-2 text-sm"></select>
+        </div>
+        <div id="ndci-wiz-custom" class="hidden mb-4">
+            <label class="text-[10px] uppercase text-gray-500 font-bold">Descripción del análisis</label>
+            <textarea id="ndci-wiz-custom-msg" rows="3" class="w-full mt-1 bg-[#0a0f18] border border-gray-700 rounded-lg px-3 py-2 text-sm"
+                placeholder="Describa el alcance del análisis personalizado..."></textarea>
+        </div>
+        <p id="ndci-wiz-status" class="text-xs text-indigo-400 mb-3 hidden"></p>
+        <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeNdciWizard()" class="px-4 py-2 rounded-lg text-xs text-gray-400">Cancelar</button>
+            <button type="button" id="ndci-wiz-submit" class="px-4 py-2 rounded-lg text-xs bg-emerald-600 text-white font-bold">
+                <i class="fas fa-cogs"></i> Generar caso
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal comparación -->
+<div id="ndci-compare-modal" class="novus-tw-modal-overlay hidden">
+    <div class="novus-tw-modal max-w-md" role="dialog">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-sm font-black uppercase text-indigo-400">Comparar casos</h2>
+            <button type="button" onclick="closeCompareModal()" class="novus-tw-modal-close">&times;</button>
+        </div>
+        <label class="text-[10px] text-gray-500">Caso A</label>
+        <select id="cmp-a" class="w-full mb-3 bg-[#0a0f18] border border-gray-700 rounded px-3 py-2 text-sm"></select>
+        <label class="text-[10px] text-gray-500">Caso B</label>
+        <select id="cmp-b" class="w-full mb-4 bg-[#0a0f18] border border-gray-700 rounded px-3 py-2 text-sm"></select>
+        <button type="button" id="cmp-run" class="w-full py-2 rounded bg-indigo-600 text-white text-xs font-bold">Comparar</button>
+        <pre id="cmp-result" class="mt-4 text-[10px] text-gray-400 whitespace-pre-wrap max-h-48 overflow-y-auto"></pre>
+    </div>
+</div>
+
+{% include 'partials/global_search.html' %}
+{% include 'partials/ai_kernel_panel.html' %}
+
+<script>
+let currentCaseId = null;
+
+function section(title, html) {
+    return `<div class="border-b border-gray-800 pb-3"><h3 class="text-[10px] uppercase text-indigo-400 mb-2">${title}</h3><div class="text-gray-300 text-xs leading-relaxed">${html}</div></div>`;
+}
+
+async function loadCase(id) {
+    currentCaseId = id;
+    document.getElementById('ndci-empty').style.display = 'none';
+    const panel = document.getElementById('ndci-detail');
+    panel.classList.add('open');
+    document.getElementById('ndci-title').textContent = 'Cargando...';
+    try {
+        const r = await fetch('/api/ndci/cases/' + encodeURIComponent(id));
+        const d = await r.json();
+        if (d.status !== 'success') throw new Error(d.message);
+        const c = d.case;
+        const exp = c.expediente || c;
+        const iden = exp.identificacion || {};
+        document.getElementById('ndci-title').textContent = c.titulo || id;
+        document.getElementById('ndci-meta').textContent =
+            `${iden.fecha || c.fecha} · ${iden.duracion || c.duracion_sec + 's'} · ${c.nivel_riesgo} · ${c.sector || ''}`;
+        document.getElementById('ndci-pdf').href = '/api/ndci/cases/' + id + '/pdf';
+
+        const sec = exp.seguridad || {};
+        const vulns = (sec.vulnerabilidades || []).map(v =>
+            `<li>[${v.id}] ${v.nombre} — ${v.impacto} (${v.confianza || '?'}% conf.)</li>`).join('') || '<li>Sin vulnerabilidades activas en el ciclo.</li>';
+
+        const timeline = (exp.timeline || []).map(t =>
+            `<div class="text-[10px] py-1 border-l-2 border-indigo-800 pl-2">${t.timestamp} — <b>${t.evento}</b>: ${t.detalle || ''}</div>`).join('');
+
+        const resumen = exp.resumen_ejecutivo_detallado || {};
+        const inv = exp.inventario_completo || [];
+        const invHtml = inv.length
+            ? `<table class="w-full text-[9px]"><tr class="text-gray-500"><th class="text-left p-1">Nombre</th><th>Tipo</th><th>IP</th><th>Riesgo</th></tr>`
+              + inv.slice(0,20).map(r =>
+                `<tr class="border-t border-gray-800"><td class="p-1">${r.nombre||'—'}</td><td>${r.tipo||'—'}</td><td>${r.ip||'—'}</td><td>${r.nivel_riesgo||'—'}</td></tr>`
+              ).join('') + '</table>' : 'Sin inventario.';
+
+        const topo = exp.topologia || {};
+        const analisis = exp.analisis_red || {};
+        const threats = exp.amenazas || {};
+        const threatHtml = Object.keys(threats).filter(k => !k.startsWith('_')).map(cat =>
+            `<div>${cat}: ${(threats[cat]||[]).length} evidencia(s)</div>`).join('') || 'Sin amenazas categorizadas.';
+        const ki = exp.kernel_ia || {};
+        const pred = exp.prediccion || {};
+        const predHtml = Object.entries(pred.horizontes || {}).map(([k,v]) =>
+            `<div>${k}: <b>${v.riesgo_estimado_pct}%</b> (${v.nivel})</div>`).join('');
+        const sims = (exp.simulaciones || []).map(s =>
+            `<div class="mb-1"><b>${s.escenario}</b>: ${s.respuesta_esperada}</div>`).join('');
+        const hist = exp.comparacion_historica || {};
+        const aprend = exp.aprendizaje || {};
+        const cumpl = exp.cumplimiento || {};
+        const rec = exp.recomendaciones || {};
+        const recHtml = ['criticas','altas','medias','bajas'].flatMap(l =>
+            (rec[l]||[]).map(r => `<li>[${l}] ${r.motivo||r}</li>`)).join('');
+
+        document.getElementById('ndci-sections').innerHTML =
+            section('Resumen ejecutivo', `<b>Objetivo:</b> ${resumen.objetivo||exp.resumen_ejecutivo||'—'}<br><b>Conclusión:</b> ${resumen.conclusion_ejecutiva||'—'}<br><b>Hallazgos:</b> ${(resumen.principales_hallazgos||[]).join('; ')||'—'}`) +
+            section('Inventario completo', invHtml) +
+            section('Topología', `Nodos: ${topo.nodes_count||0} · ${topo.organizacion||(topo.digital_twin||{}).communication_model||'—'}`) +
+            section('Cronología', timeline || '—') +
+            section('Análisis de red', `Gateway: ${analisis.gateway||'—'} · Flujo: ${analisis.flujo_comunicacion||'—'} · Protocolos: ${(analisis.protocolos_observados||[]).join(', ')}`) +
+            section('Seguridad', `<ul class="list-disc pl-4">${vulns}</ul>`) +
+            section('Amenazas', threatHtml) +
+            section('Adaptive Defense', `Estado: ${(exp.adaptive_defense||{}).estado||'—'} · Contenciones: ${(exp.adaptive_defense||{}).contenciones||0}`) +
+            section('Kernel IA', `${(ki.que_encontro||[]).join('<br>')}<br><br><b>Impacto:</b> ${(ki.impacto||[]).join('; ')}<br><b>Recomienda:</b> ${(ki.recomendaciones||[]).join('; ')}`) +
+            section('Predicción', predHtml || '—') +
+            section('Simulaciones', sims || '—') +
+            section('Cumplimiento', `${cumpl.disclaimer||''}<br>${(cumpl.brechas_identificadas||[]).join('; ')}`) +
+            section('Comparación histórica', hist.nota || `Anterior: ${hist.caso_anterior||'—'} · Nuevos: ${(hist.dispositivos_nuevos||[]).join(', ')||'ninguno'}`) +
+            section('Aprendizaje', `${(aprend.novus_aprendio||[]).join('<br>')}`) +
+            section('Recomendaciones', `<ul class="list-disc pl-4">${recHtml||'<li>—</li>'}</ul>`) +
+            section('Métricas', `CPU ${(exp.metricas||{}).cpu_pct}% · RAM ${(exp.metricas||{}).ram_pct}% · ${(exp.metricas||{}).dispositivos} dispositivos`);
+    } catch (e) {
+        document.getElementById('ndci-sections').innerHTML = section('Error', e.message);
+    }
+}
+
+document.getElementById('ndci-search')?.addEventListener('input', async (e) => {
+    const q = e.target.value.trim();
+    const r = await fetch('/api/ndci/cases?q=' + encodeURIComponent(q));
+    const d = await r.json();
+    const list = document.getElementById('ndci-list');
+    if (!d.cases || !d.cases.length) {
+        list.innerHTML = '<div class="ndci-card p-4 text-sm text-gray-500">Sin resultados.</div>';
+        return;
+    }
+    list.innerHTML = d.cases.map(c => `
+        <div class="ndci-card p-4 cursor-pointer hover:border-indigo-500/50 ndci-item" onclick="loadCase('${c.id}')">
+            <div class="text-[10px] text-gray-500">${c.id}</div>
+            <div class="font-bold text-sm mt-1">${c.titulo}</div>
+            <div class="flex justify-between mt-2 text-[10px]"><span>${c.fecha}</span><span class="risk-${c.nivel_riesgo}">${c.nivel_riesgo}</span></div>
+        </div>`).join('');
+});
+
+document.getElementById('ndci-reanalyze')?.addEventListener('click', () => {
+    if (currentCaseId && typeof NovusAIKernel !== 'undefined') {
+        NovusAIKernel.consultModule('casos_estudio', { case_id: currentCaseId });
+    }
+});
+
+let ndciWizardOptions = null;
+
+function fillSelect(el, items, valueKey, labelKey, placeholder) {
+    if (!el) return;
+    el.innerHTML = `<option value="">${placeholder || 'Seleccionar...'}</option>` +
+        (items || []).map(i => `<option value="${i[valueKey] || i.id}">${i[labelKey] || i.label || i.id}</option>`).join('');
+}
+
+function toggleWizardFields(type) {
+    document.getElementById('ndci-wiz-device').classList.toggle('hidden', type !== 'dispositivo');
+    document.getElementById('ndci-wiz-vuln').classList.toggle('hidden', type !== 'vulnerabilidad');
+    document.getElementById('ndci-wiz-incident').classList.toggle('hidden', type !== 'incidente');
+    document.getElementById('ndci-wiz-compare').classList.toggle('hidden', type !== 'comparacion');
+    document.getElementById('ndci-wiz-custom').classList.toggle('hidden', type !== 'personalizado');
+}
+
+async function openNdciWizard() {
+    const modal = document.getElementById('ndci-wizard-modal');
+    modal.classList.remove('hidden');
+    document.getElementById('ndci-wiz-status').classList.add('hidden');
+    try {
+        const r = await fetch('/api/ndci/manual/options');
+        const d = await r.json();
+        if (d.status !== 'success') throw new Error(d.message);
+        ndciWizardOptions = d;
+        fillSelect(document.getElementById('ndci-wiz-type'), d.analysis_types, 'id', 'label', 'Tipo de análisis...');
+        fillSelect(document.getElementById('ndci-wiz-device-ip'), d.devices, 'ip', 'label');
+        fillSelect(document.getElementById('ndci-wiz-vuln-id'), d.vulnerabilities, 'id', 'label');
+        fillSelect(document.getElementById('ndci-wiz-incident-id'), d.incidents, 'id', 'label');
+        fillSelect(document.getElementById('ndci-wiz-compare-id'), d.cases, 'id', 'titulo');
+        toggleWizardFields(document.getElementById('ndci-wiz-type').value);
+    } catch (e) {
+        alert('Error cargando opciones: ' + e.message);
+        closeNdciWizard();
+    }
+}
+
+function closeNdciWizard() {
+    document.getElementById('ndci-wizard-modal').classList.add('hidden');
+}
+
+async function submitNdciWizard() {
+    const type = document.getElementById('ndci-wiz-type').value;
+    if (!type) { alert('Seleccione un tipo de análisis.'); return; }
+    const payload = { analysis_type: type };
+    if (type === 'dispositivo') payload.device_ip = document.getElementById('ndci-wiz-device-ip').value;
+    if (type === 'vulnerabilidad') payload.vulnerability_id = document.getElementById('ndci-wiz-vuln-id').value;
+    if (type === 'incidente') payload.incident_id = document.getElementById('ndci-wiz-incident-id').value;
+    if (type === 'comparacion') payload.compare_case_id = document.getElementById('ndci-wiz-compare-id').value;
+    if (type === 'personalizado') payload.custom_message = document.getElementById('ndci-wiz-custom-msg').value.trim();
+
+    const btn = document.getElementById('ndci-wiz-submit');
+    const status = document.getElementById('ndci-wiz-status');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+    status.classList.remove('hidden');
+    status.textContent = 'Ejecutando motores NOVUS y compilando expediente...';
+    try {
+        const r = await fetch('/api/ndci/cases/manual', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        const d = await r.json();
+        if (d.status !== 'success') throw new Error(d.message);
+        closeNdciWizard();
+        await refreshCaseList();
+        loadCase(d.case.id);
+        alert(d.message || 'Caso generado correctamente.');
+    } catch (e) {
+        status.textContent = 'Error: ' + e.message;
+        alert(e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-cogs"></i> Generar caso';
+    }
+}
+
+async function refreshCaseList() {
+    const r = await fetch('/api/ndci/cases');
+    const d = await r.json();
+    const list = document.getElementById('ndci-list');
+    if (!d.cases || !d.cases.length) {
+        list.innerHTML = '<div class="ndci-card p-6 text-sm text-gray-500">Sin casos.</div>';
+        return;
+    }
+    list.innerHTML = d.cases.map(c => `
+        <div class="ndci-card p-4 cursor-pointer hover:border-indigo-500/50 ndci-item" onclick="loadCase('${c.id}')">
+            <div class="text-[10px] text-gray-500">${c.id}</div>
+            <div class="font-bold text-sm mt-1">${c.titulo}</div>
+            <div class="flex justify-between mt-2 text-[10px]"><span>${c.fecha}</span><span class="risk-${c.nivel_riesgo}">${c.nivel_riesgo}</span></div>
+            <div class="text-[10px] text-gray-600 mt-1">${c.origen} · ${c.sector || '—'}</div>
+            ${c.origen === 'manual' ? '<span class="text-[9px] text-emerald-500 font-bold">MANUAL</span>' : ''}
+        </div>`).join('');
+}
+
+function openCompareModal() {
+    document.getElementById('ndci-compare-modal').classList.remove('hidden');
+    document.getElementById('cmp-result').textContent = '';
+    fetch('/api/ndci/cases').then(r => r.json()).then(d => {
+        fillSelect(document.getElementById('cmp-a'), d.cases, 'id', 'titulo');
+        fillSelect(document.getElementById('cmp-b'), d.cases, 'id', 'titulo');
+    });
+}
+
+function closeCompareModal() {
+    document.getElementById('ndci-compare-modal').classList.add('hidden');
+}
+
+document.getElementById('btn-nuevo-caso')?.addEventListener('click', openNdciWizard);
+document.getElementById('ndci-wiz-type')?.addEventListener('change', e => toggleWizardFields(e.target.value));
+document.getElementById('ndci-wiz-submit')?.addEventListener('click', submitNdciWizard);
+document.getElementById('btn-compare-cases')?.addEventListener('click', openCompareModal);
+document.getElementById('cmp-run')?.addEventListener('click', async () => {
+    const a = document.getElementById('cmp-a').value;
+    const b = document.getElementById('cmp-b').value;
+    if (!a || !b) { alert('Seleccione dos casos.'); return; }
+    const r = await fetch(`/api/ndci/cases/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
+    const d = await r.json();
+    document.getElementById('cmp-result').textContent = d.status === 'success'
+        ? JSON.stringify(d.comparison, null, 2) : (d.message || 'Error');
+});
+
+const params = new URLSearchParams(window.location.search);
+if (params.get('id')) loadCase(params.get('id'));
+</script>
+</body>
+</html>

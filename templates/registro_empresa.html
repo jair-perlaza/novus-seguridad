@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — Registro y Membresía</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% include 'partials/membership_styles.html' %}
+</head>
+<body>
+<div class="nv-page">
+    <header class="nv-hero">
+        <div class="nv-hero-inner">
+            <p class="nv-eyebrow">Registro empresarial NOVUS</p>
+            <h1>Active su membresía</h1>
+            <p class="nv-lead">Complete el registro y seleccione un plan con capacidades <strong>verificadas</strong> en la plataforma.</p>
+            <div class="nv-hero-actions">
+                <a href="{{ url_for('auth.membresias') }}" class="nv-btn nv-btn-ghost"><i class="fas fa-list"></i> Ver planes</a>
+                <button type="button" class="nv-btn nv-btn-kernel" onclick="consultKernelMembership()"><i class="fas fa-brain"></i> Consultar al Kernel IA</button>
+            </div>
+        </div>
+    </header>
+
+    {% if error %}
+    <div class="nv-error"><i class="fas fa-exclamation-triangle"></i> {{ error }}</div>
+    {% endif %}
+
+    <form action="{{ url_for('auth.registro_empresa') }}" method="post" id="registro-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="plan_seleccionado" id="plan_seleccionado" value="business">
+
+        <div class="nv-form-card">
+            <h2><i class="fas fa-building"></i> Datos de la entidad</h2>
+            <p class="nv-section-desc">Credenciales y datos legales para activar el tenant.</p>
+            <div class="nv-grid">
+                <div class="nv-field">
+                    <label>Nombre de la organización</label>
+                    <input type="text" name="empresa" placeholder="Ej: Tech Solutions S.A.S" required>
+                </div>
+                <div class="nv-field">
+                    <label>NIT / Identificación fiscal</label>
+                    <input type="text" name="nit" placeholder="900.000.000-1" required>
+                </div>
+                <div class="nv-field">
+                    <label>Correo del administrador</label>
+                    <input type="email" name="email_usuario" placeholder="admin@empresa.com" required>
+                </div>
+                <p class="nv-section-desc" style="grid-column: 1 / -1; color: #94a3b8; font-size: 0.85rem;">
+                    Tras enviar la solicitud, el administrador principal de NOVUS debe autorizar su registro.
+                    Recibirá un enlace para establecer su contraseña cuando sea aprobado.
+                </p>
+                <div class="nv-field">
+                    <label>Sector de operación</label>
+                    <select id="sector" name="sector" required>
+                        {% for s in sectores %}
+                        <option value="{{ s.nombre }}">{{ s.nombre }} — {{ s.enfoque }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="nv-field">
+                    <label>Módulo NOVUS prioritario</label>
+                    <select id="servicio" name="servicio" required>
+                        <option value="network_shield">Network Shield — monitoreo de red / NDR</option>
+                        <option value="endpoint_shield">Endpoint Shield — escaneo y cuarentena</option>
+                        <option value="web_shield">Web Shield — protección de navegación</option>
+                        <option value="mail_shield">Mail Shield — correo OAuth (requiere configuración)</option>
+                        <option value="sector_aspe">Protección sectorial ASPE</option>
+                        <option value="threat_intel">Inteligencia de amenazas</option>
+                        <option value="forensic">Forense / cadena de custodia</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="nv-form-card">
+            <h2><i class="fas fa-network-wired"></i> Perfil de infraestructura</h2>
+            <div class="nv-grid">
+                <div class="nv-field">
+                    <label>Tamaño (empleados)</label>
+                    <select name="empleados">
+                        <option value="1-10">Micro (1–10)</option>
+                        <option value="11-50">Pequeña (11–50)</option>
+                        <option value="51-200">Mediana (51–200)</option>
+                        <option value="200+">Gran empresa (200+)</option>
+                    </select>
+                </div>
+                <div class="nv-field">
+                    <label>Equipos a proteger (estimado)</label>
+                    <input type="number" name="activos" placeholder="Cantidad" min="1" required>
+                </div>
+                <div class="nv-field">
+                    <label>Responsable técnico</label>
+                    <input type="text" name="responsable" placeholder="CISO / CTO">
+                </div>
+                <div class="nv-field">
+                    <label>Correo de alertas críticas</label>
+                    <input type="email" name="email_alerta" placeholder="alertas@empresa.com" required>
+                </div>
+            </div>
+        </div>
+
+        {% set show_contract = true %}
+        {% include 'partials/membership_plans_section.html' %}
+
+        <div class="nv-form-card" style="text-align:center">
+            <p class="nv-section-desc" style="margin-bottom:20px">
+                Cumplimiento Ley 1581/2012 y 1273/2009 (Colombia). Los escaneos usan telemetría real del nodo NOVUS.
+            </p>
+            <button type="submit" class="nv-btn nv-btn-primary" style="width:100%;max-width:480px;justify-content:center;padding:16px;font-size:1rem">
+                <i class="fas fa-shield-alt"></i> Finalizar registro y activar NOVUS
+            </button>
+        </div>
+    </form>
+
+    <footer class="nv-footer">
+        <p>{{ catalog.disclaimer }}</p>
+        <p><a href="{{ url_for('auth.login') }}">¿Ya tiene cuenta? Iniciar sesión</a></p>
+    </footer>
+</div>
+
+{% include 'partials/membership_scripts.html' %}
+</body>
+</html>

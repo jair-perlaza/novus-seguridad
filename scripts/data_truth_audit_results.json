@@ -1,0 +1,1437 @@
+{
+  "generated_at": "2026-07-12T02:22:56.135662+00:00",
+  "1_datos_falsos_encontrados": [
+    {
+      "tipo": "Fallbacks JS convertían ausencia de datos en 0",
+      "ubicacion": "static/js/novus-metrics.js"
+    },
+    {
+      "tipo": "KPIs iniciales en 0, métricas CPU/RAM/tráfico con || 0",
+      "ubicacion": "templates/layout_novus.html"
+    },
+    {
+      "tipo": "Mismos fallbacks engañosos en KPI strip y host-status",
+      "ubicacion": "templates/topology.html"
+    },
+    {
+      "tipo": "CPU/RAM/tráfico concatenados con % cuando valor era texto; gráfico con 0 falso",
+      "ubicacion": "templates/index.html"
+    },
+    {
+      "tipo": "cpu_load/ram/disk/procesos/usuarios con default 0",
+      "ubicacion": "routes/dashboard.py"
+    },
+    {
+      "tipo": "active_threats = 0 hardcodeado tras escaneo",
+      "ubicacion": "services/network_scanner.py"
+    },
+    {
+      "tipo": "hallazgos ?? 0 y Escaneando... como dato",
+      "ubicacion": "templates/endpoints.html"
+    },
+    {
+      "tipo": "conexiones ?? 0; amenazas con fallback a total local",
+      "ubicacion": "templates/xdr.html"
+    },
+    {
+      "tipo": "tráfico con Number(...|| 0)",
+      "ubicacion": "templates/dashboard.html"
+    },
+    {
+      "tipo": "Métricas CPU/RAM sin mensaje cuando motor no responde",
+      "ubicacion": "templates/vulnerabilidades.html"
+    },
+    {
+      "tipo": "Riesgo/protección presentados como medidos",
+      "ubicacion": "templates/index.html (escudo)"
+    }
+  ],
+  "2_datos_eliminados": [
+    "Helper central NovusMetrics sin conversión engañosa a cero",
+    "Estado inicial —, uso de NovusMetrics en fetchKPIData",
+    "Corregido con NovusMetrics y badges —",
+    "formatPercent/formatTrafficTotal; error → Sin datos disponibles",
+    "_metric_or_unavailable() → Sin datos disponibles",
+    "Fuente real: novus_security.get_cached_threat_count() o None",
+    "Sin datos disponibles cuando no hay evidencia",
+    "Solo valores numéricos verificables del API live",
+    "NovusMetrics.sumTrafficMb",
+    "Sin datos disponibles explícito",
+    "Etiquetas 'calculado por NOVUS'"
+  ],
+  "3_fallbacks_eliminados": [
+    "Number(x || 0) en KPI dashboard/topology/layout",
+    "dashboardData.usuarios ?? 0",
+    "dashboardData.conexiones ?? 0",
+    "metrics.cpu || dashboardData.cpu || 0",
+    "active_threats = 0 en network_scanner",
+    "status.get('cpu', 0) en routes/dashboard.py",
+    "ep.findings ?? 0 en endpoints",
+    "liveData.conexiones ?? 0 en xdr"
+  ],
+  "4_placeholders_eliminados": [
+    "KPI HTML inicial 0 → —",
+    "alert-badge 0 → —",
+    "Monitorizando... como estado ambiguo → Sin datos disponibles",
+    "ERROR en catch dashboard → Sin datos disponibles",
+    "Escaneando... en hallazgos endpoints → Sin datos disponibles"
+  ],
+  "5_modulos_datos_reales": [
+    "Dashboard (/dashboard, index.html)",
+    "API /api/dashboard/live",
+    "API /api/dashboard/metrics",
+    "API /api/dashboard/priority",
+    "Network scanner (ARP/psutil)",
+    "Topology",
+    "Endpoints",
+    "XDR / Amenazas",
+    "Vulnerabilidades (motor security)",
+    "Escudo sectorial",
+    "Kernel IA",
+    "Playbooks / Automatización",
+    "Reportes SOC",
+    "Configuración / data_audit_registry",
+    "CryptoVault (estado TLS real)"
+  ],
+  "6_componentes_sin_fuente_real": [
+    {
+      "module": "Automatización — ejecuciones/mes",
+      "reason": "Sin contador histórico verificable en BD",
+      "display": "Sin datos disponibles"
+    },
+    {
+      "module": "SIEM remoto",
+      "reason": "Integración externa no conectada en MVP",
+      "display": "Sin datos disponibles / módulo deshabilitado"
+    },
+    {
+      "module": "Inteligencia — feeds externos",
+      "reason": "Depende de IOCs locales escaneados; sin feed comercial",
+      "display": "Lista vacía o Sin datos disponibles"
+    }
+  ],
+  "7_componentes_sin_datos_disponibles": [
+    "Métricas CPU/RAM/disco cuando psutil falla",
+    "Amenazas cuando threat cache es None",
+    "Tráfico cuando net_io_counters no disponible",
+    "Usuarios/conexiones cuando psutil no responde",
+    "Automatización ejecuciones/mes"
+  ],
+  "8_integracion_futura": [
+    "Feed CTI comercial (MISP/TAXII)",
+    "SIEM externo (Splunk/Elastic remoto)",
+    "Contador histórico de ejecuciones de playbooks",
+    "Telemetría cloud multi-tenant"
+  ],
+  "data_audit_registry": {
+    "version": "1.0.0",
+    "generated_at": "2026-07-11T21:22:56.135579",
+    "node_id": "usuario",
+    "total_components": 37,
+    "counts": {
+      "REAL": 29,
+      "SIN FUENTE": 2,
+      "SIMULADO": 0,
+      "PENDIENTE": 3,
+      "NO IMPLEMENTADO": 2,
+      "ELIMINADO": 1
+    },
+    "entries": [
+      {
+        "component": "Dashboard KPI CPU",
+        "source_type": "psutil",
+        "source_detail": "system_monitor::get_system_status",
+        "file": "services/system_monitor.py",
+        "function": "get_system_status",
+        "service": "system_monitor",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Dashboard KPI RAM",
+        "source_type": "psutil",
+        "source_detail": "system_monitor::get_system_status",
+        "file": "services/system_monitor.py",
+        "function": "get_system_status",
+        "service": "system_monitor",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Dashboard KPI Disco",
+        "source_type": "psutil",
+        "source_detail": "system_monitor::get_system_status",
+        "file": "services/system_monitor.py",
+        "function": "get_system_status",
+        "service": "system_monitor",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Dashboard KPI Tráfico",
+        "source_type": "psutil",
+        "source_detail": "system_monitor::get_network_stats",
+        "file": "services/system_monitor.py",
+        "function": "get_network_stats",
+        "service": "system_monitor",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Dashboard KPI Nodos",
+        "source_type": "Scapy ARP",
+        "source_detail": "network_scanner::scan_network",
+        "file": "services/network_scanner.py",
+        "function": "scan_network",
+        "service": "network_scanner",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Dashboard KPI Amenazas",
+        "source_type": "motor seguridad",
+        "source_detail": "novus_security_integration::get_cached_threat_count",
+        "file": "services/novus_security_integration.py",
+        "function": "get_cached_threat_count",
+        "service": "novus_security_integration",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Dashboard Gráfico tráfico",
+        "source_type": "API",
+        "source_detail": "/api/dashboard/live",
+        "file": "api/dashboard.py",
+        "function": "dashboard_live",
+        "service": "/api/dashboard/live",
+        "api": "/api/dashboard/live",
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Dashboard dispositivos",
+        "source_type": "Scapy ARP",
+        "source_detail": "/api/network/nodes",
+        "file": "api/network.py",
+        "function": "get_network_nodes",
+        "service": "/api/network/nodes",
+        "api": "/api/network/nodes",
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Network Radar",
+        "source_type": "Scapy ARP",
+        "source_detail": "network_scanner::get_cached_nodes",
+        "file": "services/network_scanner.py",
+        "function": "get_cached_nodes",
+        "service": "network_scanner",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Network Gateway/CIDR",
+        "source_type": "psutil+route",
+        "source_detail": "network_scanner::get_network_meta",
+        "file": "services/network_scanner.py",
+        "function": "get_network_meta",
+        "service": "network_scanner",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Network Event Log",
+        "source_type": "log interno",
+        "source_detail": "network_event_log::get_recent",
+        "file": "services/network_event_log.py",
+        "function": "get_recent",
+        "service": "network_event_log",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Network Estado dispositivo",
+        "source_type": "ARP respuesta",
+        "source_detail": "network_scanner::_parse_arp_results",
+        "file": "services/network_scanner.py",
+        "function": "scan_network",
+        "service": "network_scanner",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": "Estado: Detectado (ARP), no Online asumido"
+      },
+      {
+        "component": "XDR Eventos",
+        "source_type": "motor amenazas",
+        "source_detail": "novus_security_integration::detect_threats_realtime",
+        "file": "services/novus_security_integration.py",
+        "function": "detect_threats_realtime",
+        "service": "novus_security_integration",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "XDR Procesos sospechosos",
+        "source_type": "advanced_detector",
+        "source_detail": "advanced_detector_service::scan_running_processes",
+        "file": "services/advanced_detector_service.py",
+        "function": "scan_running_processes",
+        "service": "advanced_detector_service",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "XDR Puertos abiertos",
+        "source_type": "socket scan",
+        "source_detail": "advanced_detector_service::scan_open_ports",
+        "file": "services/advanced_detector_service.py",
+        "function": "scan_open_ports",
+        "service": "advanced_detector_service",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Vulnerabilidades hallazgos",
+        "source_type": "motor vulns",
+        "source_detail": "novus_security_integration::scan_vulnerabilities",
+        "file": "services/novus_security_integration.py",
+        "function": "scan_vulnerabilities",
+        "service": "novus_security_integration",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Vulnerabilidades puertos",
+        "source_type": "socket scan",
+        "source_detail": "vulnerability_scanner::scan_open_ports",
+        "file": "vulnerability_scanner.py",
+        "function": "scan_open_ports",
+        "service": "vulnerability_scanner",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Vulnerabilidades CVE paquetes",
+        "source_type": "pip list",
+        "source_detail": "vulnerability_scanner::check_package_vulnerabilities",
+        "file": "vulnerability_scanner.py",
+        "function": "check_package_vulnerabilities",
+        "service": "vulnerability_scanner",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "PENDIENTE",
+        "notes": "Requiere OSV/NVD API — sin CVE estáticos"
+      },
+      {
+        "component": "Incidentes",
+        "source_type": "SQLite",
+        "source_detail": "database::Alerta",
+        "file": "database.py",
+        "function": "SessionLocal",
+        "service": "database",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Incidentes threat_registry",
+        "source_type": "motor seguridad",
+        "source_detail": "security_engine::threat_registry",
+        "file": "security_engine.py",
+        "function": "threat_registry",
+        "service": "security_engine",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Reportes historial",
+        "source_type": "filesystem+SQLite",
+        "source_detail": "security_report_service::list_reports",
+        "file": "services/security_report_service.py",
+        "function": "list_reports",
+        "service": "security_report_service",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Reportes PDF",
+        "source_type": "fpdf2",
+        "source_detail": "report_pdf_service::generate_pdf",
+        "file": "services/report_pdf_service.py",
+        "function": "generate_pdf",
+        "service": "report_pdf_service",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Endpoints locales",
+        "source_type": "psutil",
+        "source_detail": "/api/system/endpoints/live",
+        "file": "api/system.py",
+        "function": "get_live_endpoints",
+        "service": "/api/system/endpoints/live",
+        "api": "/api/system/endpoints/live",
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Endpoints remotos ARP",
+        "source_type": "Scapy ARP",
+        "source_detail": "network_scanner",
+        "file": "services/network_scanner.py",
+        "function": "scan_network",
+        "service": "network_scanner",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": "Solo IP/MAC; CPU/RAM remota: SIN FUENTE"
+      },
+      {
+        "component": "Kernel IA Deep Scan",
+        "source_type": "motor integral",
+        "source_detail": "deep_scan_engine::start_scan",
+        "file": "services/deep_scan_engine.py",
+        "function": "start_scan",
+        "service": "deep_scan_engine",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": "Sin caché; escaneo en hilo dedicado"
+      },
+      {
+        "component": "Kernel IA clasificación",
+        "source_type": "heurística NL",
+        "source_detail": "ai_orchestrator::classify_intent",
+        "file": "services/ai_orchestrator.py",
+        "function": "classify_intent",
+        "service": "ai_orchestrator",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": "Clasifica intención; datos de respuesta son de motores reales"
+      },
+      {
+        "component": "Gmail análisis",
+        "source_type": "Gmail API OAuth",
+        "source_detail": "gmail_analyzer_service::sync_new_messages",
+        "file": "services/gmail_analyzer_service.py",
+        "function": "sync_new_messages",
+        "service": "gmail_analyzer_service",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "PENDIENTE",
+        "notes": "Requiere GOOGLE_CLIENT_ID/SECRET"
+      },
+      {
+        "component": "Gmail edad dominio",
+        "source_type": "WHOIS",
+        "source_detail": "N/A",
+        "file": "services/gmail_analyzer_service.py",
+        "function": "analyze_message",
+        "service": "N/A",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "SIN FUENTE",
+        "notes": "No se inventa domain_age_days"
+      },
+      {
+        "component": "Automatización reglas",
+        "source_type": "motor en vivo",
+        "source_detail": "novus_security_integration::detect_threats_realtime",
+        "file": "services/novus_security_integration.py",
+        "function": "detect_threats_realtime",
+        "service": "novus_security_integration",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Automatización ejecuciones/mes",
+        "source_type": "N/A",
+        "source_detail": "N/A",
+        "file": "routes/main.py",
+        "function": "automatizacion",
+        "service": "N/A",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "SIN FUENTE",
+        "notes": "Muestra Sin datos disponibles"
+      },
+      {
+        "component": "Configuración sector",
+        "source_type": "SQLite Usuario",
+        "source_detail": "models/user.py",
+        "file": "models/user.py",
+        "function": "User.sector",
+        "service": "models/user.py",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Configuración stats",
+        "source_type": "psutil",
+        "source_detail": "routes/main.py",
+        "file": "routes/main.py",
+        "function": "ruta_configuracion",
+        "service": "routes/main.py",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": ""
+      },
+      {
+        "component": "Búsqueda global índice",
+        "source_type": "catálogo estático+DB",
+        "source_detail": "global_search_index",
+        "file": "services/global_search_index.py",
+        "function": "search",
+        "service": "global_search_index",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "REAL",
+        "notes": "Navegación + datos dinámicos DB"
+      },
+      {
+        "component": "Firewall SO nativo",
+        "source_type": "OS firewall",
+        "source_detail": "N/A",
+        "file": "N/A",
+        "function": "N/A",
+        "service": "N/A",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "NO IMPLEMENTADO",
+        "notes": "Solo puertos locales vía socket scan"
+      },
+      {
+        "component": "Licenciamiento",
+        "source_type": "N/A",
+        "source_detail": "N/A",
+        "file": "routes/auth.py",
+        "function": "login",
+        "service": "N/A",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "NO IMPLEMENTADO",
+        "notes": ""
+      },
+      {
+        "component": "Geolocalización nodo",
+        "source_type": "N/A",
+        "source_detail": "N/A",
+        "file": "templates/xdr.html",
+        "function": "N/A",
+        "service": "N/A",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "ELIMINADO",
+        "notes": "Reemplazado por NODE_ID real"
+      },
+      {
+        "component": "VirusTotal reputación",
+        "source_type": "API externa",
+        "source_detail": "VIRUSTOTAL_API_KEY",
+        "file": "services/advanced_detector_service.py",
+        "function": "scan_file_reputation",
+        "service": "VIRUSTOTAL_API_KEY",
+        "api": null,
+        "database": null,
+        "last_updated": "2026-07-11 21:22:56",
+        "status": "PENDIENTE",
+        "notes": ""
+      }
+    ]
+  },
+  "remaining_suspicious_patterns": [
+    {
+      "file": "security_engine.py",
+      "line": 116,
+      "pattern": "py_get_default_zero",
+      "snippet": "typing_diff = abs(access_data['typing_speed'] - history.get('avg_typing_speed', 0))"
+    },
+    {
+      "file": "security_engine.py",
+      "line": 344,
+      "pattern": "py_get_default_zero",
+      "snippet": "if activity_report.get('data_entropy', 0) > 7.9:"
+    },
+    {
+      "file": "security_engine.py",
+      "line": 348,
+      "pattern": "py_get_default_zero",
+      "snippet": "if activity_report.get('files_modified_per_sec', 0) > 50:"
+    },
+    {
+      "file": "security_engine.py",
+      "line": 356,
+      "pattern": "py_get_default_zero",
+      "snippet": "outbound_rate = activity_report.get('outbound_traffic_mbps', 0)"
+    },
+    {
+      "file": "security_engine.py",
+      "line": 700,
+      "pattern": "py_get_default_zero",
+      "snippet": "if device_metadata.get('device_days_on_network', 0) < 1:"
+    },
+    {
+      "file": "test_soc_analyst_queries.py",
+      "line": 112,
+      "pattern": "py_get_default_zero",
+      "snippet": "has_processes = rep.get(\"report\", {}).get(\"summary\", {}).get(\"processes\", 0) > 0"
+    },
+    {
+      "file": "api/network.py",
+      "line": 35,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"node_count\": cache_info.get(\"node_count\", 0),"
+    },
+    {
+      "file": "api/system.py",
+      "line": 55,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"verdict\": \"BLOQUEADO\" if ransomware_alert or (reputation.get('malicioso', 0) > 0) else \"PERMITIDO\""
+    },
+    {
+      "file": "api/system.py",
+      "line": 736,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"cpu\": proc.info.get('cpu_percent', 0),"
+    },
+    {
+      "file": "api/system.py",
+      "line": 737,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"memoria\": proc.info.get('memory_percent', 0),"
+    },
+    {
+      "file": "api/system.py",
+      "line": 970,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"memoria_percent\": p.info.get('memory_percent', 0)"
+    },
+    {
+      "file": "api/system.py",
+      "line": 973,
+      "pattern": "py_get_default_zero",
+      "snippet": "if p.info.get('memory_percent', 0) > 5"
+    },
+    {
+      "file": "api/system.py",
+      "line": 1062,
+      "pattern": "py_get_default_zero",
+      "snippet": "cpu = p.info.get('cpu_percent', 0)"
+    },
+    {
+      "file": "api/system.py",
+      "line": 1063,
+      "pattern": "py_get_default_zero",
+      "snippet": "mem = p.info.get('memory_percent', 0)"
+    },
+    {
+      "file": "routes/main.py",
+      "line": 144,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"ejecuciones_mes\": str(playbook.get('ejecuciones', 0)),"
+    },
+    {
+      "file": "routes/main.py",
+      "line": 152,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"procesos_criticos\": len([p for p in procesos if p.info.get('cpu_percent', 0) > 80]),"
+    },
+    {
+      "file": "routes/main.py",
+      "line": 328,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"cpu\": proc.info.get('cpu_percent', 0),"
+    },
+    {
+      "file": "routes/main.py",
+      "line": 329,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"memoria\": proc.info.get('memory_percent', 0),"
+    },
+    {
+      "file": "routes/network.py",
+      "line": 86,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"trafico_total\": f\"{round((net_stats.get('bytes_sent', 0) + net_stats.get('bytes_recv', 0)) / (1024*"
+    },
+    {
+      "file": "routes/network.py",
+      "line": 87,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"conexiones_activas\": net_stats.get('connections', 0),"
+    },
+    {
+      "file": "routes/network.py",
+      "line": 88,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"bytes_enviados\": f\"{round(net_stats.get('bytes_sent', 0) / (1024**2), 2)} MB\","
+    },
+    {
+      "file": "routes/network.py",
+      "line": 89,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"bytes_recibidos\": f\"{round(net_stats.get('bytes_recv', 0) / (1024**2), 2)} MB\","
+    },
+    {
+      "file": "scripts/forensic_verify.py",
+      "line": 51,
+      "pattern": "py_get_default_zero",
+      "snippet": "check(\"Audit entries\", ad and ad.get('total_components', 0) > 0, str(ad.get('total_components')))"
+    },
+    {
+      "file": "scripts/mvp_audit.py",
+      "line": 56,
+      "pattern": "py_get_default_zero",
+      "snippet": "real = c.get(\"REAL\", 0)"
+    },
+    {
+      "file": "scripts/mvp_audit.py",
+      "line": 57,
+      "pattern": "py_get_default_zero",
+      "snippet": "sim = c.get(\"SIMULADO\", 0)"
+    },
+    {
+      "file": "scripts/mvp_audit.py",
+      "line": 180,
+      "pattern": "py_get_default_zero",
+      "snippet": "data_pct = RESULTS.get(\"data_audit\", {}).get(\"real_pct\", 0)"
+    },
+    {
+      "file": "scripts/test_kernel_performance.py",
+      "line": 63,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"cache_hits\": result.get(\"cache_hits\", 0),"
+    },
+    {
+      "file": "services/ai_capability_registry.py",
+      "line": 214,
+      "pattern": "py_get_default_zero",
+      "snippet": "result[\"cache_hits\"] = result.get(\"cache_hits\", 0)"
+    },
+    {
+      "file": "services/ai_capability_registry.py",
+      "line": 462,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"traffic_recv_mb\": round(stats.get(\"bytes_recv\", 0) / (1024 ** 2), 2),"
+    },
+    {
+      "file": "services/ai_capability_registry.py",
+      "line": 463,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"traffic_sent_mb\": round(stats.get(\"bytes_sent\", 0) / (1024 ** 2), 2),"
+    },
+    {
+      "file": "services/ai_capability_registry.py",
+      "line": 470,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"bytes_recv_mb\": round(stats.get(\"bytes_recv\", 0) / (1024 ** 2), 2),"
+    },
+    {
+      "file": "services/ai_capability_registry.py",
+      "line": 471,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"bytes_sent_mb\": round(stats.get(\"bytes_sent\", 0) / (1024 ** 2), 2),"
+    },
+    {
+      "file": "services/ai_capability_registry.py",
+      "line": 472,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"packets_recv\": stats.get(\"packets_recv\", 0),"
+    },
+    {
+      "file": "services/ai_capability_registry.py",
+      "line": 473,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"packets_sent\": stats.get(\"packets_sent\", 0),"
+    },
+    {
+      "file": "services/ai_capability_registry.py",
+      "line": 474,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"active_connections\": stats.get(\"connections\", 0),"
+    },
+    {
+      "file": "services/ai_kernel.py",
+      "line": 124,
+      "pattern": "py_get_default_zero",
+      "snippet": "cpu_load = status.get('cpu', 0)"
+    },
+    {
+      "file": "services/ai_kernel.py",
+      "line": 125,
+      "pattern": "py_get_default_zero",
+      "snippet": "mem_load = status.get('ram', 0)"
+    },
+    {
+      "file": "services/ai_kernel.py",
+      "line": 418,
+      "pattern": "py_get_default_zero",
+      "snippet": "if risk.get(\"nivel\", 0) >= 8:"
+    },
+    {
+      "file": "services/ai_orchestrator.py",
+      "line": 553,
+      "pattern": "py_get_default_zero",
+      "snippet": "result.update(executed=True, message=f\"Gmail sincronizado: {sync.get('analyzed', 0)} correo(s).\", da"
+    },
+    {
+      "file": "services/ai_orchestrator.py",
+      "line": 645,
+      "pattern": "py_get_default_zero",
+      "snippet": "return f\"RESPUESTA DIRECTA: {stats.get('total_analyzed', 0)} correo(s) analizados. Maliciosos: {stat"
+    },
+    {
+      "file": "services/ai_orchestrator.py",
+      "line": 665,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"{len(vulns)} vulnerabilidades, {sec.get('threat_count', 0) or 0} amenazas.\""
+    },
+    {
+      "file": "services/ai_orchestrator.py",
+      "line": 729,
+      "pattern": "py_get_default_zero",
+      "snippet": "lines.append(f\"  - PID {p.get('pid')} {p.get('name')} CPU {p.get('cpu_percent', 0):.1f}%\")"
+    },
+    {
+      "file": "services/ai_orchestrator.py",
+      "line": 735,
+      "pattern": "py_get_default_zero",
+      "snippet": "lines.append(f\"  Establecidas: {conn.get('established', 0)} / Total: {conn.get('total', 0)}\")"
+    },
+    {
+      "file": "services/ai_orchestrator.py",
+      "line": 753,
+      "pattern": "py_get_default_zero",
+      "snippet": "lines.append(f\"  Analizados: {stats.get('total_analyzed', 0)} | OAuth: {(gm.get('connection') or {})"
+    },
+    {
+      "file": "services/data_audit_registry.py",
+      "line": 102,
+      "pattern": "py_get_default_zero",
+      "snippet": "counts[e[\"status\"]] = counts.get(e[\"status\"], 0) + 1"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 238,
+      "pattern": "py_get_default_zero",
+      "snippet": "self._scans[scan_id][\"stats\"][key] = self._scans[scan_id][\"stats\"].get(key, 0) + n"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 253,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"connections\": finding.get(\"connections\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 426,
+      "pattern": "py_get_default_zero",
+      "snippet": "if hp.get(\"memory_percent\", 0) >= 25:"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 430,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"ram_pct\": round(hp.get(\"memory_percent\", 0), 1),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 431,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"description\": f\"Proceso consume {hp.get('memory_percent', 0):.1f}% de RAM\","
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 505,
+      "pattern": "py_get_default_zero",
+      "snippet": "by_name[name] = by_name.get(name, 0) + 1"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 732,
+      "pattern": "py_get_default_zero",
+      "snippet": "self._bump_stat(scan_id, \"tasks_analyzed\", tasks.get(\"count\", 0))"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 797,
+      "pattern": "py_get_default_zero",
+      "snippet": "self._bump_stat(scan_id, \"drivers_analyzed\", drivers.get(\"count\", 0))"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1069,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Anomalías detectadas: {stats.get('anomalies_found', 0)}\","
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1072,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Procesos analizados: {stats.get('processes_analyzed', 0)}\","
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1073,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Servicios analizados: {stats.get('services_analyzed', 0)}\","
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1074,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Drivers analizados: {stats.get('drivers_analyzed', 0)}\","
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1076,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Tareas programadas: {stats.get('tasks_analyzed', 0)}\","
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1077,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"DLL/EXE analizados: {stats.get('dll_analyzed', 0)}\","
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1078,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Conexiones analizadas: {stats.get('connections_analyzed', 0)}\","
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1079,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Puertos verificados: {stats.get('ports_analyzed', 0)}\","
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1080,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Archivos analizados: {stats.get('files_analyzed', 0)}\","
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1081,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Carpetas analizadas: {stats.get('folders_analyzed', 0)}\","
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1112,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"  • Se analizaron {stats.get('processes_analyzed', 0)} procesos sin patrones de ataque en cmdline."
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1114,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"  • Se verificaron {stats.get('connections_analyzed', 0)} conexiones — sin destinos bloqueados por"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1115,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"  • Puertos abiertos ({stats.get('ports_analyzed', 0)}) dentro de expectativa o sin exposición crí"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1116,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"  • Servicios ({stats.get('services_analyzed', 0)}) y drivers ({stats.get('drivers_analyzed', 0)})"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1131,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"  Conexiones: {f.get('connections', 0)} | Puertos: {f.get('ports', [])}\","
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1156,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"files\": stats.get(\"files_analyzed\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1157,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"folders\": stats.get(\"folders_analyzed\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1158,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"processes\": stats.get(\"processes_analyzed\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1159,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"connections\": stats.get(\"connections_analyzed\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1160,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"ports\": stats.get(\"ports_analyzed\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1161,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"services\": stats.get(\"services_analyzed\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1162,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"users\": stats.get(\"users_analyzed\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1163,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"drivers\": stats.get(\"drivers_analyzed\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1164,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"dll\": stats.get(\"dll_analyzed\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1165,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"certificates\": stats.get(\"certificates_analyzed\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1166,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"tasks\": stats.get(\"tasks_analyzed\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1167,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"vulnerabilities\": sections.get(\"vulnerabilities\", {}).get(\"data\", {}).get(\"count\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1168,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"anomalies\": stats.get(\"anomalies_found\", 0),"
+    },
+    {
+      "file": "services/deep_scan_engine.py",
+      "line": 1169,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"threats\": stats.get(\"threats_found\", 0),"
+    },
+    {
+      "file": "services/gmail_analyzer_service.py",
+      "line": 180,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"size\": part.get(\"body\", {}).get(\"size\", 0),"
+    },
+    {
+      "file": "services/kernel_agent.py",
+      "line": 154,
+      "pattern": "py_get_default_zero",
+      "snippet": "total = prefs.get(\"total_interactions\", 0)"
+    },
+    {
+      "file": "services/kernel_memory.py",
+      "line": 80,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"total_interactions\": profile.get(\"total_interactions\", 0),"
+    },
+    {
+      "file": "services/kernel_memory.py",
+      "line": 95,
+      "pattern": "py_get_default_zero",
+      "snippet": "profile_data[\"total_interactions\"] = profile_data.get(\"total_interactions\", 0) + 1"
+    },
+    {
+      "file": "services/kernel_memory.py",
+      "line": 99,
+      "pattern": "py_get_default_zero",
+      "snippet": "profile_data.setdefault(\"query_counts\", {})[q_norm] = profile_data[\"query_counts\"].get(q_norm, 0) + "
+    },
+    {
+      "file": "services/kernel_memory.py",
+      "line": 100,
+      "pattern": "py_get_default_zero",
+      "snippet": "profile_data.setdefault(\"intent_counts\", {})[intent_id] = profile_data[\"intent_counts\"].get(intent_i"
+    },
+    {
+      "file": "services/kernel_memory.py",
+      "line": 102,
+      "pattern": "py_get_default_zero",
+      "snippet": "profile_data.setdefault(\"engine_counts\", {})[eng] = profile_data[\"engine_counts\"].get(eng, 0) + 1"
+    },
+    {
+      "file": "services/kernel_memory.py",
+      "line": 104,
+      "pattern": "py_get_default_zero",
+      "snippet": "profile_data.setdefault(\"scan_profiles\", {})[profile] = profile_data[\"scan_profiles\"].get(profile, 0"
+    },
+    {
+      "file": "services/kernel_operator.py",
+      "line": 631,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Mensajes analizados en esta ejecución: {sync.get('analyzed', 0)}\","
+    },
+    {
+      "file": "services/kernel_operator.py",
+      "line": 632,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Total histórico: {stats.get('total_analyzed', 0)} | \""
+    },
+    {
+      "file": "services/kernel_operator.py",
+      "line": 633,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Seguros: {stats.get('safe', 0)} | Sospechosos: {stats.get('suspicious', 0)} | \""
+    },
+    {
+      "file": "services/kernel_operator.py",
+      "line": 634,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Maliciosos: {stats.get('malicious', 0)}\","
+    },
+    {
+      "file": "services/kernel_session_context.py",
+      "line": 85,
+      "pattern": "py_get_default_zero",
+      "snippet": "return (time.time() - recent.get(\"ts\", 0)) < ENGINE_REUSE_TTL"
+    },
+    {
+      "file": "services/novus_security_integration.py",
+      "line": 306,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"cpu\": proc_info.get('cpu_percent', 0),"
+    },
+    {
+      "file": "services/novus_security_integration.py",
+      "line": 307,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"memoria\": proc_info.get('memory_percent', 0),"
+    },
+    {
+      "file": "services/novus_security_integration.py",
+      "line": 317,
+      "pattern": "py_get_default_zero",
+      "snippet": "system_health.get('suspicious_process_count', 0) or 0"
+    },
+    {
+      "file": "services/novus_security_integration.py",
+      "line": 319,
+      "pattern": "py_get_default_zero",
+      "snippet": "system_health.get('open_port_count', 0) or 0"
+    },
+    {
+      "file": "services/playbook_service.py",
+      "line": 248,
+      "pattern": "py_get_default_zero",
+      "snippet": "if proc.info.get(\"cpu_percent\", 0) > 80:"
+    },
+    {
+      "file": "services/sector_shield_service.py",
+      "line": 240,
+      "pattern": "py_get_default_zero",
+      "snippet": "steps.append({\"label\": \"BEC Shield\", \"status\": \"done\", \"detail\": f\"Registro: {result.get('total_thre"
+    },
+    {
+      "file": "services/sector_shield_service.py",
+      "line": 296,
+      "pattern": "py_get_default_zero",
+      "snippet": "prioritized.sort(key=lambda x: x.get(\"sector_relevance\", 0), reverse=True)"
+    },
+    {
+      "file": "services/soc_report_builder.py",
+      "line": 245,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"{sec.get('threat_count', 0)} amenaza(s) en motor XDR.\""
+    },
+    {
+      "file": "services/soc_report_builder.py",
+      "line": 262,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Resumen del día: {siem.get('total', 0)} eventos SIEM/red, \""
+    },
+    {
+      "file": "services/soc_report_builder.py",
+      "line": 391,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"  • PID {p.get('pid')} {p.get('name')} — CPU {p.get('cpu_percent', 0):.1f}% \""
+    },
+    {
+      "file": "services/soc_report_builder.py",
+      "line": 392,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"RAM {p.get('memory_percent', p.get('ram_percent', 0)):.1f}%\""
+    },
+    {
+      "file": "services/soc_report_builder.py",
+      "line": 403,
+      "pattern": "py_get_default_zero",
+      "snippet": "lines.append(f\"  Establecidas: {conn.get('established', 0)} | Total: {conn.get('total', 0)}\")"
+    },
+    {
+      "file": "services/soc_report_builder.py",
+      "line": 423,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"  Analizados: {stats.get('total_analyzed', 0)} | \""
+    },
+    {
+      "file": "services/soc_report_builder.py",
+      "line": 424,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Seguros: {stats.get('safe', 0)} | Sospechosos: {stats.get('suspicious', 0)} | \""
+    },
+    {
+      "file": "services/soc_report_builder.py",
+      "line": 425,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"Maliciosos: {stats.get('malicious', 0)}\""
+    },
+    {
+      "file": "services/soc_report_builder.py",
+      "line": 435,
+      "pattern": "py_get_default_zero",
+      "snippet": "lines.append(f\"  Fecha: {siem.get('date', 'N/D')} | Total eventos: {siem.get('total', 0)}\")"
+    },
+    {
+      "file": "services/soc_report_builder.py",
+      "line": 501,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"  Deep Scan: {summary.get('processes', 0)} procesos, {summary.get('files', 0)} archivos, \""
+    },
+    {
+      "file": "services/soc_report_builder.py",
+      "line": 502,
+      "pattern": "py_get_default_zero",
+      "snippet": "f\"{summary.get('threats', 0)} amenazas\""
+    },
+    {
+      "file": "services/soc_report_builder.py",
+      "line": 564,
+      "pattern": "py_get_default_zero",
+      "snippet": "\"threat_count\": sec.get(\"threat_count\", 0),"
+    },
+    {
+      "file": "services/system_monitor.py",
+      "line": 184,
+      "pattern": "py_get_default_zero",
+      "snippet": "'cpu_percent': proc.info.get('cpu_percent', 0),"
+    },
+    {
+      "file": "services/system_monitor.py",
+      "line": 185,
+      "pattern": "py_get_default_zero",
+      "snippet": "'memory_percent': proc.info.get('memory_percent', 0)"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 98,
+      "pattern": "html_literal_zero_kpi",
+      "snippet": "<div><span id=\"novus-ds-files\">0</span><small>Archivos</small></div>"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 99,
+      "pattern": "html_literal_zero_kpi",
+      "snippet": "<div><span id=\"novus-ds-folders\">0</span><small>Carpetas</small></div>"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 100,
+      "pattern": "html_literal_zero_kpi",
+      "snippet": "<div><span id=\"novus-ds-procs\">0</span><small>Procesos</small></div>"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 101,
+      "pattern": "html_literal_zero_kpi",
+      "snippet": "<div><span id=\"novus-ds-threats\">0</span><small>Amenazas</small></div>"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 102,
+      "pattern": "html_literal_zero_kpi",
+      "snippet": "<div><span id=\"novus-ds-anomalies\">0</span><small>Anomalías</small></div>"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 123,
+      "pattern": "html_literal_zero_kpi",
+      "snippet": "<div class=\"novus-email-kpi\"><span id=\"novus-email-total\">0</span><small>Analizados</small></div>"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 124,
+      "pattern": "html_literal_zero_kpi",
+      "snippet": "<div class=\"novus-email-kpi safe\"><span id=\"novus-email-safe\">0</span><small>Seguros</small></div>"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 125,
+      "pattern": "html_literal_zero_kpi",
+      "snippet": "<div class=\"novus-email-kpi warn\"><span id=\"novus-email-suspicious\">0</span><small>Sospechosos</smal"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 126,
+      "pattern": "html_literal_zero_kpi",
+      "snippet": "<div class=\"novus-email-kpi danger\"><span id=\"novus-email-malicious\">0</span><small>Maliciosos</smal"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 456,
+      "pattern": "js_nullish_zero",
+      "snippet": "document.getElementById('novus-email-total').textContent = stats.total_analyzed ?? 0;"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 457,
+      "pattern": "js_nullish_zero",
+      "snippet": "document.getElementById('novus-email-safe').textContent = stats.safe ?? 0;"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 458,
+      "pattern": "js_nullish_zero",
+      "snippet": "document.getElementById('novus-email-suspicious').textContent = stats.suspicious ?? 0;"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 459,
+      "pattern": "js_nullish_zero",
+      "snippet": "document.getElementById('novus-email-malicious').textContent = stats.malicious ?? 0;"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 485,
+      "pattern": "js_nullish_zero",
+      "snippet": "resultMessage: (d) => d.message || ('Analizados: ' + (d.analyzed ?? 0)),"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 802,
+      "pattern": "js_nullish_zero",
+      "snippet": "document.getElementById('novus-ds-files').textContent = st.files_analyzed ?? 0;"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 803,
+      "pattern": "js_nullish_zero",
+      "snippet": "document.getElementById('novus-ds-folders').textContent = st.folders_analyzed ?? 0;"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 804,
+      "pattern": "js_nullish_zero",
+      "snippet": "document.getElementById('novus-ds-procs').textContent = st.processes_analyzed ?? 0;"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 805,
+      "pattern": "js_nullish_zero",
+      "snippet": "document.getElementById('novus-ds-threats').textContent = st.threats_found ?? 0;"
+    },
+    {
+      "file": "templates/partials/ai_kernel_panel.html",
+      "line": 806,
+      "pattern": "js_nullish_zero",
+      "snippet": "document.getElementById('novus-ds-anomalies').textContent = st.anomalies_found ?? 0;"
+    }
+  ],
+  "remaining_count": 135,
+  "simulated_entries": 0
+}

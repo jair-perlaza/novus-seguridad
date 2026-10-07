@@ -1,0 +1,758 @@
+<!-- NOVUS Remediation Modal - include once per page -->
+<div id="novus-remediation-overlay" class="novus-modal-overlay hidden" aria-hidden="true">
+    <div id="novus-remediation-modal" class="novus-modal" role="dialog" aria-modal="true">
+        <div class="novus-modal-header">
+            <div class="novus-modal-icon" id="novus-modal-icon"><i class="fas fa-shield-alt"></i></div>
+            <div>
+                <h2 id="novus-modal-title">Remediación NOVUS</h2>
+                <p id="novus-modal-subtitle" class="novus-modal-subtitle">Monitorizando...</p>
+            </div>
+            <button type="button" class="novus-modal-close" onclick="NovusRemediation.close()" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="novus-modal-body">
+            <div class="novus-modal-status">
+                <span id="novus-modal-status-label">Estado:</span>
+                <strong id="novus-modal-status-value">En ejecución</strong>
+            </div>
+            <div class="novus-progress-track">
+                <div id="novus-modal-progress" class="novus-progress-bar"></div>
+            </div>
+            <div id="novus-modal-log" class="novus-modal-log"></div>
+            <div id="novus-modal-timing" class="novus-modal-timing hidden"></div>
+            <div id="novus-modal-details" class="novus-modal-details hidden"></div>
+            <div id="novus-manual-panel" class="novus-manual-panel hidden"></div>
+            <p id="novus-modal-result" class="novus-modal-result"></p>
+        </div>
+        <div class="novus-modal-footer">
+            <div id="novus-footer-report-actions" class="novus-footer-actions flex flex-wrap gap-2 justify-end w-full">
+            <button type="button" class="novus-btn-secondary" onclick="NovusRemediation.close()">Cerrar</button>
+            <button type="button" class="novus-btn-secondary hidden" id="novus-btn-verify-manual" onclick="NovusRemediation.verifyManual()">Verificar remediación manual</button>
+            <button type="button" class="novus-btn-secondary" id="novus-btn-view-report" onclick="NovusRemediation.viewReport()" disabled title="Disponible cuando el informe esté generado">Ver informe</button>
+            <button type="button" class="novus-btn-primary" id="novus-btn-download" onclick="NovusRemediation.downloadReport()" disabled title="Disponible cuando el informe esté generado">Descargar PDF</button>
+            <button type="button" class="novus-btn-secondary hidden" id="novus-btn-json" onclick="NovusRemediation.downloadJsonTechnical()" disabled title="JSON técnico para administradores">JSON técnico</button>
+            <button type="button" class="novus-btn-secondary" id="novus-btn-share" onclick="NovusRemediation.shareReport()" disabled title="Disponible cuando el informe esté generado">Compartir</button>
+            </div>
+            <div id="novus-footer-confirm-actions" class="novus-footer-actions hidden flex flex-wrap gap-2 justify-end w-full"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+.novus-modal-overlay {
+    position: fixed; inset: 0; z-index: 10050;
+    background: rgba(3, 6, 12, 0.82);
+    display: none;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease;
+    padding: max(12px, 2vh);
+}
+.novus-modal-overlay.active {
+    display: flex;
+    opacity: 1;
+    pointer-events: auto;
+}
+.novus-modal-overlay.hidden { display: none; }
+.novus-modal {
+    display: flex;
+    flex-direction: column;
+    width: min(640px, 96vw);
+    max-height: min(90vh, 880px);
+    background: linear-gradient(180deg, #0c121d 0%, #06090f 100%);
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    box-shadow: 0 24px 80px rgba(93, 95, 239, 0.25);
+    transform: scale(0.92) translateY(12px);
+    opacity: 0;
+    transition: transform 0.28s ease, opacity 0.28s ease;
+    overflow: hidden;
+}
+.novus-modal-overlay.active .novus-modal { transform: scale(1) translateY(0); opacity: 1; }
+.novus-modal-header {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 16px 18px 12px; border-bottom: 1px solid #1e293b;
+    flex-shrink: 0;
+    background: #0c121d;
+}
+.novus-modal-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(93, 95, 239, 0.15); color: #818cf8;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.novus-modal-header h2 { margin: 0; font-size: 18px; color: #fff; }
+.novus-modal-subtitle { margin: 4px 0 0; font-size: 11px; color: #94a3b8; }
+.novus-modal-close {
+    margin-left: auto; background: none; border: none; color: #94a3b8;
+    font-size: 24px; cursor: pointer; line-height: 1;
+}
+.novus-modal-body {
+    padding: 14px 18px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.novus-modal-status { font-size: 12px; color: #cbd5e1; margin-bottom: 12px; }
+.novus-progress-track {
+    height: 8px; background: #111827; border-radius: 999px; overflow: hidden; margin-bottom: 14px;
+}
+.novus-progress-bar {
+    height: 100%; width: 0%; background: linear-gradient(90deg, #5d5fef, #818cf8);
+    transition: width 0.35s ease;
+}
+.novus-modal-log {
+    max-height: 220px; overflow-y: auto; background: #06090f;
+    border: 1px solid #1e293b; border-radius: 10px; padding: 10px;
+    font-family: Consolas, monospace; font-size: 11px;
+}
+.novus-log-line { padding: 4px 0; border-bottom: 1px solid #111827; color: #94a3b8; }
+.novus-log-line.done { color: #86efac; }
+.novus-log-line.failed { color: #fca5a5; }
+.novus-log-line.warning { color: #fcd34d; }
+.novus-modal-result { margin-top: 12px; font-size: 12px; color: #e2e8f0; }
+.novus-modal-timing { margin-top: 8px; font-size: 11px; color: #94a3b8; }
+.novus-modal-timing.hidden { display: none; }
+.novus-modal-details {
+    margin-top: 12px; padding: 12px; background: #0a0f18;
+    border: 1px solid #1e293b; border-radius: 10px; font-size: 11px; color: #cbd5e1;
+    max-height: 200px; overflow-y: auto;
+}
+.novus-modal-details.hidden { display: none; }
+.novus-modal-details h3 { font-size: 12px; color: #818cf8; margin: 0 0 8px; }
+.novus-modal-footer {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end;
+    padding: 12px 18px 16px; border-top: 1px solid #1e293b;
+    flex-shrink: 0;
+    background: #0a0f18;
+}
+@media (max-width: 480px) {
+    .novus-modal-footer { flex-direction: column; }
+    .novus-modal-footer .novus-btn-primary,
+    .novus-modal-footer .novus-btn-secondary { width: 100%; text-align: center; }
+}
+.novus-btn-primary, .novus-btn-secondary {
+    border: none; border-radius: 8px; padding: 8px 14px; font-size: 11px;
+    font-weight: 700; cursor: pointer;
+}
+.novus-btn-primary { background: #5d5fef; color: #fff; }
+.novus-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.novus-btn-secondary { background: #1e293b; color: #e2e8f0; }
+.novus-btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+.novus-manual-panel {
+    margin-top: 12px; padding: 14px; background: #0a0f18;
+    border: 1px solid #f59e0b44; border-radius: 10px; font-size: 11px; color: #e2e8f0;
+    max-height: 280px; overflow-y: auto;
+}
+.novus-manual-panel.hidden { display: none; }
+.novus-manual-panel h3 { font-size: 13px; color: #fcd34d; margin: 0 0 10px; }
+.novus-manual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-bottom: 10px; }
+.novus-manual-grid span { color: #94a3b8; }
+.novus-manual-grid strong { color: #e2e8f0; word-break: break-all; }
+.novus-help-btns { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.novus-help-btn {
+    background: #1e293b; color: #818cf8; border: 1px solid #334155;
+    border-radius: 6px; padding: 5px 10px; font-size: 10px; cursor: pointer;
+}
+.novus-help-btn:hover { background: #334155; }
+.novus-manual-steps { margin-top: 8px; }
+.novus-manual-step { padding: 6px 0; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
+.novus-footer-actions.hidden { display: none !important; }
+.novus-footer-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; width: 100%; }
+</style>
+
+<script>
+const NovusRemediation = {
+    reportId: null,
+    targetId: null,
+    manualGuide: null,
+    isAdmin: false,
+    _timingTimer: null,
+    _overlayEl() {
+        return document.getElementById('novus-remediation-overlay');
+    },
+    _btn(id) {
+        const root = this._overlayEl();
+        if (!root) return null;
+        return root.querySelector('#' + id);
+    },
+    _ensureReportFooterReady() {
+        const report = document.getElementById('novus-footer-report-actions');
+        const confirm = document.getElementById('novus-footer-confirm-actions');
+        if (confirm) {
+            confirm.classList.add('hidden');
+            confirm.innerHTML = '';
+        }
+        if (report) report.classList.remove('hidden');
+    },
+    open(options = {}) {
+        this._ensureReportFooterReady();
+        const overlay = this._overlayEl();
+        document.getElementById('novus-modal-title').textContent = options.title || 'Remediación NOVUS';
+        document.getElementById('novus-modal-subtitle').textContent = options.description || 'Iniciando...';
+        document.getElementById('novus-modal-status-value').textContent = 'En ejecución';
+        document.getElementById('novus-modal-status-value').style.color = '';
+        document.getElementById('novus-modal-progress').style.width = '0%';
+        document.getElementById('novus-modal-log').innerHTML = '';
+        document.getElementById('novus-modal-details').classList.add('hidden');
+        document.getElementById('novus-modal-details').innerHTML = '';
+        document.getElementById('novus-manual-panel').classList.add('hidden');
+        document.getElementById('novus-manual-panel').innerHTML = '';
+        document.getElementById('novus-modal-result').textContent = '';
+        document.getElementById('novus-modal-timing').classList.add('hidden');
+        document.getElementById('novus-modal-timing').textContent = '';
+        this._stopTiming();
+        this._setReportButtons({ enabled: false, reason: 'Generando informe…' });
+        const verifyBtn = this._btn('novus-btn-verify-manual');
+        if (verifyBtn) { verifyBtn.classList.add('hidden'); verifyBtn.disabled = false; }
+        this.reportId = null;
+        this.manualGuide = null;
+        this._showAdminJsonButton();
+        overlay.classList.remove('hidden');
+        requestAnimationFrame(() => overlay.classList.add('active'));
+    },
+    close() {
+        const overlay = document.getElementById('novus-remediation-overlay');
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.classList.add('hidden'), 260);
+    },
+    appendLog(step, index, total) {
+        const log = document.getElementById('novus-modal-log');
+        const line = document.createElement('div');
+        line.className = `novus-log-line ${step.status || 'done'}`;
+        const detail = step.detail || step.error || '';
+        line.textContent = `[${step.timestamp || '--:--'}] ${step.label} ${detail ? '— ' + detail : ''}`;
+        log.appendChild(line);
+        log.scrollTop = log.scrollHeight;
+        document.getElementById('novus-modal-progress').style.width = `${Math.round(((index + 1) / total) * 100)}%`;
+    },
+    async run(targetId, targetType = 'vulnerability', meta = {}) {
+        this.targetId = targetId;
+        this.open({
+            title: meta.title || (targetType === 'incident' ? 'Mitigación de incidente' : 'Remediación de vulnerabilidad'),
+            description: meta.description || `Objetivo: ${targetId}`,
+        });
+        try {
+            const response = await fetch('/api/reports/remediate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target_id: targetId, target_type: targetType }),
+            });
+            const data = await response.json();
+            const steps = data.steps || [];
+            // Pasos reales del backend — sin pacing simulado
+            for (let i = 0; i < steps.length; i++) {
+                this.appendLog(steps[i], i, steps.length);
+            }
+            this.reportId = data.report_id;
+            this.manualGuide = data.manual_guide || null;
+            const finalStatus = data.final_status || (data.status === 'success' ? 'Mitigado' : 'En investigación');
+            const statusEl = document.getElementById('novus-modal-status-value');
+            statusEl.textContent = finalStatus;
+            if (data.resolved || finalStatus === 'RESUELTA' || finalStatus === 'RESUELTO') {
+                statusEl.style.color = '#86efac';
+            } else if (data.requires_manual || finalStatus === 'Requiere remediación manual') {
+                statusEl.style.color = '#fcd34d';
+                this.renderManualGuide(data.manual_guide, data.strategies_attempted);
+                const verifyBtn = document.getElementById('novus-btn-verify-manual');
+                if (verifyBtn) verifyBtn.classList.remove('hidden');
+            } else if (data.status === 'failed' || finalStatus === 'En investigación') {
+                statusEl.style.color = '#fcd34d';
+            }
+            document.getElementById('novus-modal-result').textContent = data.message || 'Proceso finalizado.';
+            if (this.reportId) {
+                this._setReportButtons({ enabled: true });
+            }
+            if (typeof meta.onComplete === 'function') meta.onComplete(data);
+        } catch (error) {
+            document.getElementById('novus-modal-status-value').textContent = 'Error';
+            document.getElementById('novus-modal-result').textContent = error.message;
+        }
+    },
+    renderManualGuide(guide, strategies) {
+        if (!guide) return;
+        const panel = document.getElementById('novus-manual-panel');
+        panel.classList.remove('hidden');
+        const fields = [
+            ['Ubicación', guide.donde_esta_el_problema],
+            ['Archivo', guide.archivo_afectado],
+            ['Puerto', guide.puerto_abierto],
+            ['Servicio', guide.nombre_servicio],
+            ['Proceso', guide.nombre_proceso],
+            ['PID', guide.pid],
+            ['Ruta ejecutable', guide.ruta_ejecutable],
+            ['Ventana Windows', guide.ventana_windows],
+            ['Configuración', guide.configuracion_modificar],
+            ['Riesgo', guide.riesgo_asociado],
+            ['Dificultad', guide.dificultad],
+            ['Tiempo estimado', guide.tiempo_estimado],
+        ];
+        const grid = fields.filter(([, v]) => v && v !== 'Sin datos disponibles')
+            .map(([k, v]) => `<div><span>${k}:</span><br><strong>${v}</strong></div>`).join('');
+        const stratList = (strategies || guide.estrategias_intentadas || [])
+            .map(s => `<div class="novus-log-line warning">• ${s.id || s}: ${s.status || ''} ${s.error ? '— ' + s.error : ''}</div>`).join('');
+        const steps = (guide.pasos_manuales || [])
+            .map(p => `<div class="novus-manual-step"><b>Paso ${p.orden}:</b> ${p.titulo}<br>${p.instruccion}</div>`).join('');
+        const btns = (guide.botones_ayuda || [])
+            .map(b => `<button type="button" class="novus-help-btn" data-tool="${b.tool}" data-path="${encodeURIComponent(b.path || '')}" onclick="NovusRemediation.launchTool(this.dataset.tool, decodeURIComponent(this.dataset.path||''))">${b.label}</button>`).join('');
+        panel.innerHTML = `
+            <h3>${guide.titulo || 'Guía de remediación manual'}</h3>
+            <p style="color:#94a3b8;margin-bottom:8px;">${guide.motivo_fallo_automatico || ''}</p>
+            ${stratList ? '<p><b>Estrategias automáticas intentadas:</b></p>' + stratList : ''}
+            <div class="novus-manual-grid">${grid}</div>
+            ${btns ? '<div class="novus-help-btns">' + btns + '</div>' : ''}
+            <p style="color:#818cf8;font-size:10px;">${guide.kernel_ofrece || ''}</p>
+            <div class="novus-manual-steps">${steps}</div>
+        `;
+    },
+    async launchTool(tool, path) {
+        try {
+            const body = { tool };
+            if (path) body.path = path;
+            const r = await fetch('/api/system/launch-tool', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const d = await r.json();
+            if (d.status !== 'success') alert(d.message || 'No se pudo abrir la herramienta');
+        } catch (e) { alert(e.message); }
+    },
+    async verifyManual() {
+        if (!this.targetId) return;
+        const verifyBtn = document.getElementById('novus-btn-verify-manual');
+        if (verifyBtn) verifyBtn.disabled = true;
+        this.appendLog({ label: 'Verificando remediación manual...', status: 'running', timestamp: new Date().toLocaleTimeString() }, 0, 1);
+        try {
+            const r = await fetch('/api/reports/remediate/verify-manual', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ finding_id: this.targetId }),
+            });
+            const data = await r.json();
+            const vsteps = data.steps || [];
+            vsteps.forEach(s => this.appendLog(s, 0, 1));
+            const statusEl = document.getElementById('novus-modal-status-value');
+            if (data.resolved) {
+                statusEl.textContent = 'RESUELTA';
+                statusEl.style.color = '#86efac';
+                document.getElementById('novus-manual-panel').classList.add('hidden');
+                if (verifyBtn) verifyBtn.classList.add('hidden');
+            } else {
+                statusEl.textContent = 'Requiere remediación manual';
+                statusEl.style.color = '#fcd34d';
+                if (verifyBtn) verifyBtn.disabled = false;
+            }
+            document.getElementById('novus-modal-result').textContent = data.message || '';
+            if (typeof window.cargarDatosReales === 'function') window.cargarDatosReales();
+        } catch (e) {
+            document.getElementById('novus-modal-result').textContent = e.message;
+            if (verifyBtn) verifyBtn.disabled = false;
+        }
+    },
+    _showAdminJsonButton() {
+        const btn = this._btn('novus-btn-json');
+        if (!btn) return;
+        if (this.isAdmin) btn.classList.remove('hidden');
+        else btn.classList.add('hidden');
+    },
+    _setReportButtons({ enabled, reason }) {
+        this._ensureReportFooterReady();
+        const viewBtn = this._btn('novus-btn-view-report');
+        const dlBtn = this._btn('novus-btn-download');
+        const shareBtn = this._btn('novus-btn-share');
+        const jsonBtn = this._btn('novus-btn-json');
+        const tip = reason || (enabled ? 'Informe listo' : 'Informe no disponible aún');
+        [viewBtn, dlBtn, shareBtn].forEach(b => {
+            if (!b) return;
+            b.disabled = !enabled;
+            b.title = enabled ? 'Informe listo' : tip;
+        });
+        if (jsonBtn && this.isAdmin) {
+            jsonBtn.disabled = !enabled;
+            jsonBtn.title = enabled ? 'Descargar JSON técnico (administradores)' : tip;
+        }
+        this._showAdminJsonButton();
+    },
+    showReportDetail(report) {
+        if (!report || !report.id) return;
+        this.open({
+            title: 'Informe ' + report.id,
+            description: report.resumen_ejecutivo || 'Detalle del informe',
+        });
+        const tech = report.technical || {};
+        const statusEl = this._btn('novus-modal-status-value') || document.getElementById('novus-modal-status-value');
+        if (statusEl) statusEl.textContent = report.estado || 'Activo';
+        const prog = document.getElementById('novus-modal-progress');
+        if (prog) prog.style.width = '100%';
+        const log = document.getElementById('novus-modal-log');
+        if (log) {
+            log.innerHTML = [
+                'Severidad: ' + (report.severidad || '—'),
+                'Tipo: ' + (report.tipo || '—'),
+                'Equipo: ' + (report.equipo_afectado || 'Sin evidencia verificable.'),
+                'Origen: ' + (tech.origen || 'Sin evidencia verificable.'),
+                'Confianza: ' + (tech.nivel_confianza || 'Media'),
+            ].map(t => '<div class="novus-log-line done">' + t + '</div>').join('');
+            (tech.recomendaciones || []).forEach((rec, i) => {
+                log.innerHTML += '<div class="novus-log-line warning">' + (i + 1) + '. ' + rec + '</div>';
+            });
+        }
+        const res = document.getElementById('novus-modal-result');
+        if (res) res.textContent = report.conclusiones || '';
+        this.reportId = report.id;
+        this._setReportButtons({ enabled: true });
+    },
+    _startTiming(startTs) {
+        this._timingStart = startTs || Date.now();
+        const el = document.getElementById('novus-modal-timing');
+        if (!el) return;
+        el.classList.remove('hidden');
+        this._stopTiming();
+        this._timingTimer = setInterval(() => {
+            const sec = Math.round((Date.now() - this._timingStart) / 1000);
+            el.textContent = `Tiempo transcurrido: ${sec}s` + (this._lastEta != null ? ` · ETA ~${this._lastEta}s` : '');
+        }, 1000);
+    },
+    _stopTiming() {
+        if (this._timingTimer) clearInterval(this._timingTimer);
+        this._timingTimer = null;
+    },
+    _updateJobProgress(pj) {
+        const el = document.getElementById('novus-modal-timing');
+        if (el) el.classList.remove('hidden');
+        this._lastEta = pj.eta_sec != null ? pj.eta_sec : null;
+        const elapsed = pj.elapsed_sec ?? Math.round((Date.now() - (this._timingStart || Date.now())) / 1000);
+        if (el) {
+            el.textContent = `Estado: ${pj.phase_label || pj.status || '—'} · ${pj.progress_pct ?? 0}% · ${elapsed}s` +
+                (this._lastEta != null ? ` · ETA ~${this._lastEta}s` : '');
+        }
+    },
+    async viewReport() {
+        if (!this.reportId) {
+            const msg = this._lastReportError || 'El informe aún no está disponible.';
+            document.getElementById('novus-modal-result').textContent = msg;
+            return;
+        }
+        window.open(`/api/manual-defense/report/${encodeURIComponent(this.reportId)}?format=html`, '_blank', 'noopener');
+    },
+    downloadReport() {
+        if (!this.reportId) {
+            alert(this._lastReportError || 'Informe no disponible. Espere a que finalice la generación.');
+            return;
+        }
+        window.location.href = `/api/reports/${this.reportId}/export?format=pdf`;
+    },
+    downloadJsonTechnical() {
+        if (!this.isAdmin) {
+            alert('JSON técnico reservado a administradores NOVUS.');
+            return;
+        }
+        if (!this.reportId) {
+            alert(this._lastReportError || 'Informe no disponible.');
+            return;
+        }
+        window.location.href = `/api/reports/${this.reportId}/export?format=json`;
+    },
+    async shareReport() {
+        if (!this.reportId) {
+            alert(this._lastReportError || 'Informe no disponible.');
+            return;
+        }
+        try {
+            const r = await fetch(`/api/manual-defense/report/${encodeURIComponent(this.reportId)}/share`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const d = await r.json();
+            const url = d.share_url || '';
+            if (url && navigator.clipboard) {
+                await navigator.clipboard.writeText(url);
+                document.getElementById('novus-modal-result').textContent = 'Enlace copiado al portapapeles (requiere sesión NOVUS).';
+            } else {
+                prompt('Copie el enlace del informe:', url);
+            }
+        } catch (e) {
+            alert(e.message);
+        }
+    },
+    async viewDetails() {
+        return this.viewReport();
+    },
+    _finalizeDefenseButtons(data) {
+        const statusEl = document.getElementById('novus-modal-status-value');
+        this._inlineReport = null;
+        this._lastReportError = data.report_error || null;
+        const available = data.report_id && data.report_available !== false;
+        if (available) {
+            this.reportId = data.report_id;
+            this._setReportButtons({ enabled: true });
+            if (statusEl) {
+                statusEl.textContent = '✔ Informe listo';
+                statusEl.style.color = '#86efac';
+            }
+            document.getElementById('novus-modal-progress').style.width = '100%';
+            this._stopTiming();
+            return;
+        }
+        const partial = data.result && (data.status === 'success' || data.status === 'completed');
+        if (partial) {
+            this._setReportButtons({
+                enabled: false,
+                reason: data.report_error || 'Informe no generado — solo telemetría en motor',
+            });
+            if (statusEl) {
+                statusEl.textContent = '✔ Finalizado (sin informe persistido)';
+                statusEl.style.color = '#fcd34d';
+            }
+            if (data.report_error) {
+                const resEl = document.getElementById('novus-modal-result');
+                resEl.textContent = (resEl.textContent ? resEl.textContent + ' — ' : '') + data.report_error;
+            }
+            this._stopTiming();
+            return;
+        }
+        this._setReportButtons({ enabled: false, reason: data.report_error || 'Ejecución incompleta' });
+    },
+    async runDefenseExecution(options = {}) {
+        this._restoreFooter();
+        this.open({
+            title: options.title || 'Centro de Defensa',
+            description: options.description || 'Iniciando análisis...',
+        });
+        const logEl = document.getElementById('novus-modal-log');
+        const startTs = Date.now();
+        this._startTiming(startTs);
+        document.getElementById('novus-modal-status-value').textContent = 'Generando informe…';
+        try {
+            const res = await fetch('/api/manual-defense/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mechanism_id: options.mechanism_id,
+                    params: options.params || {},
+                }),
+            });
+            let data = await res.json();
+            if (data.status === 'success' && data.async && data.job_id) {
+                while (true) {
+                    await new Promise(r => setTimeout(r, 1200));
+                    const pr = await fetch(`/api/manual-defense/job/${encodeURIComponent(data.job_id)}`);
+                    const pj = await pr.json();
+                    if (pj.phase_label) {
+                        document.getElementById('novus-modal-subtitle').textContent = pj.phase_label;
+                    }
+                    if (pj.progress_pct != null) {
+                        document.getElementById('novus-modal-progress').style.width = `${pj.progress_pct}%`;
+                    }
+                    this._updateJobProgress(pj);
+                    const el = pj.elements_analyzed || {};
+                    const elapsed = pj.elapsed_sec ?? Math.round((Date.now() - startTs) / 1000);
+                    const eta = pj.eta_sec != null ? ` · ETA ~${pj.eta_sec}s` : '';
+                    logEl.innerHTML =
+                        `<div class="novus-log-line done">${pj.phase_label || 'Progreso'} · ${pj.progress_pct ?? 0}% · ${elapsed}s${eta}</div>` +
+                        `<div class="novus-log-line">Archivos: ${el.files ?? 0} · Procesos: ${el.processes ?? 0} · Servicios: ${el.services ?? 0}</div>`;
+                    if (['completed', 'failed', 'timeout'].includes(pj.status)) {
+                        data = { status: pj.status === 'completed' ? 'success' : 'error', ...pj };
+                        break;
+                    }
+                }
+            }
+            const result = data.result || {};
+            const stats = data.stats || {};
+            const summary = [
+                `Duración total: ${data.duration_seconds ?? result.duration_sec ?? '—'}s`,
+                `Hallazgos: ${(result.findings || []).length}`,
+                `Archivos: ${stats.files_analyzed ?? '—'}`,
+                `Procesos: ${stats.processes_analyzed ?? '—'}`,
+                `Servicios: ${stats.services_analyzed ?? '—'}`,
+            ].join(' · ');
+            document.getElementById('novus-modal-result').textContent = summary;
+            if ((result.recommendations || []).length) {
+                logEl.innerHTML += result.recommendations.map((r, i) =>
+                    `<div class="novus-log-line warning">${i + 1}. ${r}</div>`).join('');
+            }
+            this._finalizeDefenseButtons(data);
+            if (typeof options.onComplete === 'function') options.onComplete(data);
+            return data;
+        } catch (error) {
+            document.getElementById('novus-modal-status-value').textContent = 'Error';
+            document.getElementById('novus-modal-result').textContent = error.message;
+            throw error;
+        }
+    },
+    refreshPlatformCaches() {
+        document.dispatchEvent(new CustomEvent('novus:platform-refresh'));
+        if (typeof window.cargarDatosReales === 'function') window.cargarDatosReales();
+        if (typeof window.loadCases === 'function') window.loadCases();
+        ['/api/security/summary', '/api/dashboard/live', '/api/security/vulnerabilities'].forEach(u => {
+            fetch(u).catch(() => {});
+        });
+    },
+    /** Confirmación profesional — reemplaza confirm() nativo */
+    confirm(options = {}) {
+        return new Promise((resolve) => {
+            this._confirmResolve = resolve;
+            this.open({
+                title: options.title || 'Confirmar acción',
+                description: options.description || '¿Desea continuar?',
+            });
+            document.getElementById('novus-modal-status-value').textContent = 'Pendiente';
+            document.getElementById('novus-modal-progress').style.width = '0%';
+            document.getElementById('novus-modal-result').textContent = options.warning || '';
+            const reportBar = document.getElementById('novus-footer-report-actions');
+            const confirmBar = document.getElementById('novus-footer-confirm-actions');
+            if (reportBar) reportBar.classList.add('hidden');
+            if (confirmBar) {
+                confirmBar.classList.remove('hidden');
+                confirmBar.innerHTML = `
+                <button type="button" class="novus-btn-secondary" id="novus-btn-cancel">Cancelar</button>
+                <button type="button" class="novus-btn-primary" id="novus-btn-confirm">${options.confirmLabel || 'Confirmar'}</button>`;
+            }
+            const cancel = document.getElementById('novus-btn-cancel');
+            const ok = document.getElementById('novus-btn-confirm');
+            if (cancel) cancel.onclick = () => {
+                this._ensureReportFooterReady();
+                this.close();
+                resolve(false);
+            };
+            if (ok) ok.onclick = () => {
+                this._ensureReportFooterReady();
+                resolve(true);
+            };
+        });
+    },
+    _restoreFooter() {
+        this._ensureReportFooterReady();
+    },
+    /** Ejecuta una petición API con modal de progreso */
+    async runApi(options = {}) {
+        this._restoreFooter();
+        this.open({
+            title: options.title || 'Procesando',
+            description: options.description || 'Ejecutando...',
+        });
+        const steps = options.steps || [
+            { label: 'Enviando solicitud al backend', detail: options.url || '', status: 'running' },
+        ];
+        try {
+            // Sin temporizadores simulados: un solo paso real hasta recibir respuesta
+            this.appendLog(steps[0], 0, Math.max(steps.length, 1));
+            const response = await fetch(options.url, {
+                method: options.method || 'POST',
+                headers: options.headers || { 'Content-Type': 'application/json' },
+                body: options.body !== undefined ? (typeof options.body === 'string' ? options.body : JSON.stringify(options.body)) : undefined,
+            });
+            const data = await response.json();
+            if (data.steps && data.steps.length) {
+                // Pasos reales del backend — se muestran de inmediato (sin setTimeout teatral)
+                document.getElementById('novus-modal-progress').style.width = '0%';
+                for (let i = 0; i < data.steps.length; i++) {
+                    this.appendLog(data.steps[i], i, data.steps.length);
+                }
+                document.getElementById('novus-modal-progress').style.width = '100%';
+            } else {
+                this.appendLog(
+                    { label: 'Respuesta del backend recibida', status: 'done' },
+                    1,
+                    2
+                );
+            }
+            const ok = data.status === 'success' || data.status === 'ok' || (response.ok && data.status !== 'error');
+            document.getElementById('novus-modal-status-value').textContent = ok ? (options.successStatus || 'Completado') : 'Error';
+            let message = data.message || options.resultMessage?.(data) || '';
+            if (!ok && data.error_detail) {
+                message = data.message || data.error_detail;
+            }
+            if (data.effects) {
+                const fx = Object.values(data.effects).slice(0, 2).join(' ');
+                if (fx) message += ' ' + fx;
+            }
+            if (options.showCounts && data.created !== undefined) {
+                message = `${data.created} registro(s) procesado(s). Hallazgos: ${data.findings_count ?? '—'}`;
+            }
+            document.getElementById('novus-modal-result').textContent = message;
+            if (data.recommendations?.length) {
+                const recHtml = data.recommendations.map((r, i) =>
+                    `<div class="novus-log-line warning">${i + 1}. ${r}</div>`
+                ).join('');
+                document.getElementById('novus-modal-log').innerHTML += recHtml;
+            }
+            if (data.report_id) {
+                this.reportId = data.report_id;
+            }
+            this._finalizeDefenseButtons(data);
+            if (data.duration_seconds !== undefined || data.success_level) {
+                const extra = [
+                    data.duration_seconds !== undefined ? `Tiempo: ${data.duration_seconds}s` : '',
+                    data.success_level ? `Nivel de éxito: ${data.success_level}` : '',
+                ].filter(Boolean).join(' · ');
+                if (extra) {
+                    document.getElementById('novus-modal-result').textContent += (message ? ' — ' : '') + extra;
+                }
+            }
+            if (typeof options.onComplete === 'function') options.onComplete(data);
+            if (ok && options.playbookExecution) {
+                this.refreshPlatformCaches();
+                if (options.autoCloseOnSuccess !== false && data.status === 'success') {
+                    setTimeout(() => this.close(), 2200);
+                }
+            }
+            if (ok && options.reloadOnSuccess) {
+                setTimeout(() => location.reload(), 1500);
+            }
+            return data;
+        } catch (error) {
+            document.getElementById('novus-modal-status-value').textContent = 'Error';
+            document.getElementById('novus-modal-result').textContent = error.message;
+            throw error;
+        }
+    },
+    async syncFindings() {
+        return this.runApi({
+            title: 'Sincronizar hallazgos',
+            description: 'Generando informes desde hallazgos detectados por NOVUS...',
+            url: '/api/reports/sync',
+            method: 'POST',
+            successStatus: 'Sincronizado',
+            showCounts: true,
+            reloadOnSuccess: true,
+            steps: [
+                { label: 'Escaneando vulnerabilidades', status: 'done' },
+                { label: 'Generando informes', status: 'done' },
+                { label: 'Actualizando dashboard', status: 'done' },
+            ],
+        });
+    },
+    async saveConfig(config) {
+        return this.runApi({
+            title: 'Guardar configuración',
+            description: 'Aplicando ajustes de defensa NOVUS...',
+            url: '/api/system/config/save',
+            method: 'POST',
+            body: config,
+            successStatus: 'Configuración aplicada',
+            resultMessage: (d) => d.message || 'Los cambios están activos.',
+        });
+    },
+    async runPlaybook(id, nombre) {
+        const ok = await this.confirm({
+            title: 'Ejecutar playbook',
+            description: `¿Ejecutar «${nombre}»?`,
+            confirmLabel: 'Ejecutar',
+        });
+        if (!ok) return null;
+        return this.runApi({
+            title: 'Playbook NOVUS',
+            description: nombre,
+            url: `/api/playbooks/${id}/execute`,
+            method: 'POST',
+            successStatus: 'Finalizado',
+            playbookExecution: true,
+            autoCloseOnSuccess: true,
+            resultMessage: (d) => d.message || 'Playbook completado.',
+        });
+    },
+};
+window.NovusAction = NovusRemediation;
+</script>

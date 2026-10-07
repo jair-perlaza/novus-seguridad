@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Dashboard Sectorial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+        }
+        
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo h1 {
+            color: #1e3c72;
+            font-size: 2em;
+            font-weight: 700;
+        }
+        
+        .user-info {
+            text-align: right;
+        }
+        
+        .user-info h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .user-info p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card h2 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sector-badge {
+            background: #28a745;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .info-grid {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-label {
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .info-value {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .access-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .access-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #1e3c72;
+        }
+        
+        .access-item h4 {
+            color: #1e3c72;
+            margin-bottom: 8px;
+        }
+        
+        .access-item p {
+            color: #666;
+            font-size: 0.9em;
+            margin: 4px 0;
+        }
+        
+        .security-status {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .status-item {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .status-item.secure {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-item.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-item h3 {
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+        
+        .status-item p {
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .user-info {
+                text-align: center;
+                margin-top: 20px;
+            }
+            
+            .security-status {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>NOVUS</h1>
+                    <span class="sector-badge">{{ sector.upper() }}</span>
+                </div>
+                <div class="user-info">
+                    <h3>{{ email }}</h3>
+                    <p>Acceso Sectorial Seguro</p>
+                    <form method="post" action="/sector-logout">
+                        <button type="submit" class="logout-btn">Cerrar Sesión</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        {% if mensaje %}
+        <div class="success-message">
+            ✅ {{ mensaje }}
+        </div>
+        {% endif %}
+        
+        <div class="main-content">
+            <div class="card">
+                <h2>🔐 Información de Acceso</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Usuario:</span>
+                        <span class="info-value">{{ email }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Sector:</span>
+                        <span class="info-value">{{ sector_info.descripcion }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">ID Dispositivo:</span>
+                        <span class="info-value">{{ device_id[:8] }}...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Estado:</span>
+                        <span class="info-value" style="color: #28a745;">✅ Autenticado</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>🛡️ Estado de Seguridad</h2>
+                <div class="security-status">
+                    <div class="status-item secure">
+                        <h3>Dispositivo</h3>
+                        <p>Validado y Confiable</p>
+                    </div>
+                    <div class="status-item secure">
+                        <h3>Sesión</h3>
+                        <p>Activa y Segura</p>
+                    </div>
+                    <div class="status-item secure">
+                        <h3>Acceso</h3>
+                        <p>Autorizado</p>
+                    </div>
+                    <div class="status-item secure">
+                        <h3>Monitoreo</h3>
+                        <p>Activo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>📋 Historial de Accesos del Usuario</h2>
+            <div class="access-list">
+                {% for acceso in accesos_usuario %}
+                <div class="access-item">
+                    <h4>Sector: {{ acceso.sector.upper() }}</h4>
+                    <p><strong>Dispositivo:</strong> {{ acceso.dispositivo_id[:8] }}...</p>
+                    <p><strong>Fecha Registro:</strong> {{ acceso.fecha_registro }}</p>
+                    <p><strong>Último Acceso:</strong> {{ acceso.ultimo_acceso }}</p>
+                    <p><strong>Estado:</strong> 
+                        {% if acceso.is_active %}
+                            <span style="color: #28a745;">✅ Activo</span>
+                        {% else %}
+                            <span style="color: #dc3545;">❌ Inactivo</span>
+                        {% endif %}
+                    </p>
+                </div>
+                {% endfor %}
+                
+                {% if not accesos_usuario %}
+                <p style="text-align: center; color: #666; padding: 20px;">
+                    No hay accesos registrados previamente.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Monitoreo de sesión en tiempo real
+        let sessionTimer = 30 * 60 * 1000; // 30 minutos
+        
+        function checkSession() {
+            fetch('/sector-dashboard', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    window.location.href = '/sector-login';
+                }
+            })
+            .catch(() => {
+                window.location.href = '/sector-login';
+            });
+        }
+        
+        // Verificar sesión cada 5 minutos
+        setInterval(checkSession, 5 * 60 * 1000);
+        
+        // Tiempo de inactividad
+        let inactivityTimer;
+        
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                alert('Sesión expirada por inactividad');
+                window.location.href = '/sector-logout';
+            }, sessionTimer);
+        }
+        
+        // Detectar actividad del usuario
+        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+            document.addEventListener(event, resetInactivityTimer);
+        });
+        
+        resetInactivityTimer();
+    </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "node_id": "mesh-peer-b-live",
+  "algorithm": "Ed25519",
+  "fingerprint": "ca7c0e0f5dae29c097c5cc4632dc4508",
+  "created_at": "2026-07-27T18:53:24.189451+00:00",
+  "public_pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAP/Z/VK67xJhevQEGaZ/aHwy0J1iLH/NJoFZindu3LmI=\n-----END PUBLIC KEY-----\n"
+}

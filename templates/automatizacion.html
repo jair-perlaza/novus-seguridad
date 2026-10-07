@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>NOVUS - Automatización Táctica</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    {% include 'partials/responsive_assets.html' %}
+
+    <style>
+
+        :root { --bg-dark: #06090f; --emerald: #10b981; }
+
+        body { background-color: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; }
+
+        .rule-card { background: #0c121d; border: 1px solid #1e293b; transition: all 0.3s; }
+
+        .rule-card:hover { border-color: var(--emerald); }
+
+        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #1e293b; transition: .4s; border-radius: 34px; }
+
+        input:checked + .slider { background-color: var(--emerald); }
+
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; transition: .4s; border-radius: 50%; }
+
+        input:checked + .slider:before { transform: translateX(14px); }
+
+    </style>
+
+</head>
+
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen w-full overflow-y-auto" data-novus-module="playbooks">
+
+    {% set active_module = 'playbooks' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+
+    <main class="novus-main flex-1 flex flex-col overflow-y-auto">
+
+        <header class="p-8 border-b border-gray-800 flex justify-between items-center bg-[#06090f]/80 backdrop-blur">
+
+            <div>
+
+                <h1 class="text-2xl font-bold tracking-tight">AUTOMATIZACIÓN <span class="text-emerald-500 text-xs ml-2 font-mono">[AI ACTIVE]</span></h1>
+
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Playbooks persistidos en base de datos NOVUS</p>
+
+            </div>
+
+            <div class="flex items-center space-x-4">
+
+                <button onclick="openPlaybookModal()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-xs font-bold transition-all text-white">
+
+                    + Crear Playbook
+
+                </button>
+
+                <a href="{{ url_for('main.ruta_configuracion') }}" class="text-gray-400 hover:text-white text-sm no-underline">
+
+                    <i class="fas fa-cog mr-1"></i>Configuración
+
+                </a>
+
+            </div>
+
+        </header>
+
+
+
+        <div class="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            {% for r in reglas %}
+
+            <div class="rule-card p-6 rounded-2xl relative overflow-hidden">
+
+                <div class="flex justify-between items-start mb-4">
+
+                    <div class="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+
+                        <i class="fas fa-bolt text-sm"></i>
+
+                    </div>
+
+                    {% if r.is_playbook %}
+
+                    <label class="switch" onclick="event.stopPropagation(); togglePlaybook('{{ r.id }}', this)">
+
+                        <input type="checkbox" {% if r.estado == 'Activo' %}checked{% endif %}>
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                    {% endif %}
+
+                </div>
+
+
+
+                <h3 class="font-bold text-sm mb-1">{{ r.nombre }}</h3>
+
+                <p class="text-[10px] text-gray-500 mb-2">{{ r.descripcion }}</p>
+
+                <p class="text-[9px] text-gray-600 font-mono mb-4">{{ r.id }}</p>
+
+
+
+                <div class="pt-4 border-t border-gray-800 flex flex-wrap gap-2">
+
+                    {% if r.is_playbook %}
+
+                    <button onclick="ejecutarPlaybook('{{ r.id }}', '{{ r.nombre }}')" class="text-[9px] bg-emerald-600/20 text-emerald-400 px-2 py-1 rounded font-bold">Ejecutar</button>
+
+                    <button onclick="editarPlaybook('{{ r.id }}')" class="text-[9px] bg-gray-800 text-gray-300 px-2 py-1 rounded font-bold">Editar</button>
+
+                    <button onclick="duplicarPlaybook('{{ r.id }}')" class="text-[9px] bg-gray-800 text-gray-300 px-2 py-1 rounded font-bold">Duplicar</button>
+
+                    <button onclick="eliminarPlaybook('{{ r.id }}', '{{ r.nombre }}')" class="text-[9px] bg-red-900/30 text-red-400 px-2 py-1 rounded font-bold">Eliminar</button>
+
+                    {% else %}
+
+                    <button onclick="ejecutarRegla('{{ r.id }}', '{{ r.nombre }}')" class="text-[9px] bg-emerald-600/20 text-emerald-400 px-2 py-1 rounded font-bold">Evaluar</button>
+
+                    {% endif %}
+
+                </div>
+
+                <div class="mt-3 flex justify-between text-[9px] text-gray-600">
+
+                    <span>Impacto: {{ r.impacto }}</span>
+
+                    <span class="font-mono text-emerald-400">{{ r.ejecuciones_mes }} ejecuciones totales</span>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+
+
+        <div class="px-8 pb-6">
+            <div class="rule-card p-6 rounded-2xl border border-emerald-500/20">
+                <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-widest">Centro de Defensa — procedimientos manuales</h3>
+                        <p class="text-[10px] text-gray-500 mt-1">Mismos motores que el Centro de Defensa. Ejecución individual o selección múltiple.</p>
+                    </div>
+                    <a href="{{ url_for('main.ruta_centro_defensa') }}" class="text-[10px] text-emerald-400 no-underline font-bold uppercase">Abrir módulo completo →</a>
+                </div>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button type="button" onclick="runPlaybookDefenseFull()" class="text-[10px] bg-red-900/40 text-red-300 px-3 py-2 rounded font-bold uppercase">Ejecutar defensa completa</button>
+                    <button type="button" onclick="loadPlaybookDefenseCatalog()" class="text-[10px] bg-gray-800 text-gray-300 px-3 py-2 rounded font-bold">Actualizar</button>
+                </div>
+                <div id="pb-defense-progress" class="hidden text-[10px] text-indigo-300 mb-3"></div>
+                <div id="pb-defense-catalog" class="max-h-96 overflow-y-auto space-y-4 text-[10px] text-gray-400">Cargando mecanismos…</div>
+            </div>
+        </div>
+
+        <div class="px-8 pb-8">
+            <div class="rule-card p-6 rounded-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-widest">Historial de ejecuciones</h3>
+                    <button type="button" onclick="loadExecutionHistory()" class="text-[10px] bg-gray-800 px-3 py-1 rounded text-gray-300">Actualizar</button>
+                </div>
+                <div id="playbook-history" class="novus-table-wrap max-h-64 overflow-y-auto text-[10px] text-gray-400">
+                    <p class="text-gray-600">Cargando historial...</p>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Modal crear/editar playbook -->
+
+        <div id="playbookModal" class="novus-tw-modal-overlay hidden">
+            <div class="novus-tw-modal" role="dialog" aria-modal="true" aria-labelledby="playbookModalTitle">
+                <div class="novus-tw-modal-header">
+                    <h2 id="playbookModalTitle">Crear Playbook</h2>
+                    <button type="button" onclick="closePlaybookModal()" class="novus-tw-modal-close" aria-label="Cerrar">&times;</button>
+                </div>
+                <form id="playbookForm" onsubmit="guardarPlaybook(event)" class="flex flex-col flex-1 min-h-0">
+                    <div class="novus-tw-modal-body">
+
+                    <input type="hidden" id="playbookId">
+
+                    <div class="mb-4">
+
+                        <label class="block text-xs text-gray-400 mb-2">Nombre</label>
+
+                        <input type="text" id="playbookNombre" required class="w-full bg-[#06090f] border border-gray-800 rounded-lg px-4 py-2 text-white text-sm">
+
+                    </div>
+
+                    <div class="mb-4">
+
+                        <label class="block text-xs text-gray-400 mb-2">Trigger</label>
+
+                        <select id="playbookTrigger" required class="w-full bg-[#06090f] border border-gray-800 rounded-lg px-4 py-2 text-white text-sm">
+
+                            <option value="manual">Manual</option>
+
+                            <option value="cpu_high">CPU &gt; 80%</option>
+
+                            <option value="memory_high">Memoria &gt; 80%</option>
+
+                            <option value="disk_low">Disco &gt; 85%</option>
+
+                            <option value="suspicious_conn">Conexiones sospechosas</option>
+
+                            <option value="port_scan">Escaneo de puertos</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="mb-4">
+
+                        <label class="block text-xs text-gray-400 mb-2">Acción</label>
+
+                        <select id="playbookAccion" required class="w-full bg-[#06090f] border border-gray-800 rounded-lg px-4 py-2 text-white text-sm">
+
+                            <option value="alert">Enviar alerta</option>
+
+                            <option value="kill_process">Terminar proceso</option>
+
+                            <option value="optimize_memory">Optimizar memoria</option>
+
+                            <option value="block_ip">Bloquear IP</option>
+
+                            <option value="log">Registrar en log</option>
+
+                            <option value="sector_shield_scan">Escaneo sectorial</option>
+
+                            <option value="orchestrate_device">Orquestador — Dispositivo desconocido</option>
+                            <option value="orchestrate_vuln">Orquestador — Vulnerabilidad crítica</option>
+                            <option value="orchestrate_email">Orquestador — Correo sospechoso</option>
+                            <option value="orchestrate_traffic">Orquestador — Tráfico anómalo</option>
+                            <option value="orchestrate_close">Orquestador — Sincronizar plataforma</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="mb-4">
+
+                        <label class="block text-xs text-gray-400 mb-2">Prioridad</label>
+
+                        <select id="playbookPrioridad" class="w-full bg-[#06090f] border border-gray-800 rounded-lg px-4 py-2 text-white text-sm">
+
+                            <option value="Bajo">Bajo</option>
+
+                            <option value="Medio" selected>Medio</option>
+
+                            <option value="Alto">Alto</option>
+
+                            <option value="Crítico">Crítico</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="mb-4">
+
+                        <label class="block text-xs text-gray-400 mb-2">Reglas asociadas (IDs separados por coma)</label>
+
+                        <input type="text" id="playbookReglas" class="w-full bg-[#06090f] border border-gray-800 rounded-lg px-4 py-2 text-white text-sm" placeholder="THREAT-001, MEM-001">
+
+                    </div>
+
+                    <div class="mb-4">
+
+                        <label class="block text-xs text-gray-400 mb-2">Remediaciones asociadas</label>
+
+                        <input type="text" id="playbookRemediaciones" class="w-full bg-[#06090f] border border-gray-800 rounded-lg px-4 py-2 text-white text-sm" placeholder="FIND-PORT-443">
+
+                    </div>
+
+                    <div class="mb-4">
+
+                        <label class="block text-xs text-gray-400 mb-2">Respuestas Kernel IA</label>
+
+                        <input type="text" id="playbookKernel" class="w-full bg-[#06090f] border border-gray-800 rounded-lg px-4 py-2 text-white text-sm" placeholder="security.threats, network.ndr">
+
+                    </div>
+
+                    <div class="mb-4">
+
+                        <label class="block text-xs text-gray-400 mb-2">Playbooks encadenados (IDs PB- separados por coma)</label>
+
+                        <input type="text" id="playbookAutomatizaciones" class="w-full bg-[#06090f] border border-gray-800 rounded-lg px-4 py-2 text-white text-sm" placeholder="PB-ORCH-CLOSE">
+
+                    </div>
+
+                    </div>
+
+                    <div class="novus-tw-modal-footer">
+                        <button type="button" onclick="closePlaybookModal()" class="px-4 py-2 rounded-lg text-xs font-bold text-gray-400">Cancelar</button>
+                        <button type="submit" class="bg-emerald-600 px-4 py-2 rounded-lg text-xs font-bold text-white">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+
+
+    <script>
+
+        function openPlaybookModal(editId) {
+
+            document.getElementById('playbookModalTitle').textContent = editId ? 'Editar Playbook' : 'Crear Playbook';
+
+            document.getElementById('playbookId').value = editId || '';
+
+            document.getElementById('playbookModal').classList.remove('hidden');
+
+        }
+
+
+
+        function closePlaybookModal() {
+
+            document.getElementById('playbookModal').classList.add('hidden');
+
+            document.getElementById('playbookForm').reset();
+
+            document.getElementById('playbookId').value = '';
+
+        }
+
+
+
+        function parseList(value) {
+
+            return (value || '').split(',').map(s => s.trim()).filter(Boolean);
+
+        }
+
+
+
+        async function guardarPlaybook(event) {
+
+            event.preventDefault();
+
+            const id = document.getElementById('playbookId').value;
+
+            const payload = {
+
+                nombre: document.getElementById('playbookNombre').value,
+
+                trigger: document.getElementById('playbookTrigger').value,
+
+                accion: document.getElementById('playbookAccion').value,
+
+                prioridad: document.getElementById('playbookPrioridad').value,
+
+                reglas_asociadas: parseList(document.getElementById('playbookReglas').value),
+
+                remediaciones_asociadas: parseList(document.getElementById('playbookRemediaciones').value),
+
+                kernel_respuestas: parseList(document.getElementById('playbookKernel').value),
+
+                automatizaciones_asociadas: parseList(document.getElementById('playbookAutomatizaciones').value),
+
+            };
+
+            const url = id ? `/api/playbooks/${id}` : '/api/playbooks';
+
+            const method = id ? 'PUT' : 'POST';
+
+            await NovusAction.runApi({
+
+                title: id ? 'Actualizar playbook' : 'Crear playbook',
+
+                description: payload.nombre,
+
+                url, method, body: payload,
+
+                successStatus: 'Guardado',
+
+                reloadOnSuccess: true,
+
+            });
+
+            closePlaybookModal();
+
+        }
+
+
+
+        async function editarPlaybook(id) {
+
+            const r = await fetch(`/api/playbooks/${id}`);
+
+            if (!r.ok) { alert('No se pudo cargar el playbook'); return; }
+
+            const d = await r.json();
+
+            if (!d.playbook) { alert('Playbook no encontrado'); return; }
+
+            const p = d.playbook;
+
+            openPlaybookModal(id);
+
+            document.getElementById('playbookNombre').value = p.nombre;
+
+            document.getElementById('playbookTrigger').value = p.trigger;
+
+            document.getElementById('playbookAccion').value = p.accion;
+
+            document.getElementById('playbookPrioridad').value = p.prioridad;
+
+            document.getElementById('playbookReglas').value = (p.reglas_asociadas || []).join(', ');
+
+            document.getElementById('playbookRemediaciones').value = (p.remediaciones_asociadas || []).join(', ');
+
+            document.getElementById('playbookKernel').value = (p.kernel_respuestas || []).join(', ');
+
+            document.getElementById('playbookAutomatizaciones').value = (p.automatizaciones_asociadas || []).join(', ');
+
+        }
+
+
+
+        async function duplicarPlaybook(id) {
+
+            const ok = await NovusAction.confirm({ title: 'Duplicar playbook', description: 'Se creará una copia del playbook seleccionado.' });
+
+            if (!ok) return;
+
+            await NovusAction.runApi({ title: 'Duplicar', url: `/api/playbooks/${id}/duplicate`, method: 'POST', successStatus: 'Duplicado', reloadOnSuccess: true });
+
+        }
+
+
+
+        async function eliminarPlaybook(id, nombre) {
+
+            const ok = await NovusAction.confirm({ title: 'Eliminar playbook', description: `¿Eliminar "${nombre}"?`, warning: 'Esta acción no se puede deshacer.', confirmLabel: 'Eliminar' });
+
+            if (!ok) return;
+
+            await NovusAction.runApi({ title: 'Eliminar playbook', url: `/api/playbooks/${id}`, method: 'DELETE', successStatus: 'Eliminado', reloadOnSuccess: true });
+
+        }
+
+
+
+        async function togglePlaybook(id, el) {
+
+            const active = el.querySelector('input').checked;
+
+            try {
+
+                const r = await fetch(`/api/playbooks/${id}/toggle`, {
+
+                    method: 'POST',
+
+                    headers: { 'Content-Type': 'application/json' },
+
+                    body: JSON.stringify({ active }),
+
+                });
+
+                const d = await r.json();
+
+                if (d.status !== 'success') {
+
+                    el.querySelector('input').checked = !active;
+
+                    alert(d.message || 'Error al cambiar estado');
+
+                }
+
+            } catch (e) {
+
+                el.querySelector('input').checked = !active;
+
+                alert(e.message);
+
+            }
+
+        }
+
+
+
+        async function ejecutarPlaybook(id, nombre) {
+
+            await NovusAction.runPlaybook(id, nombre);
+
+            setTimeout(loadExecutionHistory, 2500);
+
+        }
+
+
+
+        async function loadExecutionHistory() {
+
+            const box = document.getElementById('playbook-history');
+
+            if (!box) return;
+
+            try {
+
+                const r = await fetch('/api/playbooks/executions?limit=20');
+
+                const d = await r.json();
+
+                const items = d.executions || [];
+
+                if (!items.length) {
+
+                    box.innerHTML = '<p class="text-gray-600">Sin ejecuciones registradas aún.</p>';
+
+                    return;
+
+                }
+
+                box.innerHTML = `<table class="w-full text-left"><thead><tr class="text-gray-500 border-b border-gray-800">
+
+                    <th class="py-2 pr-2">Fecha</th><th>Playbook</th><th>Estado</th><th>Éxito</th><th>Tiempo</th><th>Informe</th>
+
+                </tr></thead><tbody>${items.map(e => `
+
+                    <tr class="border-b border-gray-900 hover:bg-[#0d1117]">
+
+                        <td class="py-2 pr-2 font-mono">${e.fecha || '—'}</td>
+
+                        <td>${e.playbook_nombre || e.playbook_id}</td>
+
+                        <td>${e.estado}</td>
+
+                        <td>${e.nivel_exito}</td>
+
+                        <td>${e.duracion_seg}s</td>
+
+                        <td>${e.report_id ? `<a href="/api/reports/${e.report_id}/pdf" class="text-indigo-400" target="_blank">PDF</a>` : '—'}</td>
+
+                    </tr>`).join('')}</tbody></table>`;
+
+            } catch (e) {
+
+                box.innerHTML = `<p class="text-red-400">Error: ${e.message}</p>`;
+
+            }
+
+        }
+
+        let pbDefenseSelected = new Set();
+        let pbDefensePoll = null;
+
+        function pbEsc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+        async function loadPlaybookDefenseCatalog() {
+            const root = document.getElementById('pb-defense-catalog');
+            if (!root) return;
+            try {
+                const r = await fetch('/api/playbooks/defense-mechanisms');
+                const d = await r.json();
+                if (d.status !== 'success') { root.textContent = d.message || 'Sin acceso'; return; }
+                const cats = d.categories || [];
+                const by = d.mechanisms_by_category || {};
+                root.innerHTML = cats.map(c => {
+                    const items = by[c.key] || [];
+                    if (!items.length) return '';
+                    const rows = items.map(m => {
+                        const av = m.availability || {};
+                        const dis = !av.available;
+                        return `<div class="flex justify-between gap-2 items-center py-1 border-b border-gray-800/80">
+                            <label class="flex gap-2 items-center ${dis ? 'opacity-50' : ''}">
+                                <input type="checkbox" class="pb-def-select" data-id="${pbEsc(m.id)}" ${dis ? 'disabled' : ''} onchange="pbDefenseToggle('${pbEsc(m.id)}', this.checked)" />
+                                <span>${pbEsc(m.title)}${dis ? ' — ' + pbEsc(av.reason || '') : ''}</span>
+                            </label>
+                            <span class="shrink-0 flex gap-1">
+                                <button type="button" class="px-2 py-0.5 bg-indigo-900/40 rounded" onclick="pbDefenseKernel('${pbEsc(m.id)}')">Kernel IA</button>
+                                <button type="button" class="px-2 py-0.5 bg-emerald-900/40 rounded" ${dis ? 'disabled' : ''} onclick="pbDefenseExec('${pbEsc(m.id)}')">Ejecutar</button>
+                            </span>
+                        </div>`;
+                    }).join('');
+                    return `<div><div class="text-emerald-500 font-bold uppercase text-[9px] mb-2">${pbEsc(c.label)}</div>${rows}</div>`;
+                }).join('');
+            } catch (e) {
+                root.textContent = e.message;
+            }
+        }
+
+        function pbDefenseToggle(id, on) { if (on) pbDefenseSelected.add(id); else pbDefenseSelected.delete(id); }
+
+        async function pbDefenseKernel(id) {
+            await NovusAction.runApi({
+                title: 'Consultar Kernel IA',
+                description: id,
+                url: `/api/manual-defense/kernel/${encodeURIComponent(id)}`,
+                method: 'POST',
+                body: { execute: true },
+                successStatus: 'Respuesta en modal',
+            });
+        }
+
+        async function pbDefenseExec(id) {
+            await NovusAction.runDefenseExecution({
+                mechanism_id: id,
+                params: {},
+                title: id,
+                description: 'Centro de Defensa desde Playbooks',
+            });
+        }
+
+        async function runPlaybookDefenseFull() {
+            const ok = await NovusAction.confirm({
+                title: 'Defensa completa',
+                description: 'Ejecutará secuencialmente todos los mecanismos compatibles (puede tardar varios minutos).',
+                confirmLabel: 'Ejecutar',
+            });
+            if (!ok) return;
+            const ids = pbDefenseSelected.size ? Array.from(pbDefenseSelected) : null;
+            const r = await fetch('/api/manual-defense/full-defense', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mechanism_ids: ids }),
+            });
+            const d = await r.json();
+            if (!d.run_id) { alert(d.message || 'Error'); return; }
+            const box = document.getElementById('pb-defense-progress');
+            box.classList.remove('hidden');
+            if (pbDefensePoll) clearInterval(pbDefensePoll);
+            pbDefensePoll = setInterval(async () => {
+                const st = await fetch(`/api/manual-defense/full-protection/${d.run_id}`);
+                const data = await st.json();
+                box.textContent = `${data.status} · ${data.current || ''} · ${data.progress_pct || 0}%`;
+                if (data.status === 'completed') clearInterval(pbDefensePoll);
+            }, 2000);
+        }
+
+        loadPlaybookDefenseCatalog();
+
+        loadExecutionHistory();
+
+
+
+        async function ejecutarRegla(id, nombre) {
+
+            const ok = await NovusAction.confirm({ title: 'Evaluar regla', description: `¿Evaluar "${nombre}"?` });
+
+            if (!ok) return;
+
+            if (id === 'THREAT-001' || nombre.includes('sospechoso')) {
+
+                await NovusAction.runApi({ title: 'Detección de amenazas', url: '/api/security/threats', method: 'GET', successStatus: 'Completado' });
+
+            } else if (nombre.includes('memoria')) {
+
+                await NovusAction.runApi({ title: 'Optimización de memoria', url: '/api/system/automation/memory/optimize', method: 'POST', successStatus: 'Completado' });
+
+            } else {
+
+                await NovusAction.runApi({ title: 'Evaluación', description: nombre, url: '/api/system/automation/processes/high', method: 'GET', successStatus: 'Completado' });
+
+            }
+
+        }
+
+    </script>
+
+    {% include 'partials/global_search.html' %}
+
+    {% include 'partials/ai_kernel_panel.html' %}
+
+</body>
+
+</html>
+

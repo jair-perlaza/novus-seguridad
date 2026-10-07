@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — Completar registro</title>
+    {% include 'partials/membership_styles.html' %}
+</head>
+<body>
+<div class="nv-page">
+    <header class="nv-hero">
+        <div class="nv-hero-inner">
+            <p class="nv-eyebrow">Autorización confirmada</p>
+            <h1>Establezca su contraseña</h1>
+            {% if company_name %}<p class="nv-lead">Empresa: <strong>{{ company_name }}</strong>{% if email %} — {{ email }}{% endif %}</p>{% endif %}
+        </div>
+    </header>
+
+    {% if error %}
+    <div class="nv-error"><i class="fas fa-exclamation-triangle"></i> {{ error }}</div>
+    {% endif %}
+
+    {% if token and email %}
+    <form action="{{ url_for('auth.completar_registro') }}" method="post" class="nv-form-card" style="max-width:480px;margin:2rem auto;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="token" value="{{ token }}">
+        <div class="nv-field">
+            <label>Contraseña</label>
+            <input type="password" name="password" required minlength="10" placeholder="Mínimo 10 caracteres">
+        </div>
+        <div class="nv-field">
+            <label>Confirmar contraseña</label>
+            <input type="password" name="password_confirm" required minlength="10">
+        </div>
+        <button type="submit" class="nv-btn nv-btn-primary">Completar registro</button>
+    </form>
+    {% endif %}
+</div>
+</body>
+</html>

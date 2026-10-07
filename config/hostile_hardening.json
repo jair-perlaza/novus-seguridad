@@ -1,0 +1,37 @@
+{
+  "ip_whitelist": [],
+  "ip_blacklist": [],
+  "user_api_rate_limit_per_minute": 180,
+  "api_path_limits": {
+    "/api/search": {
+      "max_requests": 45,
+      "window_seconds": 60
+    },
+    "/api/ai/command": {
+      "max_requests": 25,
+      "window_seconds": 60
+    },
+    "/api/playbooks/executions": {
+      "max_requests": 20,
+      "window_seconds": 60
+    }
+  },
+  "load_shedding": {
+    "enabled": true,
+    "cpu_percent_threshold": 92,
+    "ram_percent_threshold": 93,
+    "degraded_path_prefixes": [
+      "/api/reports",
+      "/api/playbooks",
+      "/api/ndci",
+      "/api/threat-intel",
+      "/api/gmail"
+    ]
+  },
+  "csrf_protection_enabled": true,
+  "csp_enabled": true,
+  "hsts_when_proxy": true,
+  "credential_stuffing_emails_per_ip": 8,
+  "password_spray_ips_per_email": 4,
+  "aes_key_max_age_days": 90
+}

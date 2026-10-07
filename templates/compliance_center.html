@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS Compliance Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% include 'partials/responsive_assets.html' ignore missing %}
+</head>
+<body class="bg-[#06090f] text-gray-200 min-h-screen flex">
+{% set active_module = 'compliance_center' %}
+{% include 'partials/novus_nav_sidebar.html' %}
+
+<main class="flex-1 overflow-y-auto p-6 lg:p-8">
+    <header class="mb-8 border-b border-gray-800 pb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <p class="text-[10px] uppercase tracking-[0.2em] text-cyan-400 mb-1">NOVUS Compliance Center</p>
+                <h1 class="text-2xl font-black text-white">Cumplimiento técnico verificable</h1>
+                <p class="text-sm text-gray-400 mt-2 max-w-2xl">
+                    Solo estados <strong class="text-emerald-400">VERIFICADO</strong>,
+                    <strong class="text-rose-400">NO VERIFICADO</strong>,
+                    <strong class="text-amber-400">PENDIENTE</strong> o
+                    <strong class="text-slate-400">NO APLICA</strong>.
+                    NOVUS <em>no certifica</em> normas legales ni afirma “cumple totalmente”.
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="runEvaluate()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold uppercase">
+                    <i class="fas fa-clipboard-check mr-1"></i> Evaluar controles
+                </button>
+                <button type="button" onclick="generatePdf()" class="px-4 py-2 rounded-lg border border-cyan-500/40 text-cyan-300 text-xs font-bold uppercase hover:bg-cyan-500/10">
+                    <i class="fas fa-file-pdf mr-1"></i> Generar PDF
+                </button>
+                <button type="button" onclick="auditNovus()" class="px-4 py-2 rounded-lg border border-amber-500/40 text-amber-300 text-xs font-bold uppercase hover:bg-amber-500/10">
+                    <i class="fas fa-shield-alt mr-1"></i> Auditar NOVUS
+                </button>
+                <button type="button" onclick="consultKernelIA && consultKernelIA()" class="px-4 py-2 rounded-lg border border-indigo-500/40 text-indigo-300 text-xs font-bold uppercase">
+                    <i class="fas fa-brain mr-1"></i> Consultar Kernel IA
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Perfil -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <div class="lg:col-span-2 rounded-xl border border-gray-800 bg-[#0a0f18] p-5">
+            <h2 class="text-sm font-bold text-cyan-400 mb-4 uppercase tracking-wide">Perfil de cumplimiento</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <label class="block">Sector
+                    <select id="sector_id" class="mt-1 w-full bg-[#06090f] border border-gray-700 rounded-lg px-3 py-2">
+                        {% for s in sectors %}
+                        <option value="{{ s.id }}" {% if s.id == default_sector %}selected{% endif %}>{{ s.label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="block">País
+                    <input id="country" class="mt-1 w-full bg-[#06090f] border border-gray-700 rounded-lg px-3 py-2" value="{{ profile.country if profile else 'CO' }}">
+                </label>
+                <label class="block">Tamaño empresa
+                    <input id="company_size" class="mt-1 w-full bg-[#06090f] border border-gray-700 rounded-lg px-3 py-2" placeholder="1-10 / 11-50 / 200+">
+                </label>
+                <label class="block">Tipo de datos
+                    <input id="data_types" class="mt-1 w-full bg-[#06090f] border border-gray-700 rounded-lg px-3 py-2" placeholder="PII, financieros, logs…">
+                </label>
+                <label class="block">Infraestructura
+                    <input id="infrastructure" class="mt-1 w-full bg-[#06090f] border border-gray-700 rounded-lg px-3 py-2" placeholder="LAN, cloud híbrida…">
+                </label>
+                <label class="block">Número de sedes
+                    <input id="sites" class="mt-1 w-full bg-[#06090f] border border-gray-700 rounded-lg px-3 py-2" value="1">
+                </label>
+                <label class="block sm:col-span-2">Empresa
+                    <input id="company" class="mt-1 w-full bg-[#06090f] border border-gray-700 rounded-lg px-3 py-2" placeholder="Razón social">
+                </label>
+            </div>
+        </div>
+        <div class="rounded-xl border border-gray-800 bg-[#0a0f18] p-5">
+            <h2 class="text-sm font-bold text-cyan-400 mb-3 uppercase">Resumen</h2>
+            <div id="score-panel" class="space-y-2 text-sm">
+                <p class="text-3xl font-black text-white"><span id="verified-count">{{ evaluation.score.verified if evaluation else 0 }}</span>
+                    <span class="text-base font-normal text-gray-500">/ <span id="total-count">{{ evaluation.score.total if evaluation else 0 }}</span> verificados</span>
+                </p>
+                <p id="score-label" class="text-xs text-amber-200/90">{{ evaluation.score.label if evaluation else 'Ejecute una evaluación' }}</p>
+                <div class="grid grid-cols-2 gap-2 pt-3 text-[11px]">
+                    <div class="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-2">VERIFICADO <b id="c-v">{{ evaluation.counts.VERIFICADO if evaluation else 0 }}</b></div>
+                    <div class="rounded-lg bg-rose-500/10 border border-rose-500/20 p-2">NO VERIFICADO <b id="c-nv">{{ evaluation.counts.NO_VERIFICADO if evaluation else 0 }}</b></div>
+                    <div class="rounded-lg bg-amber-500/10 border border-amber-500/20 p-2">PENDIENTE <b id="c-p">{{ evaluation.counts.PENDIENTE if evaluation else 0 }}</b></div>
+                    <div class="rounded-lg bg-slate-500/10 border border-slate-500/20 p-2">NO APLICA <b id="c-na">{{ evaluation.counts.NO_APLICA if evaluation else 0 }}</b></div>
+                </div>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-4" id="disclaimer">{{ evaluation.profile.disclaimer if evaluation and evaluation.profile else '' }}</p>
+        </div>
+    </section>
+
+    <section class="mb-6">
+        <h2 class="text-sm font-bold text-cyan-400 mb-3 uppercase">Marcos de referencia (orientativos)</h2>
+        <div id="frameworks" class="flex flex-wrap gap-2 text-[11px]">
+            {% for fw in (evaluation.frameworks if evaluation else []) %}
+            <span class="px-3 py-1.5 rounded-full border border-gray-700 bg-[#0a0f18]" title="{{ fw.note }}">{{ fw.label }}</span>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="mb-8">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-bold text-cyan-400 uppercase">Panel de controles</h2>
+            <span id="eval-status" class="text-[10px] text-gray-500"></span>
+        </div>
+        <div id="controls-grid" class="space-y-3">
+            {% for c in (evaluation.controls if evaluation else []) %}
+            <article class="rounded-xl border border-gray-800 bg-[#0a0f18] p-4 control-card" data-id="{{ c.id }}">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <span class="status-pill text-[10px] font-bold uppercase px-2 py-0.5 rounded
+                                {% if c.status == 'VERIFICADO' %}bg-emerald-500/15 text-emerald-400
+                                {% elif c.status == 'NO_VERIFICADO' %}bg-rose-500/15 text-rose-400
+                                {% elif c.status == 'PENDIENTE' %}bg-amber-500/15 text-amber-300
+                                {% else %}bg-slate-500/15 text-slate-400{% endif %}">{{ c.status }}</span>
+                            <span class="text-[10px] text-gray-500 uppercase">{{ c.module }}</span>
+                        </div>
+                        <h3 class="font-semibold text-white text-sm">{{ c.title }}</h3>
+                        <p class="text-xs text-gray-400 mt-1">{{ c.description }}</p>
+                        <p class="text-xs text-gray-300 mt-2"><strong>Hallazgo:</strong> {{ c.finding }}</p>
+                        {% if c.manual_needed %}
+                        <p class="text-[11px] text-amber-200/80 mt-1"><i class="fas fa-hand-paper mr-1"></i> Manual: {{ c.manual_needed }}</p>
+                        {% endif %}
+                    </div>
+                    <button type="button" class="shrink-0 px-3 py-2 rounded-lg text-[10px] font-bold uppercase border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10"
+                            onclick="explainControl('{{ c.id }}')">
+                        <i class="fas fa-brain mr-1"></i> Consultar Kernel IA
+                    </button>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="mb-8">
+        <h2 class="text-sm font-bold text-cyan-400 mb-3 uppercase">Historial de auditorías</h2>
+        <div class="overflow-x-auto rounded-xl border border-gray-800">
+            <table class="w-full text-xs">
+                <thead class="bg-[#0a0f18] text-cyan-400/80">
+                    <tr>
+                        <th class="text-left p-3">ID</th>
+                        <th class="text-left p-3">Fecha</th>
+                        <th class="text-left p-3">Usuario</th>
+                        <th class="text-left p-3">Sector</th>
+                        <th class="text-left p-3">Tipo</th>
+                        <th class="text-left p-3">Resultado</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    {% for a in history %}
+                    <tr class="border-t border-gray-800 hover:bg-white/5">
+                        <td class="p-3 font-mono text-[10px]">{{ a.id }}</td>
+                        <td class="p-3">{{ a.evaluated_at or a.fecha }}</td>
+                        <td class="p-3">{{ a.user }}</td>
+                        <td class="p-3">{{ a.sector }}</td>
+                        <td class="p-3">{{ a.type }}</td>
+                        <td class="p-3">{{ (a.score or {}).label or '' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="p-4 text-gray-500">Sin auditorías guardadas aún.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div id="kernel-modal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+        <div class="bg-[#0f172a] border border-gray-700 rounded-2xl max-w-lg w-full p-6 max-h-[85vh] overflow-auto">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-cyan-400 font-bold"><i class="fas fa-brain mr-2"></i>Kernel IA — Control</h3>
+                <button type="button" onclick="closeKernelModal()" class="text-gray-400 text-xl">&times;</button>
+            </div>
+            <pre id="kernel-body" class="text-xs text-gray-300 whitespace-pre-wrap font-sans leading-relaxed"></pre>
+        </div>
+    </div>
+</main>
+
+<script>
+function profilePayload() {
+    return {
+        sector_id: document.getElementById('sector_id').value,
+        country: document.getElementById('country').value,
+        company_size: document.getElementById('company_size').value,
+        data_types: document.getElementById('data_types').value,
+        infrastructure: document.getElementById('infrastructure').value,
+        sites: document.getElementById('sites').value,
+        company: document.getElementById('company').value,
+        save: true,
+    };
+}
+
+function statusClass(st) {
+    if (st === 'VERIFICADO') return 'bg-emerald-500/15 text-emerald-400';
+    if (st === 'NO_VERIFICADO') return 'bg-rose-500/15 text-rose-400';
+    if (st === 'PENDIENTE') return 'bg-amber-500/15 text-amber-300';
+    return 'bg-slate-500/15 text-slate-400';
+}
+
+function renderEvaluation(ev) {
+    if (!ev) return;
+    const score = ev.score || {};
+    const counts = ev.counts || {};
+    document.getElementById('verified-count').textContent = score.verified || 0;
+    document.getElementById('total-count').textContent = score.total || 0;
+    document.getElementById('score-label').textContent = score.label || '';
+    document.getElementById('c-v').textContent = counts.VERIFICADO || 0;
+    document.getElementById('c-nv').textContent = counts.NO_VERIFICADO || 0;
+    document.getElementById('c-p').textContent = counts.PENDIENTE || 0;
+    document.getElementById('c-na').textContent = counts.NO_APLICA || 0;
+    document.getElementById('disclaimer').textContent = (ev.profile && ev.profile.disclaimer) || '';
+
+    const fw = document.getElementById('frameworks');
+    fw.innerHTML = (ev.frameworks || []).map(f =>
+        `<span class="px-3 py-1.5 rounded-full border border-gray-700 bg-[#0a0f18]" title="${(f.note||'').replace(/"/g,'')}">${f.label}</span>`
+    ).join('');
+
+    const grid = document.getElementById('controls-grid');
+    grid.innerHTML = (ev.controls || []).map(c => `
+        <article class="rounded-xl border border-gray-800 bg-[#0a0f18] p-4 control-card" data-id="${c.id}">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded ${statusClass(c.status)}">${c.status}</span>
+                        <span class="text-[10px] text-gray-500 uppercase">${c.module}</span>
+                    </div>
+                    <h3 class="font-semibold text-white text-sm">${c.title}</h3>
+                    <p class="text-xs text-gray-400 mt-1">${c.description || ''}</p>
+                    <p class="text-xs text-gray-300 mt-2"><strong>Hallazgo:</strong> ${c.finding || ''}</p>
+                    ${c.manual_needed ? `<p class="text-[11px] text-amber-200/80 mt-1"><i class="fas fa-hand-paper mr-1"></i> Manual: ${c.manual_needed}</p>` : ''}
+                </div>
+                <button type="button" class="shrink-0 px-3 py-2 rounded-lg text-[10px] font-bold uppercase border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10"
+                        onclick="explainControl('${c.id}')">
+                    <i class="fas fa-brain mr-1"></i> Consultar Kernel IA
+                </button>
+            </div>
+        </article>
+    `).join('');
+}
+
+async function runEvaluate() {
+    const st = document.getElementById('eval-status');
+    st.textContent = 'Evaluando controles técnicos…';
+    try {
+        const r = await fetch('/api/compliance/evaluate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(profilePayload()),
+        });
+        const data = await r.json();
+        if (data.evaluation) renderEvaluation(data.evaluation);
+        st.textContent = 'Evaluación completada ' + (data.evaluation && data.evaluation.evaluated_at || '');
+        if (data.audit) loadHistory();
+    } catch (e) {
+        st.textContent = 'Error: ' + e;
+    }
+}
+
+async function generatePdf() {
+    const st = document.getElementById('eval-status');
+    st.textContent = 'Generando informe PDF…';
+    try {
+        const r = await fetch('/api/compliance/report', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(profilePayload()),
+        });
+        const data = await r.json();
+        if (data.download_url) {
+            st.textContent = 'PDF listo';
+            window.location.href = data.download_url;
+        } else {
+            st.textContent = data.message || 'No se pudo generar PDF';
+        }
+        loadHistory();
+    } catch (e) {
+        st.textContent = 'Error PDF: ' + e;
+    }
+}
+
+async function auditNovus() {
+    const st = document.getElementById('eval-status');
+    st.textContent = 'Auditando plataforma NOVUS…';
+    try {
+        const r = await fetch('/api/compliance/audit-novus', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({company: document.getElementById('company').value || 'NOVUS'}),
+        });
+        const data = await r.json();
+        if (data.evaluation) renderEvaluation(data.evaluation);
+        if (data.report && data.report.id) {
+            st.textContent = 'Auditoría NOVUS completada';
+            window.location.href = '/api/compliance/report/' + data.report.id + '/pdf';
+        } else {
+            st.textContent = data.message || 'Auditoría completada';
+        }
+        loadHistory();
+    } catch (e) {
+        st.textContent = 'Error: ' + e;
+    }
+}
+
+async function explainControl(controlId) {
+    const modal = document.getElementById('kernel-modal');
+    const body = document.getElementById('kernel-body');
+    body.textContent = 'Consultando…';
+    modal.classList.remove('hidden');
+    try {
+        const r = await fetch('/api/compliance/control/' + controlId + '/explain?execute=1&sector_id=' + encodeURIComponent(document.getElementById('sector_id').value), {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({execute: 1, sector_id: document.getElementById('sector_id').value}),
+        });
+        const data = await r.json();
+        const lines = [
+            'Control: ' + (data.title || controlId),
+            'Estado: ' + (data.status_label || ''),
+            '',
+            'Significado: ' + (data.meaning || ''),
+            'Riesgo que reduce: ' + (data.risk_reduced || ''),
+            'Hallazgo: ' + (data.finding || ''),
+            'Recomendación: ' + (data.recommendation || ''),
+            'Acciones NOVUS: ' + JSON.stringify(data.novus_actions || []),
+            'Intervención manual: ' + (data.manual_needed || 'Ninguna indicada'),
+            '',
+            data.response || data.message || data.answer || '',
+        ];
+        body.textContent = lines.filter(Boolean).join('\n');
+    } catch (e) {
+        body.textContent = 'Error: ' + e;
+    }
+}
+
+function closeKernelModal() {
+    document.getElementById('kernel-modal').classList.add('hidden');
+}
+
+async function loadHistory() {
+    try {
+        const r = await fetch('/api/compliance/history?limit=30');
+        const data = await r.json();
+        const tbody = document.getElementById('history-body');
+        const audits = data.audits || [];
+        if (!audits.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-gray-500">Sin auditorías guardadas aún.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = audits.map(a => `
+            <tr class="border-t border-gray-800 hover:bg-white/5">
+                <td class="p-3 font-mono text-[10px]">${a.id}</td>
+                <td class="p-3">${a.evaluated_at || a.fecha || ''}</td>
+                <td class="p-3">${a.user || ''}</td>
+                <td class="p-3">${a.sector || ''}</td>
+                <td class="p-3">${a.type || ''}</td>
+                <td class="p-3">${(a.score && a.score.label) || ''}</td>
+            </tr>
+        `).join('');
+    } catch (e) {}
+}
+
+document.getElementById('sector_id').addEventListener('change', () => runEvaluate());
+document.addEventListener('DOMContentLoaded', () => { runEvaluate(); });
+</script>
+{% include 'partials/ai_kernel_panel.html' ignore missing %}
+</body>
+</html>

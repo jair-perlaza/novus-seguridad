@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — Centro de Casos de Estudio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background: #06090f; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .card { background: #0c121d; border: 1px solid #1e293b; border-radius: 12px; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="centro_casos_estudio_novus">
+    {% set active_module = 'centro_casos_estudio_novus' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 p-4 md:p-8 space-y-6 overflow-y-auto">
+        <header>
+            <h1 class="text-2xl font-bold uppercase tracking-tight">Centro de Casos de Estudio NOVUS</h1>
+            <p class="text-xs text-gray-500 uppercase tracking-widest mt-1">Investigación interna — datos anonimizados sin identificación de clientes</p>
+        </header>
+
+        <div class="card p-4 border-amber-500/30">
+            <p class="text-sm text-amber-100">
+                Esta base pertenece exclusivamente a NOVUS. No se almacenan nombres de empresa, usuarios, correos,
+                direcciones ni información confidencial identificable.
+            </p>
+        </div>
+
+        <section class="card p-4">
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-2">Dominios de datos</h2>
+            <ul class="text-xs text-gray-400 space-y-1">
+                {% for key, info in (architecture.domains or {}).items() %}
+                <li><span class="font-mono text-indigo-300">{{ key }}</span> — {{ info.label }} {% if info.exists %}({{ info.size_bytes }} bytes){% else %}(pendiente de creación){% endif %}</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-3">Casos anonimizados ({{ cases|length }})</h2>
+            {% for c in cases %}
+            <div class="card p-4 mb-3">
+                <div class="flex flex-wrap justify-between gap-2 text-xs">
+                    <span class="font-mono text-indigo-300">{{ c.id }}</span>
+                    <span class="text-gray-500">{{ c.created_at }}</span>
+                </div>
+                <p class="text-sm mt-2">Sector: {{ c.sector or '—' }} · Ataque: {{ c.attack_type or '—' }}</p>
+                <p class="text-xs text-gray-400 mt-2">Tiempo respuesta: {{ c.response_time_sec or '—' }} · Resultado: {{ (c.outcome or '—')[:200] }}</p>
+                {% if c.lessons %}<p class="text-xs mt-2 text-gray-300">Lecciones: {{ c.lessons|join('; ') if c.lessons is iterable and c.lessons is not string else c.lessons }}</p>{% endif %}
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-500">Sin casos anonimizados persistidos aún. Se crean al promover análisis reales sin PII.</p>
+            {% endfor %}
+        </section>
+    </main>
+</body>
+</html>

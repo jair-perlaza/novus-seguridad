@@ -1,0 +1,108 @@
+<section class="nv-section" id="planes">
+    <h2><i class="fas fa-layer-group"></i> Planes NOVUS</h2>
+    <p class="nv-section-desc">Seleccione el nivel de cobertura. Cada ítem corresponde a un módulo o motor verificado en la plataforma.</p>
+
+    <div class="nv-plans-grid" id="nv-plans-grid">
+        {% for plan in catalog.plans %}
+        <div class="nv-plan-card{% if plan.id == 'business' %} selected{% endif %}"
+             data-plan-id="{{ plan.id }}"
+             onclick="selectPlan('{{ plan.id }}', this)"
+             style="--plan-accent: {{ plan.color }}">
+            {% if plan.id == 'business' %}<span class="nv-plan-badge">Recomendado</span>{% endif %}
+            <div class="nv-plan-icon" style="background: {{ plan.color }}22; color: {{ plan.color }}">
+                <i class="fas {{ plan.icon }}"></i>
+            </div>
+            <h3>{{ plan.name }}</h3>
+            <div class="nv-plan-price" style="color: {{ plan.color }}">{{ plan.price_label }}</div>
+            <p class="nv-plan-client">{{ plan.client_type }}</p>
+            <p class="nv-plan-endpoints"><i class="fas fa-desktop"></i> {{ plan.endpoints_label }}</p>
+            <ul class="nv-features">
+                {% for feat in plan.features[:12] %}
+                <li><i class="fas fa-check-circle"></i> {{ feat.label }}{% if feat.note %} <span title="{{ feat.note }}">*</span>{% endif %}</li>
+                {% endfor %}
+                {% if plan.feature_count > 12 %}
+                <li><i class="fas fa-plus-circle"></i> +{{ plan.feature_count - 12 }} capacidades verificadas más</li>
+                {% endif %}
+            </ul>
+            <button type="button" class="nv-plan-cta" onclick="event.stopPropagation(); {% if show_contract | default(true) %}selectPlan('{{ plan.id }}', this.closest('.nv-plan-card')){% else %}window.location='{{ url_for("auth.registro_empresa") }}#planes'{% endif %}">
+                {% if show_contract | default(true) %}Contratar {{ plan.name }}{% else %}Contratar {{ plan.name }}{% endif %}
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="nv-section">
+    <h2><i class="fas fa-table"></i> Comparación entre planes</h2>
+    <p class="nv-section-desc">Matriz de capacidades verificadas incluidas en cada membresía.</p>
+    <div class="nv-compare-wrap">
+        <table class="nv-compare">
+            <thead>
+                <tr>
+                    <th>Capacidad</th>
+                    {% for plan in catalog.plans %}
+                    <th>{{ plan.name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in comparison[:40] %}
+                <tr>
+                    <td>{{ row.capability }}</td>
+                    <td class="{% if row.essential %}yes{% else %}no{% endif %}">{% if row.essential %}<i class="fas fa-check"></i>{% else %}—{% endif %}</td>
+                    <td class="{% if row.professional %}yes{% else %}no{% endif %}">{% if row.professional %}<i class="fas fa-check"></i>{% else %}—{% endif %}</td>
+                    <td class="{% if row.business %}yes{% else %}no{% endif %}">{% if row.business %}<i class="fas fa-check"></i>{% else %}—{% endif %}</td>
+                    <td class="{% if row.enterprise %}yes{% else %}no{% endif %}">{% if row.enterprise %}<i class="fas fa-check"></i>{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if comparison|length > 40 %}
+    <p class="nv-section-desc" style="margin-top:12px">Mostrando 40 de {{ comparison|length }} filas. Plan Enterprise incluye todas las capacidades de planes inferiores verificadas.</p>
+    {% endif %}
+</section>
+
+<section class="nv-section" id="servicios-adicionales">
+    <h2><i class="fas fa-puzzle-piece"></i> Servicios adicionales</h2>
+    <p class="nv-section-desc">Módulos opcionales o complementarios. Estado <em>planned</em> = arquitectura reservada, no operativo completo.</p>
+    <div class="nv-addons-grid">
+        {% for addon in catalog.addons %}
+        <div class="nv-addon">
+            <h4>
+                {{ addon.name }}
+                <span class="nv-status nv-status-{{ addon.status if addon.status in ['active','planned'] else 'commercial' }}">{{ addon.status }}</span>
+            </h4>
+            <p>{{ addon.description }}</p>
+            <p><strong>Beneficio:</strong> {{ addon.benefit }}</p>
+            <p><strong>Requisitos:</strong> {{ addon.requirements }}</p>
+            <p class="nv-addon-meta">
+                <strong>Planes compatibles:</strong>
+                {% if addon.plans %}{{ addon.plans | join(', ') }}{% else %}Consultar{% endif %}
+                {% if addon.note %} · {{ addon.note }}{% endif %}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<div class="nv-modal" id="nv-kernel-modal" role="dialog" aria-labelledby="kernel-modal-title">
+    <div class="nv-modal-box">
+        <button type="button" class="nv-modal-close" onclick="closeKernelModal()" aria-label="Cerrar">&times;</button>
+        <h3 id="kernel-modal-title"><i class="fas fa-brain"></i> Kernel IA — Membresías</h3>
+        <p style="font-size:0.8rem;color:var(--nv-muted);margin-bottom:12px">Información basada únicamente en el catálogo verificado de NOVUS.</p>
+        <label class="nv-field" style="margin-bottom:12px">
+            <span style="font-size:0.75rem;color:var(--nv-muted)">Plan a consultar</span>
+            <select id="kernel-plan-select" onchange="updateKernelPreview()">
+                {% for plan in catalog.plans %}
+                <option value="{{ plan.id }}">{{ plan.name }} — {{ plan.price_label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <div class="nv-kernel-answer" id="kernel-answer-body">Cargando…</div>
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+            <button type="button" class="nv-btn nv-btn-kernel" onclick="updateKernelPreview()"><i class="fas fa-sync"></i> Actualizar</button>
+            <button type="button" class="nv-btn nv-btn-ghost" onclick="closeKernelModal()">Cerrar</button>
+        </div>
+    </div>
+</div>

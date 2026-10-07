@@ -1,0 +1,10 @@
+{
+  "documented_at": "2026-07-20",
+  "aes_key_max_age_days": 0,
+  "notes": {
+    "aes_key_max_age_days": "0 desactiva rotación automática al arranque; >0 usa services/cryptovault_key_rotation.py",
+    "ddos": "NOVUS no mitiga DDoS volumétrico de infraestructura; solo límites HTTP/API en services/http_abuse_guard.py",
+    "mail": "Mail Shield analiza solo buzones con OAuth autorizado por el cliente",
+    "protection_score": "GET /api/system/protection-score — checks binarios en platform_protection_score_service.py"
+  }
+}

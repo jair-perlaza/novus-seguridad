@@ -1,0 +1,19 @@
+{
+  "captured_at": "2026-07-14 pre-optimization session",
+  "baseline_cpu": null,
+  "baseline_ram": null,
+  "login_ms": null,
+  "endpoints": [
+    {"path": "/api/dashboard/live", "ms_avg": 838},
+    {"path": "/api/security/summary", "ms_avg": 683},
+    {"path": "/api/system/sector-shield/status", "ms_avg": 7206},
+    {"path": "/api/system/sector-protection", "ms_avg": 3963},
+    {"path": "/api/threat-intel/dashboard", "ms_avg": 7196},
+    {"path": "/api/network/nodes", "ms_avg": 5},
+    {"path": "/api/system/endpoints/live", "ms_avg": 1386},
+    {"path": "/vulnerabilidades", "ms_avg": 11182},
+    {"path": "/network", "ms_avg": 107},
+    {"path": "/topology", "ms_avg": 5},
+    {"path": "/inteligencia", "ms_avg": 10}
+  ]
+}

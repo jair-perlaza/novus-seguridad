@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Security Data Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #06090f; color: white; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .sa-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 10px; }
+        .na { color: #94a3b8; font-style: italic; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="sdace_center">
+    {% set active_module = 'sdace_center' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header class="flex flex-wrap justify-between items-start gap-4">
+            <div>
+                <h1 class="text-2xl font-bold uppercase tracking-tighter">
+                    <i class="fas fa-project-diagram text-amber-400 mr-2"></i>Security Data Analytics Center
+                </h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">
+                    Correlacion empresarial — solo datos reales · sin relaciones inventadas
+                </p>
+            </div>
+            <button onclick="loadAll()" class="px-3 py-1.5 bg-amber-800 hover:bg-amber-700 text-xs rounded">
+                <i class="fas fa-sync mr-1"></i>Actualizar
+            </button>
+        </header>
+
+        <div id="kpi" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 text-center text-[10px]"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="sa-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3">Attack Graph</h3>
+                <div id="graph" class="text-xs max-h-72 overflow-y-auto space-y-1"></div>
+            </div>
+            <div class="sa-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3">Attack Timeline</h3>
+                <div id="timeline" class="text-xs max-h-72 overflow-y-auto space-y-1"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="sa-card p-4"><h3 class="text-[10px] text-gray-500 uppercase mb-2">Top IOC</h3><pre id="top-ioc" class="text-[10px] whitespace-pre-wrap"></pre></div>
+            <div class="sa-card p-4"><h3 class="text-[10px] text-gray-500 uppercase mb-2">Top CVE</h3><pre id="top-cve" class="text-[10px] whitespace-pre-wrap"></pre></div>
+            <div class="sa-card p-4"><h3 class="text-[10px] text-gray-500 uppercase mb-2">Top Activos / Usuarios</h3><pre id="top-au" class="text-[10px] whitespace-pre-wrap"></pre></div>
+            <div class="sa-card p-4"><h3 class="text-[10px] text-gray-500 uppercase mb-2">Top Incidentes / MITRE</h3><pre id="top-im" class="text-[10px] whitespace-pre-wrap"></pre></div>
+        </div>
+
+        <div class="sa-card p-4">
+            <h3 class="text-xs font-bold text-purple-400 uppercase mb-3"><i class="fas fa-brain mr-1"></i>Kernel IA (executes_actions=false)</h3>
+            <div class="flex flex-wrap gap-2 mb-2">
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Cuál fue el primer indicador?">Primer indicador</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Cuál fue el origen del ataque?">Origen</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué incidente tiene mayor propagación?">Propagación</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué incidente tiene más relaciones?">Relaciones</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué patrón se repite?">Patrón</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué usuario aparece más veces?">Usuario</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué activos son más atacados?">Activos</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué campañas siguen activas?">Campañas</button>
+            </div>
+            <div id="kernel-out" class="text-xs text-gray-300"></div>
+        </div>
+
+        <div class="sa-card p-4">
+            <h3 class="text-xs font-bold text-gray-400 uppercase mb-3">Correlaciones / Consultas / Sellos</h3>
+            <pre id="meta" class="text-[10px] text-gray-400 whitespace-pre-wrap max-h-48 overflow-y-auto"></pre>
+        </div>
+    </main>
+<script>
+const NA='NO DISPONIBLE';
+function esc(v){ if(v===null||v===undefined||v===''||v==='NO DISPONIBLE') return NA; if(typeof v==='object') return JSON.stringify(v,null,2); return String(v); }
+
+async function loadAll(){
+  const r=await fetch('/api/sdace/analytics').then(r=>r.json());
+  if(!r.ok) return;
+  const d=r.dashboard||{};
+  const a=d.analytics||r.analytics||{};
+  const g=d.attack_graph||{};
+  const tl=d.timeline||{};
+  document.getElementById('kpi').innerHTML=[
+    ['Nodos grafo', (g.nodes||[]).length],
+    ['Aristas', (g.edges||[]).length],
+    ['Timeline', tl.count],
+    ['Pares temporales', d.temporal?.pairs_count],
+    ['Incidente', g.incident_id],
+    ['Inventado', d.invented===false?'false':esc(d.invented)],
+  ].map(([l,v])=>`<div class="sa-card p-3"><div class="text-sm font-bold">${esc(v)}</div><div class="text-gray-500">${l}</div></div>`).join('');
+
+  document.getElementById('graph').innerHTML=(g.nodes||[]).length
+    ? (g.nodes||[]).map(n=>`<div><span class="text-amber-400">${esc(n.kind)}</span> ${esc(n.value)}</div>`).join('')+
+      '<div class="mt-2 text-gray-500">Aristas:</div>'+(g.edges||[]).map(e=>`<div class="text-gray-400">${esc(e.from)} → ${esc(e.to)} (${esc(e.relation)})</div>`).join('')
+    : `<span class="na">${esc(g.message||NA)}</span>`;
+
+  document.getElementById('timeline').innerHTML=(tl.events||[]).length
+    ? (tl.events||[]).map(e=>`<div><span class="text-gray-500">${esc(e.timestamp_utc)}</span> <span class="text-cyan-400">${esc(e.engine)}</span> ${esc(e.record_type)}</div>`).join('')
+    : `<span class="na">${esc(tl.message||NA)}</span>`;
+
+  document.getElementById('top-ioc').textContent=esc(a.top_ioc);
+  document.getElementById('top-cve').textContent=esc(a.top_cve);
+  document.getElementById('top-au').textContent=esc({activos:a.top_activos, usuarios:a.top_usuarios});
+  document.getElementById('top-im').textContent=esc({incidentes:a.top_incidentes, mitre:a.top_mitre, campanas:a.top_campanas});
+  document.getElementById('meta').textContent=esc({temporal:d.temporal, queries:d.queries, last_seal:d.last_seal, engines:d.engines_peek});
+}
+
+async function ask(q){
+  const r=await fetch('/api/sdace/kernel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})}).then(r=>r.json());
+  const k=r.kernel||{};
+  document.getElementById('kernel-out').innerHTML=`<div class="sa-card p-3"><div class="text-purple-300">${esc(k.answer)}</div>
+    <div class="text-[10px] text-gray-500 mt-1">executes_actions=${k.executes_actions===false?'false':'?'} · ${esc(k.confidence)}</div></div>`;
+}
+document.querySelectorAll('.kq').forEach(b=>b.addEventListener('click',()=>ask(b.dataset.q)));
+loadAll();
+</script>
+</body>
+</html>

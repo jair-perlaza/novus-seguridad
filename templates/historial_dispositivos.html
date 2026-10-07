@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Historial de Dispositivos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #06090f; color: white; font-family: 'Inter', sans-serif; }
+        .dev-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 12px; }
+        .evt-connect { border-left: 3px solid #22c55e; }
+        .evt-disconnect { border-left: 3px solid #ef4444; }
+        .evt-ip_change, .evt-hostname_change { border-left: 3px solid #f59e0b; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="historial_dispositivos">
+    {% set active_module = 'historial_dispositivos' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header>
+            <h1 class="text-2xl font-bold uppercase tracking-tighter">Historial de Dispositivos</h1>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest">Conexiones y desconexiones detectadas por escaneo ARP/AIE — sin datos simulados</p>
+        </header>
+
+        <div class="flex flex-wrap gap-2">
+            <input id="search-q" type="text" placeholder="IP, MAC, hostname, fabricante, tipo..." class="flex-1 min-w-[220px] bg-[#06090f] border border-gray-800 rounded-lg px-3 py-2 text-sm">
+            <button onclick="searchDevices()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-xs font-bold">BUSCAR</button>
+            <select id="filter-type" onchange="filterEvents()" class="bg-[#06090f] border border-gray-800 rounded-lg px-3 py-2 text-xs">
+                <option value="">Todos los eventos</option>
+                <option value="connect">Conexiones</option>
+                <option value="disconnect">Desconexiones</option>
+                <option value="ip_change">Cambio de IP</option>
+                <option value="hostname_change">Cambio de hostname</option>
+            </select>
+        </div>
+
+        <section>
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-3">Inventario con historial</h2>
+            <div id="devices-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {% for d in devices %}
+                <div class="dev-card p-4 cursor-pointer hover:border-indigo-500/40" onclick="loadHistory('{{ d.mac }}', '{{ d.ip }}')">
+                    <div class="text-sm font-bold">{{ d.hostname or d.ip or d.mac or '—' }}</div>
+                    <div class="text-[10px] text-gray-500 font-mono">{{ d.ip }} · {{ d.mac }}</div>
+                    <div class="mt-2 flex flex-wrap gap-2 text-[10px] text-gray-400">
+                        <span>{{ d.vendor or '—' }}</span>
+                        <span>{{ d.device_type or '—' }}</span>
+                        <span>Trust: {{ d.trust_score if d.trust_score is not none else '—' }}</span>
+                    </div>
+                    <div class="mt-2 text-[10px] text-gray-500">
+                        Conexiones: {{ d.connect_count }} · Desconexiones: {{ d.disconnect_count }} · Tiempo total: {{ d.total_connected_seconds }}s
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm col-span-2">Sin dispositivos en inventario. El historial se poblará tras escaneos ARP consecutivos.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-3">Eventos cronológicos</h2>
+            <div id="events-list" class="space-y-2">
+                {% for e in events %}
+                <div class="dev-card p-3 evt-{{ e.event_type }}">
+                    <div class="flex flex-wrap justify-between gap-2">
+                        <span class="text-[10px] font-bold uppercase text-indigo-300">{{ e.event_type }}</span>
+                        <span class="text-[10px] text-gray-500">{{ e.timestamp }}</span>
+                    </div>
+                    <div class="text-sm font-mono mt-1">{{ e.ip or '—' }} · {{ e.mac or '—' }}</div>
+                    <div class="text-[10px] text-gray-400 mt-1">
+                        {{ e.hostname or '—' }} · {{ e.vendor or '—' }} · {{ e.device_type or '—' }}
+                        · Trust {{ e.trust_score if e.trust_score is not none else '—' }}
+                        · Riesgo {{ e.risk_level or '—' }}
+                        {% if e.duration_seconds is not none %} · {{ e.duration_seconds }}s conectado{% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">Sin eventos registrados aún. Se generan automáticamente al detectar cambios entre escaneos ARP reales.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div id="device-history" class="dev-card p-6 hidden">
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-4">Historial del dispositivo</h2>
+            <pre id="history-json" class="text-[10px] text-gray-300 overflow-x-auto whitespace-pre-wrap max-h-[50vh]"></pre>
+        </div>
+
+        {% include 'partials/global_search.html' %}
+        {% include 'partials/ai_kernel_panel.html' %}
+    </main>
+    <script>
+    async function searchDevices() {
+        const q = document.getElementById('search-q').value.trim();
+        if (!q) return;
+        const r = await fetch('/api/system/device-connections?q=' + encodeURIComponent(q), {credentials: 'same-origin'});
+        const data = await r.json();
+        const grid = document.getElementById('devices-grid');
+        if (!data.devices || !data.devices.length) {
+            grid.innerHTML = '<p class="text-gray-500 text-sm col-span-2">Sin resultados.</p>';
+            return;
+        }
+        grid.innerHTML = data.devices.map(d => '<div class="dev-card p-4 cursor-pointer hover:border-indigo-500/40" onclick="loadHistory(\'' + (d.mac||'') + '\',\'' + (d.ip||'') + '\')"><div class="text-sm font-bold">' + (d.hostname||d.ip||d.mac||'—') + '</div><div class="text-[10px] text-gray-500 font-mono">' + (d.ip||'—') + ' · ' + (d.mac||'—') + '</div><div class="mt-2 text-[10px] text-gray-500">Conexiones: ' + (d.connect_count||0) + ' · Desconexiones: ' + (d.disconnect_count||0) + '</div></div>').join('');
+    }
+    async function filterEvents() {
+        const t = document.getElementById('filter-type').value;
+        const url = '/api/system/device-connections?limit=100' + (t ? '&event_type=' + encodeURIComponent(t) : '');
+        const r = await fetch(url, {credentials: 'same-origin'});
+        const data = await r.json();
+        const list = document.getElementById('events-list');
+        if (!data.events || !data.events.length) {
+            list.innerHTML = '<p class="text-gray-500 text-sm">Sin eventos.</p>';
+            return;
+        }
+        list.innerHTML = data.events.map(e => '<div class="dev-card p-3 evt-' + e.event_type + '"><div class="flex justify-between"><span class="text-[10px] font-bold uppercase text-indigo-300">' + e.event_type + '</span><span class="text-[10px] text-gray-500">' + e.timestamp + '</span></div><div class="text-sm font-mono mt-1">' + (e.ip||'—') + ' · ' + (e.mac||'—') + '</div></div>').join('');
+    }
+    async function loadHistory(mac, ip) {
+        const el = document.getElementById('device-history');
+        const pre = document.getElementById('history-json');
+        el.classList.remove('hidden');
+        pre.textContent = 'Cargando...';
+        let url = '/api/system/device-connections?';
+        if (mac) url += 'mac=' + encodeURIComponent(mac);
+        else if (ip) url += 'ip=' + encodeURIComponent(ip);
+        const r = await fetch(url, {credentials: 'same-origin'});
+        const data = await r.json();
+        pre.textContent = JSON.stringify(data.history || data, null, 2);
+    }
+    </script>
+</body>
+</html>

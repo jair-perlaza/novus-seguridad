@@ -1,0 +1,7 @@
+{
+  "node_id": "fake-evil-node",
+  "algorithm": "Ed25519",
+  "fingerprint": "a47d4b814520d27eec94cc13d42a52c9",
+  "created_at": "2026-07-27T18:53:41.039995+00:00",
+  "public_pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAtYTsRWQixO03DPaBzeXEsB1noXfnurO1Odch1Q46G2M=\n-----END PUBLIC KEY-----\n"
+}

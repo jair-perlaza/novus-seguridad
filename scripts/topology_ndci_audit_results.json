@@ -1,0 +1,152 @@
+{
+  "tests": [
+    {
+      "name": "topo_status",
+      "pass": true
+    },
+    {
+      "name": "digital_twin",
+      "pass": true
+    },
+    {
+      "name": "connections_intensity",
+      "pass": true
+    },
+    {
+      "name": "network_function",
+      "pass": true
+    },
+    {
+      "name": "executive_summary",
+      "pass": true
+    },
+    {
+      "name": "topology_device_panel",
+      "pass": "Gateway principal — enrutamiento del segmento local"
+    },
+    {
+      "name": "ndci_inventario_completo",
+      "pass": true
+    },
+    {
+      "name": "ndci_topologia",
+      "pass": true
+    },
+    {
+      "name": "ndci_analisis_red",
+      "pass": true
+    },
+    {
+      "name": "ndci_analisis_seguridad",
+      "pass": true
+    },
+    {
+      "name": "ndci_prediccion",
+      "pass": true
+    },
+    {
+      "name": "ndci_simulaciones",
+      "pass": true
+    },
+    {
+      "name": "ndci_cumplimiento",
+      "pass": true
+    },
+    {
+      "name": "ndci_comparacion_historica",
+      "pass": true
+    },
+    {
+      "name": "ndci_aprendizaje",
+      "pass": true
+    },
+    {
+      "name": "ndci_resumen_ejecutivo_detallado",
+      "pass": true
+    },
+    {
+      "name": "ndci_kernel_professional",
+      "pass": true
+    }
+  ],
+  "passed": true,
+  "audit": {
+    "topology": {
+      "digital_twin_fields": [
+        "overall_status",
+        "network_health",
+        "protection_level",
+        "gateway",
+        "segment",
+        "device_count",
+        "unknown_count",
+        "critical_devices",
+        "observation_devices",
+        "vulnerable_devices",
+        "high_traffic_devices",
+        "active_connections",
+        "last_analysis",
+        "communication_model"
+      ],
+      "connection_types": [
+        "active_flow",
+        "lan_segment"
+      ],
+      "device_panel_fields": [
+        "nombre",
+        "ip",
+        "mac",
+        "fabricante",
+        "sistema_operativo",
+        "tipo_dispositivo",
+        "funcion_red",
+        "gateway_asociado",
+        "segmento",
+        "vlan",
+        "estado",
+        "riesgo_emoji",
+        "riesgo_nivel",
+        "tiempo_conectado",
+        "ultima_actividad",
+        "latencia",
+        "trafico",
+        "puertos_detectados",
+        "servicios_detectados",
+        "vulnerabilidades",
+        "incidentes",
+        "nivel_confianza",
+        "adaptive_defense",
+        "motores_proteccion",
+        "recomendaciones",
+        "historial",
+        "alertas",
+        "es_desconocido"
+      ]
+    },
+    "ndci": {
+      "sections": [
+        "inventario_completo",
+        "topologia",
+        "analisis_red",
+        "analisis_seguridad",
+        "prediccion",
+        "simulaciones",
+        "cumplimiento",
+        "comparacion_historica",
+        "aprendizaje",
+        "resumen_ejecutivo_detallado"
+      ],
+      "inventory_rows": 2,
+      "pdf_sections": 15
+    },
+    "improvements": [
+      "Topology gemelo digital con digital_twin, conexiones con intensidad, ficha completa",
+      "NDCI expediente 15 secciones: inventario, topología, predicción, simulaciones, cumplimiento",
+      "Kernel IA análisis profesional desde evidencia real",
+      "Comparación histórica y aprendizaje persistente"
+    ]
+  },
+  "performance_ms": {
+    "topology": 80055.7
+  }
+}

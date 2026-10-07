@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Deception Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body{background:#06090f;color:#fff;font-family:'Segoe UI',Tahoma,sans-serif}
+        .ia-card{background:#0c121d;border:1px solid #1e293b;border-radius:10px}
+        .na{color:#94a3b8;font-style:italic}
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="deception_center">
+    {% set active_module = 'deception_center' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header class="flex flex-wrap justify-between items-start gap-4">
+            <div>
+                <h1 class="text-2xl font-bold uppercase tracking-tighter">
+                    <i class="fas fa-theater-masks text-amber-400 mr-2"></i>Deception Center
+                </h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">
+                    Deception Platform Enterprise — senuelos aislados · sin telemetria falsa · sin listeners auto
+                </p>
+            </div>
+            <button onclick="loadDash()" class="px-3 py-1.5 bg-amber-800 hover:bg-amber-700 text-xs rounded">Actualizar</button>
+        </header>
+        <div id="kpi" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 text-[10px] text-center"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="ia-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Honeypots / Estado</h3>
+                <div id="pots" class="text-xs max-h-80 overflow-y-auto space-y-1"></div>
+            </div>
+            <div class="ia-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Eventos / Timeline</h3>
+                <div id="events" class="text-xs max-h-80 overflow-y-auto space-y-1"></div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="ia-card p-4"><h3 class="text-[10px] text-gray-500 uppercase mb-2">Honeytokens</h3><pre id="tokens" class="text-[10px] whitespace-pre-wrap max-h-48 overflow-y-auto"></pre></div>
+            <div class="ia-card p-4"><h3 class="text-[10px] text-gray-500 uppercase mb-2">Honeyfiles</h3><pre id="files" class="text-[10px] whitespace-pre-wrap max-h-48 overflow-y-auto"></pre></div>
+            <div class="ia-card p-4"><h3 class="text-[10px] text-gray-500 uppercase mb-2">IOC / Incidentes</h3><pre id="iocs" class="text-[10px] whitespace-pre-wrap max-h-48 overflow-y-auto"></pre></div>
+        </div>
+        <div class="ia-card p-4">
+            <h3 class="text-xs font-bold text-purple-400 uppercase mb-2"><i class="fas fa-brain mr-1"></i>Kernel IA</h3>
+            <div class="flex flex-wrap gap-2 mb-2">
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué recurso señuelo fue tocado?">Senuelo tocado</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué atacante interactuó con un honeytoken?">Honeytoken</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué incidente provino de un honeypot?">Incidente honeypot</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué IOC se generó?">IOC</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué playbook recomienda SOPE?">Playbook SOPE</button>
+            </div>
+            <div id="kernel" class="text-xs"></div>
+        </div>
+        <div class="ia-card p-4">
+            <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Fuentes / Limitaciones / Claims honestos</h3>
+            <pre id="meta" class="text-[10px] text-gray-400 whitespace-pre-wrap max-h-56 overflow-y-auto"></pre>
+        </div>
+    </main>
+<script>
+const NA='NO DISPONIBLE';
+function esc(v){ if(v===null||v===undefined||v===''||v==='NO DISPONIBLE'||v==='NO IMPLEMENTADO'||v==='NO CONFIGURADO') return '<span class="na">'+String(v||NA)+'</span>'; if(typeof v==='object') return JSON.stringify(v); return String(v); }
+async function loadDash(){
+  const r=await fetch('/api/deception/dashboard').then(r=>r.json());
+  if(!r.ok) return;
+  const d=r.dashboard||{};
+  const c=d.claims||{};
+  const hp=d.honeypots||{};
+  document.getElementById('kpi').innerHTML=[
+    ['Honeypots ACTIVO', c.honeypots_activos??0],
+    ['CONFIGURADO', hp.counts?.configurado],
+    ['NO CONFIGURADO', hp.counts?.no_configurado],
+    ['Honeytokens', d.honeytokens?.count],
+    ['Honeyfiles', d.honeyfiles?.count],
+    ['Eventos reales', d.events_count??0],
+  ].map(([l,v])=>`<div class="ia-card p-3"><div class="text-sm font-bold">${esc(v)}</div><div class="text-gray-500">${l}</div></div>`).join('');
+  const pots=hp.honeypots||{};
+  document.getElementById('pots').innerHTML=Object.keys(pots).length
+    ? Object.values(pots).map(p=>`<div><span class="text-amber-400">${esc(p.protocol)}</span> → ${esc(p.status)}</div>`).join('')
+    : '<span class="na">'+NA+'</span>';
+  const ev=d.events||[];
+  document.getElementById('events').innerHTML=ev.length
+    ? ev.slice(0,40).map(e=>`<div><span class="text-rose-400">${esc(e.event_id)}</span> ${esc(e.resource_type)}/${esc(e.action)}</div>`).join('')
+    : '<span class="na">Sin eventos reales (no se inventan ataques)</span>';
+  document.getElementById('tokens').textContent=JSON.stringify(d.honeytokens||NA,null,2);
+  document.getElementById('files').textContent=JSON.stringify(d.honeyfiles||NA,null,2);
+  document.getElementById('iocs').textContent=JSON.stringify({iocs:d.iocs,count:d.iocs_count},null,2);
+  document.getElementById('meta').textContent=JSON.stringify({
+    claims:d.claims, sources:d.sources_status, segregation:d.segregation,
+    policy:d.policy, limitations:d.limitations, seal:d.seal, sope:d.sope_recommendation
+  },null,2);
+}
+document.querySelectorAll('.kq').forEach(b=>b.addEventListener('click',async()=>{
+  const q=b.dataset.q;
+  const r=await fetch('/api/deception/kernel?q='+encodeURIComponent(q)).then(r=>r.json());
+  document.getElementById('kernel').textContent=JSON.stringify(r.kernel||r,null,2);
+}));
+loadDash();
+setInterval(loadDash, 30000);
+</script>
+</body>
+</html>

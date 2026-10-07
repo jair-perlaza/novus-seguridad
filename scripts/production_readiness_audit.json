@@ -1,0 +1,76 @@
+{
+  "generated_at": "2026-07-15 13:41:17",
+  "classification": "Pre-producción empresarial (piloto hostil)",
+  "readiness_score_pct": 85.7,
+  "criteria": {
+    "evidence_registry": true,
+    "active_defense_gates": true,
+    "auth_containment": true,
+    "recovery": true,
+    "hostile_detection": true,
+    "defense_suite": true,
+    "test_ratio": 1.0
+  },
+  "production_tests": {
+    "passed": 13,
+    "total": 13,
+    "all_pass": true
+  },
+  "defense_tests": {
+    "passed": 33,
+    "total": 33,
+    "all_pass": true,
+    "categories": {
+      "Motor Central": "5/5",
+      "Detección": "2/2",
+      "Contención": "3/3",
+      "ASPE": "5/5",
+      "UCE": "2/2",
+      "Sector": "2/2",
+      "Red": "3/3",
+      "Vulnerabilidades": "1/1",
+      "Remediación": "2/2",
+      "Playbooks": "1/1",
+      "Inteligencia": "1/1",
+      "NDCI": "1/1",
+      "Kernel IA": "2/2",
+      "APIs": "3/3"
+    }
+  },
+  "strengths": [
+    "Registro central de evidencias (defense_evidence_registry) — JSONL + DB",
+    "Defensa activa con gate de evidencia para CRITICO/aislamiento",
+    "Contención automática IP en brute force con trazabilidad",
+    "Recuperación reversible (revert_containment)",
+    "Detección entorno hostil (NDR: densidad, desconocidos, auth flood)",
+    "Rate limiting login/API activo",
+    "Rendimiento endpoints optimizado (dashboard live ~7ms)"
+  ],
+  "weaknesses": [
+    "Sin IDS/packet inspection — DNS/DHCP spoofing no verificable en host",
+    "Bloqueo IP remoto en SQLite — sin enforcement firewall OS para todos los escenarios",
+    "Sector móvil sin agente/SDK",
+    "BEC/Phishing sin OAuth email en producción",
+    "MITM completo requiere NOVUS_EXPECTED_CERT_PIN",
+    "Escalabilidad >100 dispositivos no validada en laboratorio real"
+  ],
+  "residual_risks": [
+    "Sin validación a escala >100 dispositivos en red real",
+    "Sin agente móvil ni OAuth email",
+    "Enforcement red OS-level limitado"
+  ],
+  "requirements_for_full_production": [
+    "IDS/SPAN o sensor de red para spoofing DNS/DHCP",
+    "Agente móvil + telemetría app",
+    "Integración OAuth correo (BEC/phishing)",
+    "Firewall OS para bloqueo IP remoto",
+    "Pruebas de carga multi-tenant documentadas",
+    "NOVUS_EXPECTED_CERT_PIN en entornos TLS críticos"
+  ],
+  "evidence_files": [
+    "scripts/production_readiness_tests.json",
+    "scripts/defense_comprehensive_audit.json",
+    "scripts/performance_after.json",
+    "data/defense_registry/events.jsonl"
+  ]
+}

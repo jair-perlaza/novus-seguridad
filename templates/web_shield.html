@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — Web Shield</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <script src="{{ url_for('static', filename='js/novus-metrics.js') }}"></script>
+    <style>
+        body { background: #06090f; color: #e2e8f0; font-family: Inter, sans-serif; }
+        .ws-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 12px; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="web_shield">
+    {% set active_module = 'web_shield' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        {% if monitoring_not_configured %}
+        <div class="ws-card p-4 text-amber-200 border-amber-500/40">{{ monitoring_message }}</div>
+        {% else %}
+        <header>
+            <h1 class="text-2xl font-bold uppercase tracking-tighter">NOVUS Web Shield</h1>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest">Protección web — solo eventos y métricas verificables del host</p>
+        </header>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-xs">
+            <div class="ws-card p-4"><div class="text-gray-500 uppercase text-[9px]">Sitios analizados</div><div id="ws-sites" class="text-2xl font-bold text-cyan-400">—</div></div>
+            <div class="ws-card p-4"><div class="text-gray-500 uppercase text-[9px]">Sitios bloqueados</div><div id="ws-blocked" class="text-2xl font-bold text-red-400">—</div></div>
+            <div class="ws-card p-4"><div class="text-gray-500 uppercase text-[9px]">Descargas inspeccionadas</div><div id="ws-dl" class="text-2xl font-bold text-indigo-400">—</div></div>
+            <div class="ws-card p-4"><div class="text-gray-500 uppercase text-[9px]">Cuarentena</div><div id="ws-q" class="text-2xl font-bold text-amber-400">—</div></div>
+        </div>
+
+        <div class="ws-card p-4 flex flex-wrap gap-4 items-end">
+            <div class="flex-1 min-w-[200px]">
+                <label class="text-[10px] text-gray-500 uppercase">Analizar URL (TLS + heurísticas locales)</label>
+                <input id="ws-url" type="url" class="w-full mt-1 bg-[#06090f] border border-gray-700 rounded px-3 py-2 text-sm" placeholder="https://..." />
+            </div>
+            <button type="button" id="ws-analyze-btn" class="px-4 py-2 bg-indigo-600 rounded text-sm font-bold">Analizar</button>
+        </div>
+        <pre id="ws-analyze-out" class="ws-card p-4 text-xs text-gray-400 overflow-x-auto hidden"></pre>
+
+        <div class="grid md:grid-cols-2 gap-4">
+            <div class="ws-card p-4">
+                <h2 class="text-sm font-bold mb-2"><i class="fa fa-cog text-indigo-400"></i> Política</h2>
+                <div class="space-y-2 text-xs">
+                    <label>Sensibilidad
+                        <select id="cfg-sens" class="w-full bg-[#06090f] border border-gray-700 rounded p-2">
+                            <option value="low">Baja</option>
+                            <option value="balanced">Equilibrada</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </label>
+                    <label>Modo
+                        <select id="cfg-mode" class="w-full bg-[#06090f] border border-gray-700 rounded p-2">
+                            <option value="warn">Solo advertencia</option>
+                            <option value="block">Bloqueo automático (política API)</option>
+                        </select>
+                    </label>
+                    <label>Umbral bloqueo <input id="cfg-block" type="number" min="30" max="95" class="w-full bg-[#06090f] border border-gray-700 rounded p-2" /></label>
+                    <label>Lista blanca (dominios, uno por línea)<textarea id="cfg-wl" rows="2" class="w-full bg-[#06090f] border border-gray-700 rounded p-2"></textarea></label>
+                    <label>Lista negra<textarea id="cfg-bl" rows="2" class="w-full bg-[#06090f] border border-gray-700 rounded p-2"></textarea></label>
+                    <button type="button" id="cfg-save" class="w-full py-2 bg-emerald-700/80 rounded font-bold">Guardar configuración</button>
+                </div>
+            </div>
+            <div class="ws-card p-4">
+                <h2 class="text-sm font-bold mb-2"><i class="fa fa-heartbeat text-green-400"></i> Motor</h2>
+                <div id="ws-engine-meta" class="text-xs text-gray-400 space-y-1">Cargando…</div>
+                <p class="text-[10px] text-gray-600 mt-3" id="ws-limits"></p>
+            </div>
+        </div>
+
+        <div class="ws-card p-4">
+            <h2 class="text-sm font-bold mb-3">Eventos recientes</h2>
+            <div id="ws-events" class="text-xs font-mono space-y-2 max-h-64 overflow-y-auto">Sin eventos</div>
+        </div>
+        {% endif %}
+    </main>
+    {% include 'partials/global_search.html' %}
+    {% include 'partials/ai_kernel_panel.html' %}
+    <script>
+        async function refreshWebShield() {
+            try {
+                const st = await fetch('/api/web-shield/status').then(r => r.json());
+                const stats = st.stats || {};
+                document.getElementById('ws-sites').textContent = stats.sites_analyzed ?? '0';
+                document.getElementById('ws-blocked').textContent = stats.sites_blocked ?? '0';
+                document.getElementById('ws-dl').textContent = stats.downloads_inspected ?? '0';
+                document.getElementById('ws-q').textContent = stats.files_quarantined ?? '0';
+                const eng = document.getElementById('ws-engine-meta');
+                if (eng) {
+                    eng.innerHTML = '<div>Estado: ' + (st.enabled ? 'Activo' : 'Desactivado') + '</div>' +
+                        '<div>Modo: ' + (st.mode || '—') + ' · CPU motor: ' + (st.status && st.status.cpu_percent != null ? st.status.cpu_percent + '%' : '—') + '</div>' +
+                        '<div>Última actualización: ' + (stats.last_event_at || st.updated_at || '—') + '</div>';
+                }
+                const lim = document.getElementById('ws-limits');
+                if (lim && st.limitations) {
+                    lim.textContent = Object.values(st.limitations).join(' ');
+                }
+                const ev = await fetch('/api/web-shield/events?limit=30').then(r => r.json());
+                const box = document.getElementById('ws-events');
+                if (box && ev.events && ev.events.length) {
+                    box.innerHTML = ev.events.map(e =>
+                        '<div class="border-b border-gray-800 pb-1">' + e.timestamp + ' · ' + e.event_type +
+                        ' · score ' + (e.risk_score ?? '—') + ' · ' + (e.domain || e.url || '') + '</div>'
+                    ).join('');
+                } else if (box) box.textContent = 'Sin eventos registrados todavía';
+            } catch (e) { console.error(e); }
+        }
+        async function loadConfig() {
+            const c = await fetch('/api/web-shield/config').then(r => r.json());
+            if (!c.config) return;
+            document.getElementById('cfg-sens').value = c.config.sensitivity || 'balanced';
+            document.getElementById('cfg-mode').value = c.config.mode || 'block';
+            document.getElementById('cfg-block').value = c.config.block_threshold || 70;
+            document.getElementById('cfg-wl').value = (c.config.whitelist_domains || []).join('\n');
+            document.getElementById('cfg-bl').value = (c.config.blacklist_domains || []).join('\n');
+        }
+        document.getElementById('ws-analyze-btn')?.addEventListener('click', async () => {
+            const url = document.getElementById('ws-url').value.trim();
+            if (!url) return;
+            const res = await fetch('/api/web-shield/analyze-url', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+            const data = await res.json();
+            const out = document.getElementById('ws-analyze-out');
+            out.classList.remove('hidden');
+            out.textContent = JSON.stringify(data, null, 2);
+            refreshWebShield();
+        });
+        document.getElementById('cfg-save')?.addEventListener('click', async () => {
+            const body = {
+                sensitivity: document.getElementById('cfg-sens').value,
+                mode: document.getElementById('cfg-mode').value,
+                block_threshold: Number(document.getElementById('cfg-block').value),
+                whitelist_domains: document.getElementById('cfg-wl').value.split('\n').map(s => s.trim()).filter(Boolean),
+                blacklist_domains: document.getElementById('cfg-bl').value.split('\n').map(s => s.trim()).filter(Boolean),
+            };
+            await fetch('/api/web-shield/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            refreshWebShield();
+        });
+        {% if not monitoring_not_configured %}
+        loadConfig();
+        refreshWebShield();
+        setInterval(refreshWebShield, 10000);
+        {% endif %}
+    </script>
+</body>
+</html>

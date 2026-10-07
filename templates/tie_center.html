@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Threat Intelligence Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #06090f; color: white; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .ti-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 10px; }
+        .ti-badge { font-size: 10px; padding: 2px 8px; border-radius: 9999px; }
+        .bg-crit { background: #dc2626; } .bg-alto { background: #f59e0b; }
+        .bg-medio { background: #3b82f6; } .bg-bajo { background: #6b7280; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="threat_intel">
+    {% set active_module = 'threat_intel' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header class="flex flex-wrap justify-between items-start gap-4">
+            <div>
+                <h1 class="text-2xl font-bold uppercase tracking-tighter">
+                    <i class="fas fa-globe text-cyan-400 mr-2"></i>Threat Intelligence Center
+                </h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">
+                    Inteligencia real — feeds verificados · sin datos inventados · NO DISPONIBLE si no hay fuente
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="fetchFeeds()" class="px-3 py-1 bg-cyan-700 hover:bg-cyan-600 text-xs rounded">
+                    <i class="fas fa-sync-alt mr-1"></i>Fetch Feeds
+                </button>
+                <button onclick="runCycle()" class="px-3 py-1 bg-emerald-700 hover:bg-emerald-600 text-xs rounded">
+                    <i class="fas fa-play mr-1"></i>Full Cycle
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats row -->
+        <div id="stats-row" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+
+        <!-- IOC Search -->
+        <div class="ti-card p-4">
+            <div class="flex gap-2 items-center">
+                <input id="search-input" type="text" placeholder="Buscar IOC (hash, IP, dominio, URL)..."
+                    class="flex-1 bg-[#111827] border border-gray-700 rounded px-3 py-2 text-sm text-white">
+                <select id="search-type" class="bg-[#111827] border border-gray-700 rounded px-2 py-2 text-sm text-white">
+                    <option value="hash">Hash</option><option value="ip">IP</option>
+                    <option value="domain">Dominio</option><option value="url">URL</option>
+                </select>
+                <button onclick="enrichIndicator()" class="px-3 py-2 bg-purple-700 hover:bg-purple-600 text-xs rounded">
+                    <i class="fas fa-search mr-1"></i>Enrich
+                </button>
+            </div>
+            <div id="enrichment-result" class="mt-3 hidden"></div>
+        </div>
+
+        <!-- Main grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Top IOCs -->
+            <div class="ti-card p-4">
+                <h3 class="text-xs font-bold uppercase text-gray-400 mb-3"><i class="fas fa-crosshairs mr-1 text-red-400"></i>IOC Activos</h3>
+                <div id="top-iocs" class="space-y-1 text-xs max-h-64 overflow-y-auto"></div>
+            </div>
+            <!-- Threat Types -->
+            <div class="ti-card p-4">
+                <h3 class="text-xs font-bold uppercase text-gray-400 mb-3"><i class="fas fa-bug mr-1 text-amber-400"></i>Threat Types</h3>
+                <div id="threat-types" class="space-y-1 text-xs max-h-64 overflow-y-auto"></div>
+            </div>
+            <!-- Malware Families -->
+            <div class="ti-card p-4">
+                <h3 class="text-xs font-bold uppercase text-gray-400 mb-3"><i class="fas fa-virus mr-1 text-rose-400"></i>Malware Families</h3>
+                <div id="malware-families" class="space-y-1 text-xs max-h-64 overflow-y-auto"></div>
+            </div>
+            <!-- Countries -->
+            <div class="ti-card p-4">
+                <h3 class="text-xs font-bold uppercase text-gray-400 mb-3"><i class="fas fa-flag mr-1 text-cyan-400"></i>Países</h3>
+                <div id="countries" class="space-y-1 text-xs max-h-64 overflow-y-auto"></div>
+            </div>
+            <!-- Feed History -->
+            <div class="ti-card p-4 lg:col-span-2">
+                <h3 class="text-xs font-bold uppercase text-gray-400 mb-3"><i class="fas fa-rss mr-1 text-green-400"></i>Feed History</h3>
+                <div id="feed-history" class="space-y-1 text-xs max-h-48 overflow-y-auto"></div>
+            </div>
+        </div>
+
+        <!-- Connectors status -->
+        <div class="ti-card p-4">
+            <h3 class="text-xs font-bold uppercase text-gray-400 mb-3"><i class="fas fa-plug mr-1 text-blue-400"></i>Conectores</h3>
+            <div id="connectors" class="flex flex-wrap gap-2"></div>
+        </div>
+    </main>
+
+    <script>
+    const API = '/api/tie';
+    async function loadDashboard() {
+        try {
+            const r = await fetch(API + '/dashboard');
+            const j = await r.json();
+            if (!j.ok) return;
+            const d = j.dashboard;
+            if (d.status === 'NOT AVAILABLE' || d.snapshot_pending) {
+                document.getElementById('stats-row').innerHTML =
+                    '<div class="ti-card p-4 col-span-full text-amber-400 text-sm">' +
+                    (d.status_label || d.message || 'Datos aún no disponibles') +
+                    (d.snapshot_meta && d.snapshot_meta.refresh_inflight ? ' — generando snapshot…' : '') +
+                    '</div>';
+                return;
+            }
+            document.getElementById('stats-row').innerHTML = [
+                stat('Total IOCs', d.total_iocs, 'fa-database', 'cyan'),
+                stat('Tipos', Object.keys(d.iocs_by_type||{}).length, 'fa-layer-group', 'blue'),
+                stat('Fuentes', Object.keys(d.iocs_by_source||{}).length, 'fa-plug', 'green'),
+                stat('Detecciones Int.', d.internal_detections, 'fa-shield-alt', 'amber'),
+                stat('Enrichments', d.enrichments_performed, 'fa-search', 'purple'),
+                stat('Swarm Published', d.swarm_published, 'fa-broadcast-tower', 'rose'),
+            ].join('');
+            renderList('top-iocs', (d.top_iocs||[]).map(i =>
+                `<span class="text-gray-500">[${i.type}]</span> <span class="text-white">${truncate(i.value,50)}</span> `+
+                `<span class="text-gray-600">${i.source||''}</span> `+
+                `<span class="text-amber-400">${(i.confidence||0).toFixed(2)}</span>`
+            ));
+            renderKV('threat-types', d.threat_types||{}, 'red');
+            renderKV('malware-families', d.malware_families||{}, 'rose');
+            renderKV('countries', d.iocs_by_country||{}, 'cyan');
+            renderList('feed-history', (d.feed_history||[]).map(f =>
+                `<span class="text-gray-500">${f.fetched_at_utc||f.timestamp_utc||''}</span> `+
+                `<span class="text-cyan-400">${f.connector||''}</span> `+
+                `<span class="${f.status==='ok'?'text-green-400':'text-red-400'}">${f.status}</span> `+
+                `<span class="text-gray-400">${f.iocs_fetched||f.iocs_count||0} IOCs</span>`
+            ));
+            const cEl = document.getElementById('connectors');
+            cEl.innerHTML = (d.connectors||[]).map(c =>
+                `<span class="ti-badge bg-[#1e293b] text-cyan-300">${c}</span>`
+            ).join('');
+        } catch(e) { console.error(e); }
+    }
+    function stat(label, val, icon, color) {
+        return `<div class="ti-card p-3 text-center"><i class="fas ${icon} text-${color}-400 text-lg"></i><div class="text-xl font-bold mt-1">${val??'—'}</div><div class="text-[9px] text-gray-500 uppercase">${label}</div></div>`;
+    }
+    function renderList(id, items) {
+        document.getElementById(id).innerHTML = items.length ? items.map(i=>`<div class="border-b border-gray-800 py-1">${i}</div>`).join('') : '<div class="text-gray-600">Sin datos</div>';
+    }
+    function renderKV(id, obj, color) {
+        const entries = Object.entries(obj);
+        renderList(id, entries.map(([k,v])=>`<span class="text-${color}-400">${k}</span> <span class="text-gray-500 float-right">${v}</span>`));
+    }
+    function truncate(s, n) { return s && s.length>n ? s.slice(0,n)+'…' : s||''; }
+
+    async function fetchFeeds() {
+        const r = await fetch(API+'/feeds',{method:'POST'}); await r.json(); loadDashboard();
+    }
+    async function runCycle() {
+        const r = await fetch(API+'/cycle',{method:'POST'}); await r.json(); loadDashboard();
+    }
+    async function enrichIndicator() {
+        const ind = document.getElementById('search-input').value.trim();
+        const typ = document.getElementById('search-type').value;
+        if(!ind) return;
+        const el = document.getElementById('enrichment-result');
+        el.classList.remove('hidden');
+        el.innerHTML = '<div class="text-gray-500">Enriching...</div>';
+        try {
+            const r = await fetch(API+'/enrich',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({indicator:ind,type:typ})});
+            const j = await r.json();
+            if(!j.ok) { el.innerHTML='<div class="text-red-400">Error</div>'; return; }
+            const e = j.enrichment;
+            el.innerHTML = `<div class="ti-card p-3 space-y-1 text-xs">`+
+                `<div><b>Indicator:</b> ${e.indicator}</div>`+
+                `<div><b>Confidence Score:</b> <span class="${e.confidence_score>=0.5?'text-red-400':'text-green-400'}">${e.confidence_score}</span></div>`+
+                `<div><b>Recommendation:</b> ${e.recommendation}</div>`+
+                `<div class="text-gray-500">${e.kernel_decision_note}</div>`+
+                `<div class="mt-2"><b>Factors (${e.factors_count}):</b></div>`+
+                (e.factors||[]).map(f=>`<div class="pl-2 border-l border-gray-700">· ${f.source} [${f.type}] = ${f.score!=null?f.score.toFixed(2):'N/A'} — ${f.detail||''}</div>`).join('')+
+                `</div>`;
+        } catch(ex) { el.innerHTML='<div class="text-red-400">'+ex+'</div>'; }
+    }
+    loadDashboard();
+    setInterval(loadDashboard, 30000);
+    </script>
+</body>
+</html>

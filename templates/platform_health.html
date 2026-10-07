@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Platform Health Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #06090f; color: white; font-family: 'Inter', sans-serif; }
+        .health-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 12px; }
+        .status-activo { color: #22c55e; }
+        .status-degradado { color: #f59e0b; }
+        .status-detenido { color: #ef4444; }
+        .score-ring { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; border: 3px solid currentColor; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="platform_health">
+    {% set active_module = 'platform_health' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header class="flex flex-wrap justify-between items-start gap-4">
+            <div>
+                <h1 class="text-2xl font-bold uppercase tracking-tighter">Platform Health Center</h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Estado operativo en tiempo real — telemetría real de motores NOVUS</p>
+            </div>
+            <div class="text-right text-[10px] text-gray-500">
+                <div>Actualizado: <span id="ph-updated">{{ health.generated_at }}</span></div>
+                <div>Uptime plataforma: <span id="ph-uptime">{{ health.platform_uptime_label }}</span></div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center text-[10px]">
+            <div class="health-card p-3">
+                <div id="ph-overall-score" class="text-2xl font-bold text-indigo-400">{{ health.overall_health_score }}</div>
+                <div class="text-gray-500">Health Score global</div>
+            </div>
+            <div class="health-card p-3">
+                <div id="ph-overall-status" class="text-lg font-bold status-{{ health.overall_status }}">{{ health.overall_status_label }}</div>
+                <div class="text-gray-500">Estado NOVUS</div>
+            </div>
+            <div class="health-card p-3">
+                <div id="ph-active" class="text-lg font-bold text-green-400">{{ health.engines_active }}</div>
+                <div class="text-gray-500">Motores activos</div>
+            </div>
+            <div class="health-card p-3">
+                <div id="ph-degraded" class="text-lg font-bold text-amber-400">{{ health.engines_degraded }}</div>
+                <div class="text-gray-500">Degradados</div>
+            </div>
+            <div class="health-card p-3">
+                <div id="ph-process" class="text-lg font-bold text-white">{{ health.process_cpu_percent or '—' }}% / {{ health.process_memory_mb or '—' }} MB</div>
+                <div class="text-gray-500">CPU / RAM proceso</div>
+            </div>
+        </div>
+
+        <div id="engines-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {% for e in health.engines %}
+            <div class="health-card p-4 engine-row" data-engine="{{ e.engine_id }}">
+                <div class="flex justify-between items-start gap-3">
+                    <div>
+                        <h2 class="text-sm font-bold">{{ e.label }}</h2>
+                        <span class="text-[10px] font-bold uppercase status-{{ e.status }}">{{ e.status_label }}</span>
+                    </div>
+                    <div class="score-ring status-{{ e.status }}" style="color: {% if e.health_score >= 80 %}#22c55e{% elif e.health_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %}">
+                        {{ e.health_score }}
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4 text-[10px] text-gray-400">
+                    <div><span class="text-gray-600 block">Uptime</span>{{ e.uptime_label or '—' }}</div>
+                    <div><span class="text-gray-600 block">Última ejecución</span>{{ e.last_execution or '—' }}</div>
+                    <div><span class="text-gray-600 block">Última sync</span>{{ e.last_sync or '—' }}</div>
+                    <div><span class="text-gray-600 block">Eventos</span>{{ e.events_processed }}</div>
+                    <div><span class="text-gray-600 block">CPU</span>{% if e.cpu_percent is not none %}{{ e.cpu_percent }}%{% else %}—{% endif %}</div>
+                    <div><span class="text-gray-600 block">RAM</span>{% if e.memory_mb is not none %}{{ e.memory_mb }} MB{% else %}—{% endif %}</div>
+                    <div class="col-span-2"><span class="text-gray-600 block">Último error</span><span class="text-red-400/80">{{ e.last_error or 'Ninguno' }}</span></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% include 'partials/global_search.html' %}
+        {% include 'partials/ai_kernel_panel.html' %}
+    </main>
+    <script>
+    function renderEngine(e) {
+        const scoreColor = e.health_score >= 80 ? '#22c55e' : (e.health_score >= 50 ? '#f59e0b' : '#ef4444');
+        const cpu = e.cpu_percent != null ? e.cpu_percent + '%' : '—';
+        const ram = e.memory_mb != null ? e.memory_mb + ' MB' : '—';
+        return `<div class="health-card p-4 engine-row" data-engine="${e.engine_id}">
+            <div class="flex justify-between items-start gap-3">
+                <div><h2 class="text-sm font-bold">${e.label}</h2>
+                <span class="text-[10px] font-bold uppercase status-${e.status}">${e.status_label}</span></div>
+                <div class="score-ring" style="color:${scoreColor};border-color:${scoreColor}">${e.health_score}</div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4 text-[10px] text-gray-400">
+                <div><span class="text-gray-600 block">Uptime</span>${e.uptime_label || '—'}</div>
+                <div><span class="text-gray-600 block">Última ejecución</span>${e.last_execution || '—'}</div>
+                <div><span class="text-gray-600 block">Última sync</span>${e.last_sync || '—'}</div>
+                <div><span class="text-gray-600 block">Eventos</span>${e.events_processed}</div>
+                <div><span class="text-gray-600 block">CPU</span>${cpu}</div>
+                <div><span class="text-gray-600 block">RAM</span>${ram}</div>
+                <div class="col-span-2"><span class="text-gray-600 block">Último error</span><span class="text-red-400/80">${e.last_error || 'Ninguno'}</span></div>
+            </div>
+        </div>`;
+    }
+    async function refreshHealth() {
+        try {
+            const r = await fetch('/api/system/platform-health', {credentials: 'same-origin'});
+            const data = await r.json();
+            if (data.status !== 'success' || !data.health) return;
+            const h = data.health;
+            document.getElementById('ph-updated').textContent = h.generated_at;
+            document.getElementById('ph-uptime').textContent = h.platform_uptime_label;
+            document.getElementById('ph-overall-score').textContent = h.overall_health_score;
+            document.getElementById('ph-overall-status').textContent = h.overall_status_label;
+            document.getElementById('ph-overall-status').className = 'text-lg font-bold status-' + h.overall_status;
+            document.getElementById('ph-active').textContent = h.engines_active;
+            document.getElementById('ph-degraded').textContent = h.engines_degraded;
+            document.getElementById('ph-process').textContent = (h.process_cpu_percent ?? '—') + '% / ' + (h.process_memory_mb ?? '—') + ' MB';
+            document.getElementById('engines-grid').innerHTML = (h.engines || []).map(renderEngine).join('');
+        } catch (e) { console.debug('platform health refresh', e); }
+    }
+    setInterval(refreshHealth, 10000);
+    </script>
+</body>
+</html>

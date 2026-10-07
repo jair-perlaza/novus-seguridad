@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <title>CryptoVault — NOVUS</title>
+  <style>
+    body { margin:0; font-family: "Segoe UI", system-ui, sans-serif; background:#0f1419; color:#e7ecf1; }
+    main { max-width:960px; margin:0 auto; padding:2rem 1.25rem; }
+    pre { background:#1a222c; border:1px solid #2a3542; border-radius:8px; padding:12px; overflow:auto; font-size:.8rem; }
+    a { color:#3dd68c; }
+    .meta { color:#8b9aab; font-size:.85rem; margin-bottom:1rem; }
+  </style>
+  {% include 'partials/responsive_assets.html' %}
+</head>
+<body>
+<main>
+  <h1>CryptoVault</h1>
+  <p class="meta">Estado LIVE desde Health Engine probe — sin datos inventados.</p>
+  <div id="status" class="meta">Cargando…</div>
+  <pre id="raw">—</pre>
+  <p><a href="/api/health/status">API health/status</a> · <a href="/health-center">Health Center</a></p>
+</main>
+<script>
+async function load() {
+  try {
+    const r = await fetch('/api/health/status', {credentials:'same-origin'});
+    const d = await r.json();
+    const eng = d.engine || {};
+    const comps = eng.components || [];
+    const cv = comps.find(c => c.component_id === 'cryptovault');
+    const el = document.getElementById('status');
+    if (!cv) {
+      el.textContent = 'NOT MEASURED — componente cryptovault no presente en último snapshot';
+      document.getElementById('raw').textContent = JSON.stringify({observed_at: eng.observed_at, confidence: eng.confidence}, null, 2);
+      return;
+    }
+    el.textContent = 'Estado: ' + (cv.status_label || cv.status || 'UNKNOWN') +
+      ' · observed_at: ' + (eng.observed_at || 'N/A') +
+      ' · source: ' + (eng.source || 'health_engine');
+    document.getElementById('raw').textContent = JSON.stringify(cv, null, 2);
+  } catch (e) {
+    document.getElementById('raw').textContent = 'NOT VERIFIED: ' + e.message;
+  }
+}
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>

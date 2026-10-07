@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Configuración Táctica</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #06090f; color: white; font-family: 'Inter', sans-serif; }
+        .config-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 16px; transition: all 0.3s; }
+        .sector-btn { border: 1px solid #1e293b; transition: all 0.3s; }
+        .sector-btn:hover { border-color: #5d5fef; background: #5d5fef/10; }
+        .sector-active { border-color: #5d5fef; background: rgba(93, 95, 239, 0.2); }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen w-full overflow-y-auto" data-novus-module="configuracion">
+    <input type="hidden" id="csrf-token" value="{{ csrf_token or '' }}">
+    {% set active_module = 'configuracion' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8">
+        <header>
+            <h1 class="text-2xl font-bold italic uppercase tracking-tighter">Personalización de Defensa</h1>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest">Ajuste de NOVUS según el sector de su PyME</p>
+        </header>
+
+        <div class="config-card p-6" id="network-monitoring-panel">
+            <h3 class="text-xs font-bold text-emerald-400 uppercase mb-4 tracking-widest">Monitoreo de Red</h3>
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+                <span id="nm-status-badge" class="text-[10px] font-bold px-3 py-1 rounded-full bg-gray-800 text-gray-400">—</span>
+                <span id="nm-freshness" class="text-[9px] text-gray-500 uppercase">—</span>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-[10px] mb-4">
+                <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">Empresa (tenant)</span><span id="nm-tenant" class="font-mono text-white break-all">—</span></div>
+                <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">Interfaz</span><span id="nm-iface" class="text-white">—</span></div>
+                <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">SSID</span><span id="nm-ssid" class="text-white">—</span></div>
+                <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">IP local</span><span id="nm-ip" class="font-mono text-indigo-300">—</span></div>
+                <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">CIDR</span><span id="nm-cidr" class="font-mono">—</span></div>
+                <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">Gateway</span><span id="nm-gw" class="font-mono">—</span></div>
+                <div class="bg-[#06090f] p-3 rounded-lg col-span-2"><span class="text-gray-500 block">DNS</span><span id="nm-dns" class="font-mono">—</span></div>
+                <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">Dispositivos observados</span><span id="nm-devices" class="font-bold text-white">—</span></div>
+                <div class="bg-[#06090f] p-3 rounded-lg col-span-2 md:col-span-3"><span class="text-gray-500 block">Último escaneo / método</span><span id="nm-scan" class="text-gray-300">—</span></div>
+            </div>
+            <p id="nm-limited" class="text-[9px] text-amber-400/90 mb-3 hidden"></p>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="nmAction('refresh')" class="bg-indigo-900/40 border border-indigo-700/50 px-3 py-2 rounded-lg text-[10px] font-bold">Actualizar configuración</button>
+                <button type="button" onclick="nmAction('discover_now')" class="bg-emerald-900/30 border border-emerald-700/40 px-3 py-2 rounded-lg text-[10px] font-bold">Ejecutar descubrimiento ahora</button>
+                <button type="button" onclick="nmAction('stop_discovery')" class="bg-red-900/30 border border-red-800/40 px-3 py-2 rounded-lg text-[10px] font-bold">Detener descubrimiento</button>
+                <button type="button" onclick="nmAction('resume_discovery')" class="bg-blue-900/30 border border-blue-700/40 px-3 py-2 rounded-lg text-[10px] font-bold">Reanudar descubrimiento</button>
+                <button type="button" onclick="nmAction('restart')" class="bg-amber-900/30 border border-amber-700/40 px-3 py-2 rounded-lg text-[10px] font-bold">Reiniciar monitoreo</button>
+                <button type="button" onclick="nmAction('disable')" class="bg-red-900/30 border border-red-700/40 px-3 py-2 rounded-lg text-[10px] font-bold">Desactivar monitoreo</button>
+                <button type="button" onclick="nmAction('enable')" class="bg-green-900/30 border border-green-700/40 px-3 py-2 rounded-lg text-[10px] font-bold">Activar monitoreo</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <div class="xl:col-span-2 space-y-6">
+                <div class="config-card p-6">
+                    <h3 class="text-xs font-bold text-indigo-400 uppercase mb-4 tracking-widest">1. Seleccione su Sector Económico</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for s in sectores %}
+                        <button type="button" id="sector-{{ s.id }}" onclick="selectSector('{{ s.id }}', this)" class="sector-btn p-4 rounded-xl text-left {% if s.id == config.sector_activo %}sector-active{% endif %}">
+                            <div class="text-sm font-bold text-white">{{ s.nombre }}</div>
+                            <div class="text-[9px] text-gray-500 mt-1 uppercase">Prioridad: {{ s.enfoque }}</div>
+                        </button>
+                        {% endfor %}
+                    </div>
+                    <p class="text-[9px] text-gray-600 mt-4 italic">Nota: El sector seleccionado se guarda en su perfil y ajusta el enfoque de monitoreo.</p>
+                </div>
+
+                <div class="config-card p-6" id="pentest-config">
+                    <h3 class="text-xs font-bold text-indigo-400 uppercase mb-4 tracking-widest">2. Intensidad del Pentesting</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="setPentestMode('pasivo')" id="btn-pasivo" class="flex-1 min-w-[120px] bg-[#06090f] border border-gray-800 p-3 rounded-lg text-[10px] font-bold hover:border-indigo-500">PASIVO</button>
+                        <button onclick="setPentestMode('estandar')" id="btn-estandar" class="flex-1 min-w-[120px] bg-indigo-600 border border-indigo-500 p-3 rounded-lg text-[10px] font-bold shadow-lg shadow-indigo-500/20">ESTÁNDAR (RECOMENDADO)</button>
+                        <button onclick="setPentestMode('agresivo')" id="btn-agresivo" class="flex-1 min-w-[120px] bg-[#06090f] border border-red-900/30 p-3 rounded-lg text-[10px] font-bold hover:border-red-500 text-red-500">AGRESIVO (ESTRÉS)</button>
+                    </div>
+                    <p class="text-[9px] text-gray-600 mt-3 italic">Efecto inmediato: ajusta límites de escaneo en el próximo ciclo de vulnerabilidades.</p>
+                </div>
+
+                <div class="config-card p-6" id="auth-protection-config">
+                    <h3 class="text-xs font-bold text-red-400 uppercase mb-4 tracking-widest">3. Protección contra Accesos No Autorizados</h3>
+                    <p class="text-[9px] text-gray-600 mb-4">Bloqueo inteligente de IP por intentos fallidos reales. Umbrales aplicados al siguiente intento.</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[10px]" id="auth-cfg-fields">
+                        <label>Ventana fallos (min)<input type="number" id="cfg-failure_window_minutes" class="w-full mt-1 bg-[#06090f] border border-gray-800 rounded px-2 py-1"></label>
+                        <label>Registro riesgo (1-N)<input type="number" id="cfg-risk_log_attempts_max" class="w-full mt-1 bg-[#06090f] border border-gray-800 rounded px-2 py-1"></label>
+                        <label>Monitoreo reforzado (#)<input type="number" id="cfg-monitoring_attempt" class="w-full mt-1 bg-[#06090f] border border-gray-800 rounded px-2 py-1"></label>
+                        <label>Bloqueo automático (#)<input type="number" id="cfg-block_attempt" class="w-full mt-1 bg-[#06090f] border border-gray-800 rounded px-2 py-1"></label>
+                        <label>1er bloqueo (min)<input type="number" id="cfg-first_block_minutes" class="w-full mt-1 bg-[#06090f] border border-gray-800 rounded px-2 py-1"></label>
+                        <label>Reincidencia (min)<input type="number" id="cfg-recurrence_block_minutes" class="w-full mt-1 bg-[#06090f] border border-gray-800 rounded px-2 py-1"></label>
+                        <label>Revisión admin tras N<input type="number" id="cfg-admin_review_after_recurrences" class="w-full mt-1 bg-[#06090f] border border-gray-800 rounded px-2 py-1"></label>
+                    </div>
+                    <button onclick="saveAuthProtection()" class="mt-4 w-full bg-red-900/40 hover:bg-red-800/50 border border-red-700/50 py-2 rounded-lg text-[10px] font-bold text-red-200">
+                        GUARDAR PROTECCIÓN DE ACCESO
+                    </button>
+                    <p id="auth-cfg-hint" class="text-[9px] text-gray-600 mt-2 hidden"></p>
+                </div>
+
+                <div class="config-card p-6" id="ngrok-manager-panel">
+                    <h3 class="text-xs font-bold text-emerald-400 uppercase mb-4 tracking-widest">4. Ngrok Connection Manager</h3>
+                    <p class="text-[9px] text-gray-600 mb-4">Túnel remoto gestionado automáticamente por NOVUS — telemetría real, sin URLs inventadas.</p>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-[10px] mb-4">
+                        <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">NOVUS</span><span id="ng-novus" class="font-bold text-white">—</span></div>
+                        <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">ngrok</span><span id="ng-ngrok" class="font-bold text-white">—</span></div>
+                        <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">Conexión</span><span id="ng-conn" class="font-bold text-white">—</span></div>
+                        <div class="bg-[#06090f] p-3 rounded-lg col-span-2 md:col-span-3"><span class="text-gray-500 block">URL local</span><span id="ng-local" class="font-mono text-indigo-300 break-all">—</span></div>
+                        <div class="bg-[#06090f] p-3 rounded-lg col-span-2 md:col-span-3"><span class="text-gray-500 block">URL pública HTTPS</span><a id="ng-public" href="#" target="_blank" rel="noopener" class="font-mono text-emerald-300 break-all">—</a></div>
+                        <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">Último reinicio</span><span id="ng-restart">—</span></div>
+                        <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">Reconexiones</span><span id="ng-reconnects">0</span></div>
+                        <div class="bg-[#06090f] p-3 rounded-lg"><span class="text-gray-500 block">Última verificación</span><span id="ng-check">—</span></div>
+                    </div>
+                    <p id="ng-plan-note" class="text-[9px] text-amber-500/90 mb-3 hidden"></p>
+                    <p id="ng-error" class="text-[9px] text-red-400 mb-3 hidden"></p>
+                    <div id="ng-events" class="text-[9px] text-gray-500 max-h-32 overflow-y-auto space-y-1 border-t border-gray-800 pt-3"></div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="config-card p-6">
+                    <h3 class="text-xs font-bold text-indigo-400 uppercase mb-4 tracking-widest">Canales de Alerta</h3>
+                    <div class="space-y-4">
+                        <div id="alert-whatsapp" class="flex items-center justify-between p-3 bg-[#06090f] rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <i class="fab fa-whatsapp text-green-500"></i>
+                                <span class="text-[11px]">WhatsApp (Gerencia)</span>
+                            </div>
+                            <div onclick="toggleAlert('whatsapp')" id="toggle-whatsapp" class="w-8 h-4 bg-indigo-600 rounded-full relative cursor-pointer"><div class="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div></div>
+                        </div>
+                        <div id="alert-email" class="flex items-center justify-between p-3 bg-[#06090f] rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <i class="far fa-envelope text-indigo-400"></i>
+                                <span class="text-[11px]">Reporte Diario Email</span>
+                            </div>
+                            <div onclick="toggleAlert('email')" id="toggle-email" class="w-8 h-4 bg-gray-800 rounded-full relative cursor-pointer"><div class="absolute left-1 top-1 w-2 h-2 bg-gray-500 rounded-full"></div></div>
+                        </div>
+                    </div>
+                    <p class="text-[9px] text-gray-600 mt-3 italic">
+                        <strong>WhatsApp:</strong> alertas críticas/altas se encolan en <code class="text-gray-500">data/alerts/whatsapp_queue.json</code>, eventos de red y log del sistema.<br>
+                        <strong>Email:</strong> al sincronizar reportes se genera un informe empresarial diario automático si está activo.
+                    </p>
+                </div>
+
+                <p id="config-save-hint" class="text-[10px] text-gray-500 text-center hidden"></p>
+
+                <button id="guardar" onclick="saveConfig()" class="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl text-xs font-black shadow-xl transition-all">
+                    GUARDAR CONFIGURACIÓN TÁCTICA
+                </button>
+
+                <div class="config-card p-6">
+                    <h3 class="text-xs font-bold text-amber-400 uppercase mb-2 tracking-widest">
+                        <i class="fas fa-shield-virus mr-2"></i>Auditoría Integral de Seguridad
+                    </h3>
+                    <p class="text-[10px] text-gray-500 mb-4">
+                        Análisis del sistema operativo, aplicaciones, red, integridad y amenazas — solo telemetría real.
+                        <span class="text-gray-600">(antes: Auditoría de Datos Reales)</span>
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button onclick="runIntegralAudit('quick')" id="btn-audit-quick" class="flex-1 min-w-[140px] bg-amber-600/30 hover:bg-amber-600/45 border border-amber-500/40 py-2 rounded-lg text-[10px] font-bold text-amber-200">
+                            AUDITORÍA RÁPIDA
+                        </button>
+                        <button onclick="runIntegralAudit('deep')" id="btn-audit-deep" class="flex-1 min-w-[140px] bg-red-900/30 hover:bg-red-900/45 border border-red-500/40 py-2 rounded-lg text-[10px] font-bold text-red-200">
+                            AUDITORÍA PROFUNDA
+                        </button>
+                    </div>
+                    <div id="audit-progress" class="hidden text-[10px] text-amber-300 mb-2"></div>
+                    <div id="audit-summary" class="grid grid-cols-3 gap-2 mb-4 text-center text-[10px]"></div>
+                    <div id="audit-result" class="max-h-48 overflow-y-auto text-[9px] space-y-2 mb-3 hidden"></div>
+                    <div id="audit-table" class="max-h-48 overflow-y-auto text-[9px] space-y-1"></div>
+                    <button onclick="loadDataAudit()" class="mt-4 w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 py-2 rounded-lg text-[10px] font-bold text-gray-300">
+                        TRAZABILIDAD DE FUENTES
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let config = {
+            pentest_mode: 'estandar',
+            whatsapp_alerts: true,
+            email_reports: false,
+            sector_activo: '{{ config.sector_activo }}'
+        };
+
+        function selectSector(sectorId, buttonEl) {
+            config.sector_activo = sectorId;
+            document.querySelectorAll('.sector-btn').forEach(btn => btn.classList.remove('sector-active'));
+            if (buttonEl) buttonEl.classList.add('sector-active');
+        }
+
+        function setPentestMode(mode) {
+            config.pentest_mode = mode;
+            
+            // Update button styles
+            document.getElementById('btn-pasivo').className = mode === 'pasivo' 
+                ? 'flex-1 min-w-[120px] bg-indigo-600 border border-indigo-500 p-3 rounded-lg text-[10px] font-bold shadow-lg shadow-indigo-500/20'
+                : 'flex-1 min-w-[120px] bg-[#06090f] border border-gray-800 p-3 rounded-lg text-[10px] font-bold hover:border-indigo-500';
+            
+            document.getElementById('btn-estandar').className = mode === 'estandar'
+                ? 'flex-1 min-w-[120px] bg-indigo-600 border border-indigo-500 p-3 rounded-lg text-[10px] font-bold shadow-lg shadow-indigo-500/20'
+                : 'flex-1 min-w-[120px] bg-[#06090f] border border-gray-800 p-3 rounded-lg text-[10px] font-bold hover:border-indigo-500';
+            
+            document.getElementById('btn-agresivo').className = mode === 'agresivo'
+                ? 'flex-1 min-w-[120px] bg-red-600 border border-red-500 p-3 rounded-lg text-[10px] font-bold shadow-lg shadow-red-500/20 text-white'
+                : 'flex-1 min-w-[120px] bg-[#06090f] border border-red-900/30 p-3 rounded-lg text-[10px] font-bold hover:border-red-500 text-red-500';
+        }
+
+        function toggleAlert(type) {
+            if (type === 'whatsapp') {
+                config.whatsapp_alerts = !config.whatsapp_alerts;
+                const toggle = document.getElementById('toggle-whatsapp');
+                if (config.whatsapp_alerts) {
+                    toggle.className = 'w-8 h-4 bg-indigo-600 rounded-full relative cursor-pointer';
+                    toggle.innerHTML = '<div class="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div>';
+                } else {
+                    toggle.className = 'w-8 h-4 bg-gray-800 rounded-full relative cursor-pointer';
+                    toggle.innerHTML = '<div class="absolute left-1 top-1 w-2 h-2 bg-gray-500 rounded-full"></div>';
+                }
+            } else if (type === 'email') {
+                config.email_reports = !config.email_reports;
+                const toggle = document.getElementById('toggle-email');
+                if (config.email_reports) {
+                    toggle.className = 'w-8 h-4 bg-indigo-600 rounded-full relative cursor-pointer';
+                    toggle.innerHTML = '<div class="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div>';
+                } else {
+                    toggle.className = 'w-8 h-4 bg-gray-800 rounded-full relative cursor-pointer';
+                    toggle.innerHTML = '<div class="absolute left-1 top-1 w-2 h-2 bg-gray-500 rounded-full"></div>';
+                }
+            }
+        }
+
+        async function saveConfig() {
+            try {
+                const result = await NovusAction.saveConfig(config);
+                const hint = document.getElementById('config-save-hint');
+                if (hint && result?.effects) {
+                    hint.classList.remove('hidden');
+                    hint.innerHTML = Object.values(result.effects).slice(0, 2).join(' · ');
+                }
+            } catch (error) {
+                console.error('Error saving config:', error);
+            }
+        }
+
+        // Load config on page load
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/system/config/load');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    config = data.config;
+                    setPentestMode(config.pentest_mode);
+                    // Fix toggle calls to not double-toggle
+                    if (config.whatsapp_alerts) {
+                        const toggle = document.getElementById('toggle-whatsapp');
+                        toggle.className = 'w-8 h-4 bg-indigo-600 rounded-full relative cursor-pointer';
+                        toggle.innerHTML = '<div class="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div>';
+                    }
+                    if (config.email_reports) {
+                        const toggle = document.getElementById('toggle-email');
+                        toggle.className = 'w-8 h-4 bg-indigo-600 rounded-full relative cursor-pointer';
+                        toggle.innerHTML = '<div class="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading config:', error);
+            }
+        }
+
+        loadConfig();
+        loadAuthProtectionConfig();
+
+        async function loadAuthProtectionConfig() {
+            try {
+                const r = await fetch('/api/system/auth-protection/config', {credentials: 'same-origin'});
+                const data = await r.json();
+                if (data.status !== 'success' || !data.config) return;
+                const c = data.config;
+                ['failure_window_minutes','risk_log_attempts_max','monitoring_attempt','block_attempt','first_block_minutes','recurrence_block_minutes','admin_review_after_recurrences'].forEach(k => {
+                    const el = document.getElementById('cfg-' + k);
+                    if (el && c[k] != null) el.value = c[k];
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function saveAuthProtection() {
+            const payload = {};
+            ['failure_window_minutes','risk_log_attempts_max','monitoring_attempt','block_attempt','first_block_minutes','recurrence_block_minutes','admin_review_after_recurrences'].forEach(k => {
+                const el = document.getElementById('cfg-' + k);
+                if (el && el.value !== '') payload[k] = parseInt(el.value, 10);
+            });
+            try {
+                const r = await fetch('/api/system/auth-protection/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload),
+                    credentials: 'same-origin',
+                });
+                const data = await r.json();
+                const hint = document.getElementById('auth-cfg-hint');
+                hint.classList.remove('hidden');
+                hint.textContent = data.message || (data.status === 'success' ? 'Guardado' : 'Error');
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadDataAudit() {
+            try {
+                const r = await fetch('/api/audit/data-sources');
+                const d = await r.json();
+                if (d.status !== 'success') return;
+                const counts = d.counts || {};
+                document.getElementById('audit-summary').innerHTML = Object.entries(counts).map(([k,v]) =>
+                    `<div class="bg-[#06090f] p-2 rounded border border-gray-800"><div class="font-bold text-white">${v}</div><div class="text-gray-500">${k}</div></div>`
+                ).join('');
+                const statusColor = { REAL: 'text-green-400', 'SIN FUENTE': 'text-yellow-400', PENDIENTE: 'text-orange-400', 'NO IMPLEMENTADO': 'text-red-400', ELIMINADO: 'text-gray-500', SIMULADO: 'text-red-500' };
+                document.getElementById('audit-table').innerHTML = (d.entries || []).map(e => `
+                    <div class="p-2 bg-[#06090f] rounded border border-gray-800">
+                        <div class="font-bold text-white">${e.component} <span class="${statusColor[e.status] || 'text-gray-400'}">[${e.status}]</span></div>
+                        <div class="text-gray-500">${e.source_type}: ${e.source_detail}</div>
+                        <div class="text-gray-600">${e.file} → ${e.function}</div>
+                        ${e.notes ? `<div class="text-gray-600 italic">${e.notes}</div>` : ''}
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Audit load error:', err);
+            }
+        }
+        loadDataAudit();
+
+        let deepAuditPoll = null;
+
+        async function runIntegralAudit(mode) {
+            const prog = document.getElementById('audit-progress');
+            const resultEl = document.getElementById('audit-result');
+            prog.classList.remove('hidden');
+            resultEl.classList.remove('hidden');
+            prog.textContent = mode === 'deep' ? 'Iniciando auditoría profunda...' : 'Ejecutando auditoría rápida...';
+            try {
+                const r = await fetch('/api/audit/integral/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode }),
+                });
+                const d = await r.json();
+                if (d.status !== 'success') throw new Error(d.message || 'Error');
+                if (mode === 'deep' && d.scan_id) {
+                    pollDeepAudit(d.scan_id);
+                    return;
+                }
+                renderIntegralResult(d);
+                prog.textContent = 'Auditoría rápida completada.';
+            } catch (err) {
+                prog.textContent = 'Error: ' + err.message;
+            }
+        }
+
+        function renderIntegralResult(d) {
+            const resultEl = document.getElementById('audit-result');
+            const counts = d.counts || {};
+            resultEl.innerHTML = `
+                <div class="p-3 bg-[#06090f] rounded border border-amber-900/40">
+                    <div class="font-bold text-white mb-2">${d.title || 'Auditoría'} — ${d.security_level || d.general_status || ''}</div>
+                    <div class="grid grid-cols-2 gap-2 text-gray-400">
+                        <div>Riesgo: <span class="text-amber-300">${d.current_risk || '—'}</span></div>
+                        <div>Procesos: ${counts.processes_analyzed ?? '—'}</div>
+                        <div>Servicios: ${counts.services_analyzed ?? '—'}</div>
+                        <div>Aplicaciones: ${counts.applications_analyzed ?? '—'}</div>
+                        <div>Amenazas: ${counts.threats_found ?? 0}</div>
+                        <div>Vulnerabilidades: ${counts.vulnerabilities_found ?? 0}</div>
+                        <div>Dispositivos: ${counts.devices_analyzed ?? '—'}</div>
+                        <div>Disp. sospechosos: ${counts.suspicious_devices ?? 0}</div>
+                    </div>
+                    ${(d.recommendations || []).map(x => `<div class="mt-2 text-amber-200/80">• ${x}</div>`).join('')}
+                    ${d.text_report ? `<pre class="mt-2 text-[8px] text-gray-500 whitespace-pre-wrap max-h-32 overflow-y-auto">${d.text_report.slice(0, 2000)}</pre>` : ''}
+                </div>`;
+        }
+
+        function pollDeepAudit(scanId) {
+            if (deepAuditPoll) clearInterval(deepAuditPoll);
+            const prog = document.getElementById('audit-progress');
+            deepAuditPoll = setInterval(async () => {
+                try {
+                    const sr = await fetch('/api/audit/integral/deep/' + scanId + '/status');
+                    const st = await sr.json();
+                    const scanState = st.status;
+                    if (scanState === 'running') {
+                        prog.textContent = `Profunda: ${st.progress_pct || 0}% — ${st.phase_label || st.phase || '...'}`;
+                        return;
+                    }
+                    if (scanState === 'completed' || scanState === 'error') {
+                        clearInterval(deepAuditPoll);
+                        const rr = await fetch('/api/audit/integral/deep/' + scanId + '/report');
+                        const rep = await rr.json();
+                        if (rep.status === 'success' || rep.text_report) {
+                            renderIntegralResult(rep);
+                            prog.textContent = 'Auditoría profunda completada.';
+                        }
+                    }
+                } catch (_) {}
+            }, 3000);
+        }
+
+        async function refreshNgrokManager() {
+            try {
+                const r = await fetch('/api/system/ngrok-manager', { credentials: 'same-origin' });
+                const data = await r.json();
+                if (data.status !== 'success' || !data.ngrok) return;
+                const n = data.ngrok;
+                document.getElementById('ng-novus').textContent = n.novus_status || '—';
+                document.getElementById('ng-ngrok').textContent = n.ngrok_status || '—';
+                document.getElementById('ng-conn').textContent = n.connection_status || '—';
+                document.getElementById('ng-local').textContent = n.local_url || '—';
+                const pub = document.getElementById('ng-public');
+                if (n.public_url) {
+                    pub.textContent = n.public_url;
+                    pub.href = n.login_url || (n.public_url + '/login');
+                } else {
+                    pub.textContent = 'Sin túnel activo';
+                    pub.href = '#';
+                }
+                document.getElementById('ng-restart').textContent = n.last_tunnel_restart || '—';
+                document.getElementById('ng-reconnects').textContent = n.reconnect_count ?? 0;
+                document.getElementById('ng-check').textContent = n.last_check_at || '—';
+                const plan = document.getElementById('ng-plan-note');
+                if (n.plan_limitation) { plan.textContent = n.plan_limitation; plan.classList.remove('hidden'); }
+                const err = document.getElementById('ng-error');
+                if (n.last_error) { err.textContent = n.last_error; err.classList.remove('hidden'); } else { err.classList.add('hidden'); }
+                const ev = document.getElementById('ng-events');
+                const events = (n.recent_events || []).slice().reverse();
+                ev.innerHTML = events.length ? events.map(e =>
+                    `<div><span class="text-gray-600">${e.timestamp}</span> <span class="text-gray-400">${e.event_type}</span> — ${e.detail || ''}</div>`
+                ).join('') : '<div>Sin eventos registrados aún.</div>';
+            } catch (e) { console.debug('ngrok manager refresh', e); }
+        }
+        refreshNgrokManager();
+        setInterval(refreshNgrokManager, 10000);
+
+        const NM_STATUS = {
+            active: { label: '🟢 Activo', cls: 'bg-emerald-900/40 text-emerald-300' },
+            initializing: { label: '🟡 Inicializando', cls: 'bg-amber-900/40 text-amber-200' },
+            limited_visibility: { label: '🟠 Visibilidad limitada', cls: 'bg-orange-900/40 text-orange-200' },
+            error: { label: '🔴 Error', cls: 'bg-red-900/40 text-red-300' },
+            disabled_manual: { label: '⚪ Desactivado manualmente', cls: 'bg-gray-800 text-gray-400' },
+            unavailable: { label: '⚪ Sin datos disponibles', cls: 'bg-gray-800 text-gray-500' },
+        };
+
+        function renderNetworkMonitoring(d) {
+            if (!d || d.status === 'error') return;
+            const st = NM_STATUS[d.monitoring_status] || NM_STATUS.unavailable;
+            const badge = document.getElementById('nm-status-badge');
+            badge.textContent = st.label;
+            badge.className = 'text-[10px] font-bold px-3 py-1 rounded-full ' + st.cls;
+            document.getElementById('nm-freshness').textContent = (d.data_freshness || '—') + ' · ' + (d.discovery_method || 'arp_scapy');
+            document.getElementById('nm-tenant').textContent = d.tenant_id || '—';
+            document.getElementById('nm-iface').textContent = d.interface || '—';
+            document.getElementById('nm-ssid').textContent = d.ssid || 'SSID no disponible';
+            document.getElementById('nm-ip').textContent = d.local_ip || '—';
+            document.getElementById('nm-cidr').textContent = d.network_cidr || '—';
+            document.getElementById('nm-gw').textContent = d.gateway || '—';
+            document.getElementById('nm-dns').textContent = (d.dns && d.dns.display) ? d.dns.display : 'DNS no disponible';
+            document.getElementById('nm-devices').textContent = String(d.observed_device_count ?? '—');
+            document.getElementById('nm-scan').textContent = (d.last_scan || 'Sin escaneo') + ' · ' + (d.discovery_method || 'arp_scapy') + (d.discovery_paused ? ' · PAUSADO' : '');
+            const lim = document.getElementById('nm-limited');
+            if (d.limited_visibility_reason) {
+                lim.textContent = d.limited_visibility_reason;
+                lim.classList.remove('hidden');
+            } else {
+                lim.classList.add('hidden');
+            }
+        }
+
+        async function loadNetworkMonitoring() {
+            try {
+                const r = await fetch('/api/monitoring/network-config', { credentials: 'same-origin' });
+                const d = await r.json();
+                renderNetworkMonitoring(d);
+            } catch (e) { console.debug('network monitoring load', e); }
+        }
+
+        async function nmAction(action) {
+            try {
+                const r = await fetch('/api/monitoring/network-config/action', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.getElementById('csrf-token').value || '',
+                    },
+                    body: JSON.stringify({ action }),
+                });
+                const d = await r.json();
+                if (d.status === 'success') renderNetworkMonitoring(d);
+            } catch (e) { console.debug('network monitoring action', e); }
+        }
+
+        loadNetworkMonitoring();
+        setInterval(loadNetworkMonitoring, 30000);
+    </script>
+    {% include 'partials/global_search.html' %}
+    {% include 'partials/ai_kernel_panel.html' %}
+</body>
+</html>

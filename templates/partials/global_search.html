@@ -1,0 +1,14 @@
+<!-- NOVUS Global Search — include once per authenticated page -->
+{% include 'partials/remediation_modal.html' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/novus-global-search.css') }}">
+<div id="novus-search-overlay" class="novus-search-overlay hidden" aria-hidden="true">
+    <div class="novus-search-panel" role="dialog" aria-modal="true" aria-label="Búsqueda global NOVUS">
+        <div class="novus-search-header">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <input type="search" id="novus-global-search-input" placeholder="" autocomplete="off" spellcheck="false" aria-label="Búsqueda">
+        </div>
+        <div id="novus-search-kernel-strip" class="novus-search-kernel-strip"></div>
+        <div id="novus-search-results" class="novus-search-results"></div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/novus-global-search.js') }}"></script>

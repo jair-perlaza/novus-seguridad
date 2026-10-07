@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Identity Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background:#06090f; color:#fff; font-family:'Segoe UI',Tahoma,sans-serif; }
+        .ii-card { background:#0c121d; border:1px solid #1e293b; border-radius:10px; }
+        .na { color:#94a3b8; font-style:italic; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="identity_intelligence">
+    {% set active_module = 'identity_intelligence' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header class="flex flex-wrap justify-between items-start gap-4">
+            <div>
+                <h1 class="text-2xl font-bold uppercase tracking-tighter">
+                    <i class="fas fa-user-secret text-emerald-400 mr-2"></i>Identity Intelligence & UEBA
+                </h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">
+                    Baseline real · desviaciones explicables · sin perfiles precargados
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="runCycle()" class="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-xs rounded">Ejecutar ciclo</button>
+                <button onclick="loadDash()" class="px-3 py-1.5 bg-indigo-800 hover:bg-indigo-700 text-xs rounded">Actualizar</button>
+            </div>
+        </header>
+        <div id="kpi" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 text-[10px] text-center"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="ii-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Top riesgo</h3>
+                <div id="rank" class="text-xs space-y-1 max-h-64 overflow-y-auto"></div>
+            </div>
+            <div class="ii-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Anomalías recientes</h3>
+                <div id="anom" class="text-xs space-y-1 max-h-64 overflow-y-auto"></div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="ii-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Identity Graph</h3>
+                <div id="graph" class="text-xs max-h-72 overflow-y-auto space-y-1"></div>
+            </div>
+            <div class="ii-card p-4">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Timeline</h3>
+                <div id="tl" class="text-xs max-h-72 overflow-y-auto space-y-1"></div>
+            </div>
+        </div>
+        <div class="ii-card p-4">
+            <h3 class="text-xs font-bold text-purple-400 uppercase mb-2"><i class="fas fa-brain mr-1"></i>Kernel IA (executes_actions=false)</h3>
+            <div class="flex flex-wrap gap-2 mb-2">
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Cuál es el usuario con mayor riesgo?">Mayor riesgo</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué identidad cambió más su comportamiento?">Cambio</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué usuario presenta mayor desviación?">Desviación</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué equipos comparte este usuario?">Equipos</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué usuarios se relacionan con este incidente?">Incidentes</button>
+                <button class="kq text-[10px] px-2 py-1 border border-purple-900 rounded" data-q="¿Qué comportamiento fue el primer indicador?">Primer indicador</button>
+            </div>
+            <div id="kernel" class="text-xs text-gray-300"></div>
+        </div>
+        <div class="ii-card p-4">
+            <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Pesos Risk Engine / Sellos</h3>
+            <pre id="meta" class="text-[10px] text-gray-400 whitespace-pre-wrap"></pre>
+        </div>
+    </main>
+<script>
+const NA='NO DISPONIBLE';
+function esc(v){ if(v===null||v===undefined||v===''||v==='NO DISPONIBLE') return '<span class="na">'+NA+'</span>'; if(typeof v==='object') return JSON.stringify(v); return String(v); }
+async function loadDash(){
+  const r=await fetch('/api/identity-intelligence/dashboard').then(r=>r.json());
+  if(!r.ok) return;
+  const d=r.dashboard;
+  document.getElementById('kpi').innerHTML=[
+    ['Identidades', d.identity_count],
+    ['Baselines', d.baseline_count],
+    ['Suficientes', d.sufficient_baselines],
+    ['Tipos', JSON.stringify(d.by_type||{})],
+    ['Nodos grafo', (d.graph?.nodes||[]).length],
+    ['Timeline', d.timeline?.count],
+  ].map(([l,v])=>`<div class="ii-card p-3"><div class="text-sm font-bold">${esc(v)}</div><div class="text-gray-500">${l}</div></div>`).join('');
+  const rank=d.top_risk||[];
+  document.getElementById('rank').innerHTML=Array.isArray(rank)&&rank.length?rank.map(x=>`<div><span class="text-emerald-400">${esc(x.score)}</span> ${esc(x.label)} <span class="text-gray-500">${esc(x.type)} · ${esc(x.confidence)}</span></div>`).join(''):`<span class="na">${NA}</span>`;
+  const an=d.recent_anomalies||[];
+  document.getElementById('anom').innerHTML=an.length?an.slice().reverse().slice(0,20).map(a=>`<div class="border-b border-gray-800 py-1"><span class="text-amber-400">${esc(a.type||a.factor)}</span> ${esc(a.explanation)}</div>`).join(''):`<span class="na">${NA}</span>`;
+  const g=d.graph||{};
+  document.getElementById('graph').innerHTML=(g.nodes||[]).length?(g.nodes||[]).slice(0,40).map(n=>`<div><span class="text-cyan-400">${esc(n.kind)}</span> ${esc(n.label)}</div>`).join('')+((g.edges||[]).slice(0,30).map(e=>`<div class="text-gray-500">${esc(e.from)} → ${esc(e.to)}</div>`).join('')):`<span class="na">${esc(g.message||NA)}</span>`;
+  const tl=d.timeline||{};
+  document.getElementById('tl').innerHTML=(tl.events||[]).length?(tl.events||[]).map(e=>`<div><span class="text-gray-500">${esc(e.timestamp)}</span> ${esc(e.label)}</div>`).join(''):`<span class="na">${NA}</span>`;
+  document.getElementById('meta').textContent=JSON.stringify({risk_weights:d.risk_weights, seals:d.seals, traffic_baseline:d.traffic_baseline, policy:d.policy},null,2);
+}
+async function runCycle(){
+  const r=await fetch('/api/identity-intelligence/cycle',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(r=>r.json());
+  alert('Observaciones: '+(r.result?.observations?.observations??NA)+' · baselines: '+(r.result?.baselines?.baseline_count??NA));
+  loadDash();
+}
+async function ask(q){
+  const r=await fetch('/api/identity-intelligence/kernel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})}).then(r=>r.json());
+  const k=r.kernel||{};
+  document.getElementById('kernel').innerHTML=`<div class="ii-card p-3 text-purple-300">${esc(k.answer)}<div class="text-[10px] text-gray-500 mt-1">executes_actions=${k.executes_actions===false?'false':'?'}</div></div>`;
+}
+document.querySelectorAll('.kq').forEach(b=>b.addEventListener('click',()=>ask(b.dataset.q)));
+loadDash();
+</script>
+</body>
+</html>

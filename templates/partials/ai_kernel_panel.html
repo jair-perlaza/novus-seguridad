@@ -1,0 +1,1081 @@
+<!-- NOVUS AI Kernel Panel — include once per request (Jinja context guard) -->
+{% if not _novus_kernel_panel_included|default(false) %}
+{% set _novus_kernel_panel_included = true %}
+<div id="novus-ai-fab" class="novus-ai-fab" title="Kernel IA (Ctrl+Shift+K)" onclick="NovusAIKernel.toggle()">
+    <i class="fas fa-brain"></i>
+    <span class="novus-ai-fab-pulse"></span>
+</div>
+
+<div id="novus-ai-panel" class="novus-ai-panel minimized" aria-hidden="false">
+    <div class="novus-ai-header">
+        <div class="novus-ai-title">
+            <i class="fas fa-brain text-indigo-400"></i>
+            <div>
+                <strong>Kernel IA NOVUS</strong>
+                <small id="novus-ai-status-text">Agente Autónomo SOC/XDR — Cerebro operativo</small>
+            </div>
+        </div>
+        <div class="novus-ai-header-actions">
+            <button type="button" onclick="NovusAIKernel.refreshContext()" title="Actualizar contexto"><i class="fas fa-sync-alt"></i></button>
+            <button type="button" onclick="NovusAIKernel.toggleMaximize()" title="Maximizar"><i id="novus-ai-max-icon" class="fas fa-expand"></i></button>
+            <button type="button" onclick="NovusAIKernel.minimize()" title="Minimizar"><i class="fas fa-minus"></i></button>
+            <button type="button" onclick="NovusAIKernel.close()" title="Cerrar"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+
+    <div id="novus-ai-activity" class="novus-ai-activity hidden">
+        <span class="novus-ai-spinner"></span> <span id="novus-ai-activity-text">Procesando...</span>
+    </div>
+
+    <div class="novus-ai-tabs">
+        <button type="button" class="novus-ai-tab active" data-tab="chat" onclick="NovusAIKernel.switchTab('chat')">Chat</button>
+        <button type="button" class="novus-ai-tab" data-tab="email" onclick="NovusAIKernel.switchTab('email')">Seguridad del correo</button>
+    </div>
+
+    <div id="novus-ai-tab-chat" class="novus-ai-tab-panel">
+    <div class="novus-ai-quick">
+        <button type="button" onclick="NovusAIKernel.quick('Deep Scan')">Deep Scan</button>
+        <button type="button" onclick="NovusAIKernel.quick('escanear red')">Red</button>
+        <button type="button" onclick="NovusAIKernel.quick('buscar vulnerabilidades')">Vulns</button>
+        <button type="button" onclick="NovusAIKernel.quick('analizar sistema')">Sistema</button>
+        <button type="button" onclick="NovusAIKernel.quick('dispositivos conectados')">Devices</button>
+        <button type="button" onclick="NovusAIKernel.navigate('/reportes')">Reportes</button>
+        <button type="button" onclick="NovusAIKernel.navigate('/network')">Network</button>
+        <button type="button" onclick="NovusAIKernel.navigate('/amenazas')">XDR</button>
+        <button type="button" onclick="NovusAIKernel.navigate('/incidentes')">Incidentes</button>
+    </div>
+
+    <div class="novus-ai-chat-layout">
+        <div class="novus-ai-chat-main">
+            <div id="novus-ai-messages" class="novus-ai-messages">
+                <div class="novus-ai-msg assistant">
+                    <div class="novus-ai-msg-body">Analista SOC/XDR NOVUS — en activo. Escriba su solicitud; trabajaré en tiempo real y le informaré conforme avance el análisis.</div>
+                    <div class="novus-ai-msg-time">--:--</div>
+                </div>
+            </div>
+            <div id="novus-ai-suggestions" class="novus-ai-suggestions"></div>
+        </div>
+
+        <div id="novus-soc-analyst-panel" class="novus-soc-analyst hidden">
+            <div class="novus-soc-compact">
+                <div class="novus-soc-compact-top">
+                    <div class="novus-soc-brand">
+                        <i class="fas fa-shield-halved"></i>
+                        <div>
+                            <strong>ANALISTA SOC/XDR</strong>
+                            <small id="novus-soc-status">En espera</small>
+                        </div>
+                    </div>
+                    <div class="novus-soc-compact-actions">
+                        <span id="novus-deep-scan-pct" class="novus-soc-pct">0%</span>
+                        <button type="button" class="novus-soc-btn" onclick="NovusAIKernel.toggleSocDetails()" title="Detalles">
+                            <i id="novus-soc-details-icon" class="fas fa-chevron-down"></i>
+                        </button>
+                        <button type="button" class="novus-soc-btn" onclick="NovusAIKernel.toggleSocCollapse()" title="Minimizar panel">
+                            <i id="novus-soc-collapse-icon" class="fas fa-compress-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="novus-deep-scan-bar"><div id="novus-deep-scan-bar-fill" class="novus-deep-scan-bar-fill"></div></div>
+                <div class="novus-soc-metrics">
+                    <span><i class="fas fa-clock"></i> <span id="novus-deep-scan-elapsed">0s</span></span>
+                    <span><i class="fas fa-hourglass-half"></i> ~<span id="novus-soc-eta">—</span></span>
+                    <span><i class="fas fa-microchip"></i> <span id="novus-soc-motor">—</span></span>
+                </div>
+                <div class="novus-soc-finding">
+                    <i class="fas fa-magnifying-glass"></i>
+                    <span id="novus-soc-finding">Sin hallazgos aún</span>
+                </div>
+                <div class="novus-soc-next-motor">
+                    <small>Siguiente:</small> <span id="novus-soc-next">—</span>
+                </div>
+            </div>
+            <div id="novus-soc-details" class="novus-soc-details hidden">
+                <button type="button" class="novus-soc-details-toggle" onclick="NovusAIKernel.toggleSocDetails()">
+                    <i class="fas fa-list-check"></i> Ver detalles del análisis
+                </button>
+                <div id="novus-deep-scan-modules" class="novus-deep-scan-modules"></div>
+                <ul id="novus-kernel-task-list" class="novus-kernel-task-list"></ul>
+                <div class="novus-deep-scan-stats">
+                    <div><span id="novus-ds-files">0</span><small>Archivos</small></div>
+                    <div><span id="novus-ds-folders">0</span><small>Carpetas</small></div>
+                    <div><span id="novus-ds-procs">0</span><small>Procesos</small></div>
+                    <div><span id="novus-ds-threats">0</span><small>Amenazas</small></div>
+                    <div><span id="novus-ds-anomalies">0</span><small>Anomalías</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="novus-ai-input-row">
+        <input type="text" id="novus-ai-input" placeholder="Pregunte al Kernel IA..." autocomplete="off">
+        <button type="button" id="novus-ai-send" onclick="NovusAIKernel.send()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+    </div>
+
+    <div id="novus-ai-tab-email" class="novus-ai-tab-panel hidden">
+        <div id="novus-email-setup" class="novus-email-setup hidden">
+            <h4><i class="fas fa-shield-alt"></i> Configuración OAuth requerida</h4>
+            <p class="novus-email-note">NOVUS usa exclusivamente la API oficial de Gmail con OAuth 2.0. Nunca se solicita contraseña.</p>
+            <ol id="novus-email-steps" class="novus-email-steps"></ol>
+            <p class="novus-email-env">Variables: <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code></p>
+        </div>
+        <div id="novus-email-dashboard">
+            <div class="novus-email-kpis">
+                <div class="novus-email-kpi"><span id="novus-email-total">0</span><small>Analizados</small></div>
+                <div class="novus-email-kpi safe"><span id="novus-email-safe">0</span><small>Seguros</small></div>
+                <div class="novus-email-kpi warn"><span id="novus-email-suspicious">0</span><small>Sospechosos</small></div>
+                <div class="novus-email-kpi danger"><span id="novus-email-malicious">0</span><small>Maliciosos</small></div>
+            </div>
+            <div class="novus-email-status-row">
+                <span id="novus-email-protection">Protección: —</span>
+                <span id="novus-email-last">Último análisis: —</span>
+            </div>
+            <div class="novus-email-actions">
+                <button type="button" id="novus-email-connect" onclick="NovusAIKernel.connectGmail()"><i class="fab fa-google"></i> Conectar Gmail</button>
+                <button type="button" onclick="NovusAIKernel.syncGmail()"><i class="fas fa-sync"></i> Sincronizar</button>
+                <button type="button" onclick="NovusAIKernel.loadEmailHistory()"><i class="fas fa-history"></i> Historial</button>
+            </div>
+            <div id="novus-email-history" class="novus-email-history"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+.novus-ai-fab {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9990;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, #5d5fef, #818cf8);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; cursor: pointer; box-shadow: 0 8px 32px rgba(93,95,239,0.45);
+    transition: transform 0.2s ease;
+}
+.novus-ai-fab:hover { transform: scale(1.06); }
+.novus-ai-fab-pulse {
+    position: absolute; inset: -4px; border-radius: 50%;
+    border: 2px solid rgba(93,95,239,0.4); animation: novus-ai-pulse 2s infinite;
+}
+@keyframes novus-ai-pulse { 0%,100%{opacity:0.3;transform:scale(1)} 50%{opacity:1;transform:scale(1.08)} }
+
+.novus-ai-panel {
+    position: fixed; z-index: 9989;
+    background: linear-gradient(180deg, #0c121d 0%, #06090f 100%);
+    border: 1px solid #1e293b; border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 60px rgba(93,95,239,0.2);
+    display: flex; flex-direction: column;
+    transition: all 0.28s ease;
+    right: 16px; bottom: 0; width: min(420px, 96vw); height: min(520px, 70vh);
+    transform: translateY(110%); opacity: 0; pointer-events: none;
+}
+.novus-ai-panel.open { transform: translateY(0); opacity: 1; pointer-events: auto; display: flex; flex-direction: column; }
+.novus-ai-panel.minimized.open { height: 48px; overflow: hidden; border-radius: 12px 12px 0 0; }
+.novus-ai-panel.maximized.open {
+    width: min(820px, 98vw); height: min(780px, 92vh);
+    right: 50%; transform: translate(50%, 0); border-radius: 16px;
+    bottom: 16px;
+}
+
+.novus-ai-chat-layout {
+    flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+}
+.novus-ai-chat-main {
+    flex: 3 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+}
+.novus-ai-messages {
+    flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px;
+}
+
+.novus-ai-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; border-bottom: 1px solid #1e293b; flex-shrink: 0;
+}
+.novus-ai-title { display: flex; gap: 10px; align-items: center; }
+.novus-ai-title strong { display: block; font-size: 13px; color: #f1f5f9; }
+.novus-ai-title small { font-size: 10px; color: #64748b; }
+.novus-ai-header-actions button {
+    background: none; border: none; color: #94a3b8; cursor: pointer;
+    padding: 4px 6px; font-size: 12px;
+}
+.novus-ai-header-actions button:hover { color: #818cf8; }
+
+.novus-ai-activity {
+    padding: 8px 14px; font-size: 11px; color: #818cf8;
+    background: rgba(93,95,239,0.08); border-bottom: 1px solid #1e293b;
+    display: flex; align-items: center; gap: 8px;
+}
+.novus-ai-activity.hidden { display: none; }
+.novus-ai-spinner {
+    width: 12px; height: 12px; border: 2px solid #334155;
+    border-top-color: #818cf8; border-radius: 50%;
+    animation: novus-ai-spin 0.7s linear infinite;
+}
+@keyframes novus-ai-spin { to { transform: rotate(360deg); } }
+
+.novus-ai-quick {
+    display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px;
+    border-bottom: 1px solid #1e293b; flex-shrink: 0;
+}
+.novus-ai-quick button {
+    background: #111827; border: 1px solid #1e293b; color: #cbd5e1;
+    font-size: 9px; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer;
+}
+.novus-ai-quick button:hover { border-color: #5d5fef; color: #818cf8; }
+
+.novus-ai-msg { max-width: 92%; }
+.novus-ai-msg.progress .novus-ai-msg-body {
+    background: rgba(93,95,239,0.08); border-color: rgba(93,95,239,0.25);
+    font-size: 11px; color: #c7d2fe;
+}
+.novus-ai-msg.finding .novus-ai-msg-body {
+    background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.35);
+    color: #fde68a;
+}
+.novus-ai-msg.user { align-self: flex-end; }
+.novus-ai-msg.assistant { align-self: flex-start; }
+.novus-ai-msg-body {
+    padding: 10px 12px; border-radius: 12px; font-size: 12px; line-height: 1.5;
+    white-space: pre-wrap; word-break: break-word;
+}
+.novus-ai-msg.user .novus-ai-msg-body { background: #5d5fef; color: #fff; border-bottom-right-radius: 4px; }
+.novus-ai-msg.assistant .novus-ai-msg-body { background: #111827; color: #e2e8f0; border: 1px solid #1e293b; border-bottom-left-radius: 4px; }
+.novus-ai-msg-time { font-size: 9px; color: #64748b; margin-top: 3px; padding: 0 4px; }
+
+.novus-ai-suggestions { padding: 0 12px 8px; display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
+.novus-ai-suggestions button {
+    background: rgba(93,95,239,0.12); border: 1px solid rgba(93,95,239,0.3);
+    color: #a5b4fc; font-size: 10px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+}
+
+.novus-ai-input-row {
+    display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid #1e293b; flex-shrink: 0;
+}
+.novus-ai-input-row input {
+    flex: 1; background: #06090f; border: 1px solid #1e293b; border-radius: 10px;
+    padding: 10px 12px; color: #e2e8f0; font-size: 12px; outline: none;
+}
+.novus-ai-input-row input:focus { border-color: #5d5fef; }
+#novus-ai-send {
+    background: #5d5fef; border: none; border-radius: 10px; color: #fff;
+    width: 40px; cursor: pointer;
+}
+
+.novus-ai-tabs {
+    display: flex; gap: 0; border-bottom: 1px solid #1e293b; flex-shrink: 0;
+}
+.novus-ai-tab {
+    flex: 1; background: none; border: none; color: #64748b;
+    padding: 8px 10px; font-size: 10px; font-weight: 700; cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+.novus-ai-tab.active { color: #818cf8; border-bottom-color: #5d5fef; }
+.novus-ai-tab-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.novus-ai-tab-panel.hidden { display: none; }
+
+.novus-email-kpis {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    padding: 10px 12px;
+}
+.novus-email-kpi {
+    background: #111827; border: 1px solid #1e293b; border-radius: 8px;
+    padding: 8px; text-align: center;
+}
+.novus-email-kpi span { display: block; font-size: 16px; font-weight: 700; color: #e2e8f0; }
+.novus-email-kpi small { font-size: 8px; color: #64748b; text-transform: uppercase; }
+.novus-email-kpi.safe span { color: #4ade80; }
+.novus-email-kpi.warn span { color: #fbbf24; }
+.novus-email-kpi.danger span { color: #f87171; }
+
+.novus-email-status-row {
+    display: flex; flex-wrap: wrap; gap: 8px; padding: 0 12px 8px;
+    font-size: 9px; color: #94a3b8;
+}
+.novus-email-actions {
+    display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 10px;
+}
+.novus-email-actions button {
+    background: #111827; border: 1px solid #1e293b; color: #cbd5e1;
+    font-size: 9px; padding: 6px 10px; border-radius: 6px; cursor: pointer;
+}
+.novus-email-actions button:hover { border-color: #5d5fef; color: #818cf8; }
+.novus-email-history {
+    flex: 1; overflow-y: auto; padding: 0 12px 12px; font-size: 10px;
+}
+.novus-email-item {
+    background: #111827; border: 1px solid #1e293b; border-radius: 8px;
+    padding: 8px; margin-bottom: 6px;
+}
+.novus-email-item .cls-malicious { color: #f87171; }
+.novus-email-item .cls-safe { color: #4ade80; }
+.novus-email-item .cls-suspicious { color: #fbbf24; }
+.novus-email-setup {
+    padding: 12px; font-size: 11px; color: #cbd5e1; overflow-y: auto; flex: 1;
+}
+.novus-email-setup h4 { font-size: 12px; color: #818cf8; margin-bottom: 8px; }
+.novus-email-steps { padding-left: 18px; line-height: 1.5; }
+.novus-email-note { color: #94a3b8; margin-bottom: 8px; }
+.novus-email-env { font-size: 9px; color: #64748b; margin-top: 8px; }
+
+.novus-soc-analyst {
+    flex: 1 1 0; max-height: 28%; min-height: 108px;
+    margin: 0 10px 8px; border-radius: 10px;
+    background: linear-gradient(180deg, rgba(15,23,42,0.95) 0%, rgba(6,9,15,0.98) 100%);
+    border: 1px solid rgba(71,85,105,0.5);
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(148,163,184,0.06);
+}
+.novus-soc-analyst.hidden { display: none; }
+.novus-soc-analyst.collapsed { min-height: 52px; max-height: 52px; }
+.novus-soc-analyst.collapsed .novus-soc-metrics,
+.novus-soc-analyst.collapsed .novus-soc-finding,
+.novus-soc-analyst.collapsed .novus-soc-next-motor,
+.novus-soc-analyst.collapsed .novus-soc-details { display: none !important; }
+.novus-soc-compact { padding: 8px 10px 6px; flex-shrink: 0; }
+.novus-soc-compact-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.novus-soc-brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.novus-soc-brand i { color: #6366f1; font-size: 14px; flex-shrink: 0; }
+.novus-soc-brand strong { display: block; font-size: 9px; letter-spacing: 0.1em; color: #94a3b8; }
+.novus-soc-brand small { display: block; font-size: 11px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+.novus-soc-compact-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.novus-soc-pct { font-size: 13px; font-weight: 800; color: #818cf8; min-width: 36px; text-align: right; }
+.novus-soc-btn {
+    background: rgba(30,41,59,0.8); border: 1px solid #334155; color: #94a3b8;
+    width: 24px; height: 24px; border-radius: 6px; cursor: pointer; font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+}
+.novus-soc-btn:hover { color: #818cf8; border-color: #6366f1; }
+.novus-soc-metrics {
+    display: flex; flex-wrap: wrap; gap: 8px 12px; font-size: 9px; color: #64748b; margin: 4px 0;
+}
+.novus-soc-metrics span { display: inline-flex; align-items: center; gap: 4px; }
+.novus-soc-finding {
+    font-size: 10px; color: #fbbf24; display: flex; gap: 6px; align-items: flex-start;
+    padding: 4px 0; line-height: 1.35;
+}
+.novus-soc-finding i { margin-top: 2px; flex-shrink: 0; font-size: 9px; }
+.novus-soc-next-motor { font-size: 9px; color: #475569; padding-top: 2px; }
+.novus-soc-next-motor small { color: #64748b; }
+.novus-soc-details { padding: 0 10px 8px; overflow-y: auto; max-height: 120px; border-top: 1px solid #1e293b; }
+.novus-soc-details.hidden { display: none; }
+.novus-soc-details-toggle {
+    width: 100%; background: none; border: none; color: #818cf8; font-size: 9px;
+    padding: 6px 0; cursor: pointer; text-align: left;
+}
+.novus-soc-details-toggle:hover { color: #a5b4fc; }
+
+.novus-deep-scan-bar { height: 3px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.novus-deep-scan-bar-fill {
+    height: 100%; width: 0%; background: linear-gradient(90deg, #4338ca, #6366f1, #818cf8);
+    transition: width 0.35s ease; box-shadow: 0 0 6px rgba(99,102,241,0.5);
+}
+.novus-deep-scan-stats {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; text-align: center; margin-top: 6px;
+}
+.novus-deep-scan-stats span { display: block; font-size: 11px; font-weight: 700; color: #e2e8f0; }
+.novus-deep-scan-stats small { font-size: 7px; color: #64748b; text-transform: uppercase; }
+.novus-deep-scan-modules {
+    font-size: 8px; color: #94a3b8; margin: 4px 0; max-height: 32px; overflow-y: auto; line-height: 1.4;
+}
+.novus-deep-scan-modules span { color: #818cf8; }
+.novus-kernel-task-list {
+    list-style: none; margin: 0; padding: 0; max-height: 80px; overflow-y: auto;
+    font-size: 9px; line-height: 1.4;
+}
+.novus-kernel-task-list li {
+    padding: 2px 6px; border-left: 2px solid #334155; margin-bottom: 2px; color: #64748b;
+}
+.novus-kernel-task-list li.running { border-color: #6366f1; color: #e2e8f0; background: rgba(99,102,241,0.06); }
+.novus-kernel-task-list li.completed { border-color: #22c55e; color: #94a3b8; }
+.novus-kernel-task-list li.failed { border-color: #ef4444; }
+</style>
+
+<script>
+const NovusAIKernel = {
+    panelOpen: false,
+    maximized: false,
+    pendingToken: null,
+    activeTab: 'chat',
+    deepScanId: null,
+    deepScanPoll: null,
+    operationId: null,
+    operationPoll: null,
+    operationStartedAt: null,
+    lastFeedId: 0,
+    socDetailsOpen: false,
+    socCollapsed: false,
+    IMMEDIATE_ACK: 'Entendido.\n\nVoy a iniciar el análisis.\nPreparando motores...\nNo cierre esta ventana.\nLe iré mostrando los hallazgos conforme aparezcan.',
+
+    init() {
+        const input = document.getElementById('novus-ai-input');
+        if (!input) return;
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') this.send();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && (e.key === 'k' || e.key === 'K')) {
+                e.preventDefault();
+                this.toggle();
+            }
+        });
+        this.pollStatus();
+        setInterval(() => this.pollStatus(), 15000);
+        this.refreshContext(true);
+        this.loadEmailStatus();
+    },
+
+    switchTab(tab) {
+        this.activeTab = tab;
+        document.querySelectorAll('.novus-ai-tab').forEach(b => {
+            b.classList.toggle('active', b.dataset.tab === tab);
+        });
+        document.getElementById('novus-ai-tab-chat').classList.toggle('hidden', tab !== 'chat');
+        document.getElementById('novus-ai-tab-email').classList.toggle('hidden', tab !== 'email');
+        if (tab === 'email') this.loadEmailStatus();
+    },
+
+    async loadEmailStatus() {
+        try {
+            const [statusR, setupR] = await Promise.all([
+                fetch('/api/gmail/status'),
+                fetch('/api/gmail/setup'),
+            ]);
+            const status = await statusR.json();
+            const setup = await setupR.json();
+
+            const setupEl = document.getElementById('novus-email-setup');
+            const dashEl = document.getElementById('novus-email-dashboard');
+            if (!setup.configured) {
+                setupEl.classList.remove('hidden');
+                dashEl.classList.add('hidden');
+                const steps = document.getElementById('novus-email-steps');
+                steps.innerHTML = (setup.steps || []).map(s => `<li>${this.escape(s)}</li>`).join('');
+                return;
+            }
+            setupEl.classList.add('hidden');
+            dashEl.classList.remove('hidden');
+
+            const stats = status.stats || {};
+            const conn = status.connection || {};
+            document.getElementById('novus-email-total').textContent = stats.total_analyzed ?? 0;
+            document.getElementById('novus-email-safe').textContent = stats.safe ?? 0;
+            document.getElementById('novus-email-suspicious').textContent = stats.suspicious ?? 0;
+            document.getElementById('novus-email-malicious').textContent = stats.malicious ?? 0;
+            document.getElementById('novus-email-last').textContent = 'Último análisis: ' + (stats.last_analysis || '—');
+            document.getElementById('novus-email-protection').textContent =
+                'Protección: ' + (conn.protection_active ? 'ACTIVA' : 'INACTIVA') +
+                (conn.email ? ' (' + conn.email + ')' : '');
+            const btn = document.getElementById('novus-email-connect');
+            btn.textContent = conn.connected ? 'Desconectar Gmail' : 'Conectar Gmail';
+            btn.onclick = conn.connected ? () => this.disconnectGmail() : () => this.connectGmail();
+        } catch (_) {}
+    },
+
+    connectGmail() { window.location.href = '/api/gmail/oauth/start'; },
+
+    async disconnectGmail() {
+        const ok = await NovusAction.confirm({ title: 'Desconectar Gmail', description: '¿Desconectar Gmail de NOVUS?' });
+        if (!ok) return;
+        await fetch('/api/gmail/disconnect', { method: 'POST' });
+        this.loadEmailStatus();
+    },
+
+    async syncGmail() {
+        await NovusAction.runApi({
+            title: 'Sincronizar Gmail',
+            url: '/api/gmail/sync',
+            method: 'POST',
+            successStatus: 'Completado',
+            resultMessage: (d) => d.message || ('Analizados: ' + (d.analyzed ?? 0)),
+        });
+        this.loadEmailStatus();
+        this.loadEmailHistory();
+    },
+
+    async loadEmailHistory() {
+        const box = document.getElementById('novus-email-history');
+        box.innerHTML = '<div style="color:#64748b">Cargando...</div>';
+        try {
+            const r = await fetch('/api/gmail/history?limit=20');
+            const d = await r.json();
+            const records = d.records || [];
+            if (!records.length) {
+                box.innerHTML = '<div style="color:#64748b">Sin análisis registrados.</div>';
+                return;
+            }
+            box.innerHTML = records.map(rec => {
+                const cls = ['Malicioso','Phishing','Fraude'].includes(rec.classification) ? 'cls-malicious'
+                    : rec.classification === 'Seguro' ? 'cls-safe' : 'cls-suspicious';
+                const actions = (rec.suggested_actions || []).filter(a => a.requires_confirmation)
+                    .map(a => `<button onclick="NovusAIKernel.emailAction('${rec.message_id}','${a.id}')">${a.label}</button>`).join(' ');
+                return `<div class="novus-email-item">
+                    <strong class="${cls}">${this.escape(rec.classification)}</strong> — ${this.escape(rec.subject)}<br>
+                    <span style="color:#64748b">${this.escape(rec.sender)} · ${rec.analyzed_at}</span><br>
+                    <span>${this.escape(rec.technical_summary || '')}</span>
+                    ${actions ? '<div class="novus-email-actions" style="padding:6px 0 0">' + actions + '</div>' : ''}
+                </div>`;
+            }).join('');
+        } catch (e) {
+            box.innerHTML = '<div style="color:#f87171">Error al cargar historial.</div>';
+        }
+    },
+
+    async emailAction(messageId, actionId) {
+        const ok = await NovusAction.confirm({
+            title: 'Acción en Gmail',
+            description: 'Esta acción modificará su buzón Gmail.',
+            warning: 'Confirme solo si reconoce la operación.',
+        });
+        if (!ok) return;
+        await NovusAction.runApi({
+            title: 'Ejecutando acción Gmail',
+            url: '/api/gmail/action',
+            method: 'POST',
+            body: { action: actionId, message_id: messageId, confirmed: true },
+            successStatus: 'Completado',
+        });
+        this.loadEmailHistory();
+    },
+
+    toggle() {
+        const panel = document.getElementById('novus-ai-panel');
+        const fab = document.getElementById('novus-ai-fab');
+        this.panelOpen = !this.panelOpen;
+        panel.classList.toggle('open', this.panelOpen);
+        panel.classList.remove('minimized');
+        fab.style.display = this.panelOpen ? 'none' : 'flex';
+        if (this.panelOpen) document.getElementById('novus-ai-input').focus();
+    },
+
+    close() {
+        this.panelOpen = false;
+        document.getElementById('novus-ai-panel').classList.remove('open', 'maximized');
+        document.getElementById('novus-ai-fab').style.display = 'flex';
+    },
+
+    minimize() {
+        const panel = document.getElementById('novus-ai-panel');
+        panel.classList.add('minimized');
+        if (!this.panelOpen) { this.panelOpen = true; panel.classList.add('open'); }
+    },
+
+    toggleMaximize() {
+        this.maximized = !this.maximized;
+        document.getElementById('novus-ai-panel').classList.toggle('maximized', this.maximized);
+        document.getElementById('novus-ai-max-icon').className = this.maximized ? 'fas fa-compress' : 'fas fa-expand';
+    },
+
+    _lastDsPhase: null,
+    _lastDsThreats: 0,
+
+    setActivity(on, text) {
+        const el = document.getElementById('novus-ai-activity');
+        if (on) {
+            el.classList.remove('hidden');
+            document.getElementById('novus-ai-activity-text').textContent = text || 'Procesando...';
+        } else {
+            el.classList.add('hidden');
+        }
+    },
+
+    async pollStatus() {
+        try {
+            const r = await fetch('/api/ai/status');
+            const d = await r.json();
+            if (d.logs) {
+                document.getElementById('novus-ai-status-text').textContent = d.logs;
+            }
+        } catch (_) {}
+    },
+
+    async refreshContext(silent) {
+        if (!silent) this.setActivity(true, 'Actualizando contexto...');
+        try {
+            await fetch('/api/ai/context?refresh=1');
+            if (!silent) this.appendMsg('assistant', 'Contexto de sesión actualizado con datos reales de NOVUS.');
+        } catch (e) {
+            if (!silent) this.appendMsg('assistant', 'Error al actualizar contexto: ' + e.message);
+        }
+        if (!silent) this.setActivity(false);
+    },
+
+    appendMsg(role, text, variant) {
+        const box = document.getElementById('novus-ai-messages');
+        const time = new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+        const div = document.createElement('div');
+        div.className = `novus-ai-msg ${role}` + (variant ? ` ${variant}` : '');
+        div.innerHTML = `<div class="novus-ai-msg-body">${this.escape(text)}</div><div class="novus-ai-msg-time">${time}</div>`;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    },
+
+    processLiveFeed(feed) {
+        if (!feed || !feed.length) return;
+        feed.forEach(item => {
+            if (!item || item.id <= this.lastFeedId) return;
+            this.lastFeedId = item.id;
+            const variant = item.kind === 'finding' ? 'finding' : (item.kind === 'progress' ? 'progress' : 'assistant');
+            const role = item.kind === 'finding' || item.kind === 'progress' ? 'assistant' : 'assistant';
+            this.appendMsg(role, item.text, variant === 'assistant' ? null : variant);
+        });
+    },
+
+    showSocPanel() {
+        const panel = document.getElementById('novus-soc-analyst-panel');
+        if (panel) panel.classList.remove('hidden');
+    },
+
+    hideSocPanel() {
+        const panel = document.getElementById('novus-soc-analyst-panel');
+        if (panel) panel.classList.add('hidden');
+    },
+
+    toggleSocDetails() {
+        this.socDetailsOpen = !this.socDetailsOpen;
+        const el = document.getElementById('novus-soc-details');
+        const icon = document.getElementById('novus-soc-details-icon');
+        if (el) el.classList.toggle('hidden', !this.socDetailsOpen);
+        if (icon) icon.className = this.socDetailsOpen ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+    },
+
+    toggleSocCollapse() {
+        this.socCollapsed = !this.socCollapsed;
+        const panel = document.getElementById('novus-soc-analyst-panel');
+        const icon = document.getElementById('novus-soc-collapse-icon');
+        if (panel) panel.classList.toggle('collapsed', this.socCollapsed);
+        if (icon) icon.className = this.socCollapsed ? 'fas fa-expand-alt' : 'fas fa-compress-alt';
+    },
+
+    updateSocPanel(d) {
+        const pct = d.progress_pct || 0;
+        document.getElementById('novus-deep-scan-pct').textContent = pct + '%';
+        document.getElementById('novus-deep-scan-bar-fill').style.width = pct + '%';
+        const status = d.live_message || d.phase_label || d.current_motor || 'Trabajando...';
+        const statusEl = document.getElementById('novus-soc-status');
+        if (statusEl) statusEl.textContent = status;
+        const elapsed = d.elapsed_sec != null
+            ? Math.floor(d.elapsed_sec) + 's'
+            : (this.operationStartedAt ? Math.floor((Date.now() - this.operationStartedAt) / 1000) + 's' : '0s');
+        document.getElementById('novus-deep-scan-elapsed').textContent = elapsed;
+        const etaEl = document.getElementById('novus-soc-eta');
+        if (etaEl) {
+            const rem = d.eta_remaining_sec != null ? Math.ceil(d.eta_remaining_sec) : null;
+            etaEl.textContent = rem != null ? rem + 's' : '—';
+        }
+        const motorEl = document.getElementById('novus-soc-motor');
+        if (motorEl) motorEl.textContent = (d.current_motor || '—').replace(/\.\.\.$/, '');
+        const nextEl = document.getElementById('novus-soc-next');
+        if (nextEl) nextEl.textContent = (d.next_motor || '—').replace(/\.\.\.$/, '');
+        const findEl = document.getElementById('novus-soc-finding');
+        if (findEl) findEl.textContent = d.last_finding || 'Sin hallazgos aún';
+        if (d.tasks) this.renderTaskList(d.tasks);
+        this.processLiveFeed(d.live_feed);
+    },
+
+    escape(t) {
+        const d = document.createElement('div');
+        d.textContent = t || '';
+        return d.innerHTML.replace(/\n/g, '<br>');
+    },
+
+    renderActions(actions) {
+        const box = document.getElementById('novus-ai-suggestions');
+        box.innerHTML = '';
+        (actions || []).forEach(a => {
+            const btn = document.createElement('button');
+            btn.textContent = a.label || 'Acción';
+            btn.onclick = () => this.handleAction(a);
+            box.appendChild(btn);
+        });
+    },
+
+    handleAction(a) {
+        if (a.type === 'navigate' && a.url) this.navigate(a.url);
+        else if (a.type === 'quick' && a.message) this.quick(a.message);
+        else if (a.type === 'search' && a.query && typeof NovusGlobalSearch !== 'undefined') {
+            NovusGlobalSearch.open();
+            document.getElementById('novus-global-search-input').value = a.query;
+            NovusGlobalSearch.onInput(a.query);
+        }
+        else if (a.type === 'api' && (a.endpoint || a.url)) this.callApi(a.endpoint || a.url, a.method || 'POST');
+        else if (a.type === 'confirm' && a.token) this.sendConfirm(a.token);
+        else if (a.type === 'deep_scan' && a.scan_id) this.startDeepScan(a.scan_id, []);
+        else if (a.type === 'operation' && a.operation_id) this.startOperation(a.operation_id);
+        else if (a.type === 'confirm_remediate' && a.target_id) {
+            this.send('remediar ' + a.target_id);
+        }
+        else if (a.type === 'ndci_create') this.createNdciCase(a);
+        else if (a.type === 'remediate' || a.type === 'mitigate') this.send('remediar hallazgo detectado');
+    },
+
+    renderTaskList(tasks) {
+        const ul = document.getElementById('novus-kernel-task-list');
+        if (!ul || !tasks) return;
+        ul.innerHTML = tasks.map(t => {
+            const icon = t.status === 'completed' ? '✓' : t.status === 'running' ? '▶' : t.status === 'failed' ? '✗' : '○';
+            return `<li class="${t.status || 'pending'}">${icon} Task ${t.task_id}: ${this.escape(t.label).replace(/<br>/g, '')}</li>`;
+        }).join('');
+    },
+
+    startOperation(operationId, tasks, etaMessage, performanceLevel) {
+        this.operationId = operationId;
+        this.operationStartedAt = Date.now();
+        this.operationEta = etaMessage || '';
+        this.operationLevel = performanceLevel || 2;
+        this.lastFeedId = 0;
+        this.showSocPanel();
+        if (tasks) this.renderTaskList(tasks);
+        if (this.operationPoll) clearInterval(this.operationPoll);
+        this.pollOperation();
+        this.operationPoll = setInterval(() => this.pollOperation(), 650);
+    },
+
+    async pollOperation() {
+        if (!this.operationId) return;
+        try {
+            const r = await fetch('/api/ai/operation/' + this.operationId + '/status');
+            const d = await r.json();
+            if (d.status !== 'success') return;
+            this.updateSocPanel(d);
+            if (d.scan_id && !this.deepScanId) {
+                this.deepScanId = d.scan_id;
+                if (!this.deepScanPoll) {
+                    this.deepScanPoll = setInterval(() => this.pollDeepScan(), 1000);
+                }
+            }
+            if (d.operation_status === 'completed' || d.operation_status === 'error') {
+                clearInterval(this.operationPoll);
+                this.operationPoll = null;
+                await this.fetchOperationResult();
+            }
+        } catch (_) {}
+    },
+
+    async fetchOperationResult() {
+        if (!this.operationId) return;
+        try {
+            const r = await fetch('/api/ai/operation/' + this.operationId + '/result');
+            if (r.status === 202) return;
+            const d = await r.json();
+            if (d.status === 'success' && d.reply) {
+                document.getElementById('novus-soc-status').textContent = 'Análisis finalizado';
+                document.getElementById('novus-deep-scan-pct').textContent = '100%';
+                document.getElementById('novus-deep-scan-bar-fill').style.width = '100%';
+                this.appendMsg('assistant', '═══ INFORME FINAL ═══\n\n' + d.reply);
+                if (d.confirm_required && d.confirm_token) this.pendingToken = d.confirm_token;
+                this.renderActions(d.actions || []);
+            }
+        } catch (e) {
+            this.appendMsg('assistant', 'Error al obtener resultado: ' + e.message);
+        }
+        this.setActivity(false);
+    },
+
+    startDeepScan(scanId, modules) {
+        this.deepScanId = scanId;
+        this.lastFeedId = 0;
+        this.showSocPanel();
+        const modEl = document.getElementById('novus-deep-scan-modules');
+        if (modEl && modules && modules.length) {
+            modEl.innerHTML = '<strong>Módulos:</strong> ' +
+                modules.map(m => '<span>' + this.escape(m).replace(/<br>/g, '') + '</span>').join(' · ');
+        }
+        if (this.deepScanPoll) clearInterval(this.deepScanPoll);
+        this.pollDeepScan();
+        this.deepScanPoll = setInterval(() => this.pollDeepScan(), 1000);
+    },
+
+    async pollDeepScan() {
+        if (!this.deepScanId) return;
+        try {
+            const r = await fetch('/api/ai/deep-scan/' + this.deepScanId + '/status');
+            const d = await r.json();
+            if (d.status !== 'success') return;
+            const st = d.stats || {};
+            const panelData = {
+                progress_pct: d.progress_pct || 0,
+                live_message: d.phase_label || d.phase || 'Deep Scan',
+                current_motor: d.current_element || d.phase_label || '—',
+                next_motor: 'Siguiente fase',
+                elapsed_sec: d.elapsed_sec || 0,
+                eta_remaining_sec: Math.max(0, 45 - (d.elapsed_sec || 0)),
+                last_finding: (st.threats_found > 0)
+                    ? `Detectadas ${st.threats_found} amenaza(s)`
+                    : (st.anomalies_found > 0 ? `Detectadas ${st.anomalies_found} anomalía(s)` : 'Sin hallazgos aún'),
+            };
+            this.updateSocPanel(panelData);
+            document.getElementById('novus-ds-files').textContent = st.files_analyzed ?? 0;
+            document.getElementById('novus-ds-folders').textContent = st.folders_analyzed ?? 0;
+            document.getElementById('novus-ds-procs').textContent = st.processes_analyzed ?? 0;
+            document.getElementById('novus-ds-threats').textContent = st.threats_found ?? 0;
+            document.getElementById('novus-ds-anomalies').textContent = st.anomalies_found ?? 0;
+            const phase = d.phase_label || d.phase;
+            if (phase && phase !== this._lastDsPhase) {
+                this._lastDsPhase = phase;
+                this.appendMsg('assistant', '✓ ' + phase + '.', 'progress');
+            }
+            if (st.threats_found > (this._lastDsThreats || 0)) {
+                this._lastDsThreats = st.threats_found;
+                this.appendMsg('assistant', `⚠ Detectadas ${st.threats_found} amenaza(s) durante el escaneo.`, 'finding');
+            }
+
+            if (d.scan_state === 'completed' || d.scan_state === 'error') {
+                clearInterval(this.deepScanPoll);
+                this.deepScanPoll = null;
+                await this.fetchDeepScanReport();
+            }
+        } catch (_) {}
+    },
+
+    async fetchDeepScanReport() {
+        if (!this.deepScanId) return;
+        try {
+            const r = await fetch('/api/ai/deep-scan/' + this.deepScanId + '/report');
+            if (r.status === 202) return;
+            const d = await r.json();
+            if (d.status === 'success' && d.report) {
+                document.getElementById('novus-soc-status').textContent = 'Completado — riesgo: ' + (d.report.risk_level || 'N/D');
+                document.getElementById('novus-deep-scan-pct').textContent = '100%';
+                document.getElementById('novus-deep-scan-bar-fill').style.width = '100%';
+                this.appendMsg('assistant', '═══ INFORME FINAL ═══\n\n' + (d.report.text_report || 'Informe Deep Scan generado.'));
+                this.renderActions([
+                    { label: 'Abrir XDR', type: 'navigate', url: '/amenazas' },
+                    { label: 'Vulnerabilidades', type: 'navigate', url: '/vulnerabilidades' },
+                ]);
+            }
+        } catch (e) {
+            this.appendMsg('assistant', 'Error al obtener informe Deep Scan: ' + e.message);
+        }
+    },
+
+    async createNdciCase(a) {
+        this.setActivity(true, 'Generando expediente NDCI...');
+        try {
+            const r = await fetch('/api/ndci/cases/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scan_id: a.scan_id || null,
+                    operation_id: a.operation_id || this.operationId || null,
+                }),
+            });
+            const d = await r.json();
+            if (d.status !== 'success') throw new Error(d.message || 'Error al crear caso');
+            this.appendMsg('assistant', d.message || `Caso ${d.case?.id} creado.`);
+            this.renderActions([
+                { label: 'Abrir Caso', type: 'navigate', url: d.url || '/casos-estudio' },
+                { label: 'Descargar PDF', type: 'api', endpoint: `/api/ndci/cases/${d.case?.id}/pdf`, method: 'GET' },
+            ]);
+        } catch (e) {
+            this.appendMsg('assistant', 'Error al crear caso de estudio: ' + e.message);
+        }
+        this.setActivity(false);
+    },
+
+    navigate(url) { window.location.href = url; },
+
+    open() {
+        this.openPanel();
+    },
+
+    openPanel() {
+        const panel = document.getElementById('novus-ai-panel');
+        const fab = document.getElementById('novus-ai-fab');
+        if (!this.panelOpen) {
+            this.panelOpen = true;
+            if (panel) {
+                panel.classList.add('open');
+                panel.classList.remove('minimized');
+            }
+            if (fab) fab.style.display = 'none';
+        }
+        const input = document.getElementById('novus-ai-input');
+        if (input) input.focus();
+    },
+
+    sendMessage(msg) {
+        return this.send(msg);
+    },
+
+    detectModule() {
+        const body = document.body;
+        if (body && body.dataset.novusModule) return body.dataset.novusModule;
+        const path = (window.location.pathname || '').replace(/^\//, '').split('/')[0];
+        const map = { amenazas: 'xdr', automatizacion: 'playbooks', '': 'dashboard' };
+        return map[path] || path || 'dashboard';
+    },
+
+    async consultModule(module, extra) {
+        const mod = module || this.detectModule();
+        const extraParams = Object.assign({}, extra || {});
+        if (typeof window.NovusModuleExtra === 'object' && window.NovusModuleExtra) {
+            Object.assign(extraParams, window.NovusModuleExtra);
+        }
+        this.openPanel();
+        this.switchTab('chat');
+        const label = mod.replace(/_/g, ' ');
+        this.appendMsg('user', `Consultar Kernel IA — ${label}`);
+        this.setActivity(true, 'Recopilando contexto verificado del módulo...');
+        try {
+            const r = await fetch('/api/ai/module-consult', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ module: mod, extra: extraParams, execute: true }),
+            });
+            const d = await r.json();
+            if (d.status !== 'success') {
+                throw new Error(d.message || 'No se pudo consultar el Kernel IA');
+            }
+            this.setActivity(false);
+            const ctxNote = d.has_real_data
+                ? `Telemetría real cargada (${d.module_label || mod}). Motores: seguridad, defensa adaptativa, UCE/ASPE según contexto.`
+                : `Contexto limitado para ${d.module_label || mod}. El análisis indicará qué evidencia falta.`;
+            this.appendMsg('assistant', ctxNote);
+            if (d.reply) {
+                this.appendMsg('assistant', d.reply);
+            } else if (d.message) {
+                this.appendMsg('assistant', d.message);
+            } else if (d.prompt) {
+                await this._executeConsultPrompt(d.prompt);
+            } else {
+                this.appendMsg('assistant', 'Consulta enviada. Sin respuesta del motor — verifique el estado del Kernel IA.');
+            }
+            if (d.working && d.operation_id) {
+                this.startOperation(d.operation_id, d.tasks || [], d.eta_message, d.performance_level);
+                this.setActivity(true, d.eta_message || 'Analista SOC trabajando...');
+            }
+            if (d.soc_workflow && d.scan_id) {
+                this.startDeepScan(d.scan_id, d.modules_loaded || []);
+            }
+            this.renderActions(d.actions || []);
+        } catch (e) {
+            this.setActivity(false);
+            this.appendMsg('assistant', 'Error al consultar Kernel IA: ' + (e.message || e) + '. Verifique que el panel esté cargado y la sesión activa.');
+            console.error('consultModule', e);
+        }
+    },
+
+    async _executeConsultPrompt(prompt) {
+        this.setActivity(true, 'Analista SOC analizando contexto...');
+        try {
+            const r = await fetch('/api/ai/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: prompt }),
+            });
+            const d = await r.json();
+            if (d.working && d.operation_id) {
+                this.startOperation(d.operation_id, d.tasks || [], d.eta_message, d.performance_level);
+                return;
+            }
+            if (d.reply) this.appendMsg('assistant', d.reply);
+            if (d.soc_workflow && d.scan_id) this.startDeepScan(d.scan_id, d.modules_loaded || []);
+            this.renderActions(d.actions || []);
+        } catch (err) {
+            this.appendMsg('assistant', 'Error procesando consulta: ' + err.message);
+        } finally {
+            if (!this.operationId) this.setActivity(false);
+        }
+    },
+
+    quick(msg) {
+        if (!this.panelOpen) this.toggle();
+        document.getElementById('novus-ai-input').value = msg;
+        this.send();
+    },
+
+    async callApi(endpoint, method) {
+        this.setActivity(true, 'Ejecutando...');
+        try {
+            const r = await fetch(endpoint, { method, headers: { 'Content-Type': 'application/json' } });
+            const d = await r.json();
+            this.appendMsg('assistant', d.message || JSON.stringify(d).slice(0, 300));
+        } catch (e) {
+            this.appendMsg('assistant', 'Error: ' + e.message);
+        }
+        this.setActivity(false);
+    },
+
+    async sendConfirm(token) {
+        this.setActivity(true, 'Ejecutando acción confirmada...');
+        try {
+            const r = await fetch('/api/ai/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'confirmar', confirm_token: token }),
+            });
+            const d = await r.json();
+            if (d.reply) this.appendMsg('assistant', d.reply);
+            this.renderActions(d.actions || []);
+        } catch (e) {
+            this.appendMsg('assistant', 'Error: ' + e.message);
+        }
+        this.setActivity(false);
+    },
+
+    async send(preset) {
+        const input = document.getElementById('novus-ai-input');
+        const message = preset || (input.value || '').trim();
+        if (!message) return;
+        if (!preset) input.value = '';
+        if (!this.panelOpen) this.toggle();
+
+        this.appendMsg('user', message);
+        this.appendMsg('assistant', this.IMMEDIATE_ACK);
+        this.setActivity(true, 'Analista SOC iniciando...');
+        this.renderActions([]);
+
+        try {
+            const body = { message };
+            if (this.pendingToken) { body.confirm_token = this.pendingToken; this.pendingToken = null; }
+
+            const r = await fetch('/api/ai/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const d = await r.json();
+            if (d.working && d.operation_id) {
+                this.startOperation(d.operation_id, d.tasks || [], d.eta_message, d.performance_level);
+                this.setActivity(true, d.eta_message || d.performance_label || 'Analista SOC trabajando...');
+                return;
+            }
+            if (d.soc_workflow && d.scan_id) {
+                this.startDeepScan(d.scan_id, d.modules_loaded || []);
+                if (d.defer_full_reply) {
+                    this.setActivity(true, 'Análisis en progreso...');
+                } else if (d.reply) {
+                    this.appendMsg('assistant', d.reply);
+                }
+            } else if (d.reply) {
+                this.appendMsg('assistant', d.reply);
+            }
+            if (d.deep_scan && d.scan_id && !d.soc_workflow) this.startDeepScan(d.scan_id, d.modules_loaded || []);
+            if (d.navigate) setTimeout(() => { window.location.href = d.navigate; }, 800);
+            if (d.confirm_required && d.confirm_token) this.pendingToken = d.confirm_token;
+            this.renderActions(d.actions || []);
+        } catch (e) {
+            this.appendMsg('assistant', 'Error de conexión con el Kernel: ' + e.message);
+        }
+        if (!this.operationId || !this.operationPoll) this.setActivity(false);
+    },
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const bootKernel = () => {
+        if (document.getElementById('novus-ai-input')) NovusAIKernel.init();
+    };
+    if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(bootKernel, { timeout: 4000 });
+    } else {
+        setTimeout(bootKernel, 800);
+    }
+});
+window.consultKernelIA = function(module, extra) {
+    if (typeof NovusAIKernel === 'undefined') {
+        console.error('NovusAIKernel no cargado');
+        alert('Kernel IA no disponible. Recargue la página.');
+        return Promise.resolve();
+    }
+    return NovusAIKernel.consultModule(module || null, extra || {});
+};
+</script>
+{% endif %}

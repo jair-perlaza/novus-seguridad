@@ -1,0 +1,85 @@
+{
+  "tests": [
+    {
+      "name": "status_success",
+      "pass": true
+    },
+    {
+      "name": "has_nodes",
+      "pass": true
+    },
+    {
+      "name": "executive_summary",
+      "pass": true
+    },
+    {
+      "name": "top_traffic_fields",
+      "pass": true
+    },
+    {
+      "name": "alerts_have_explanation",
+      "pass": true
+    },
+    {
+      "name": "device_detail_confidence",
+      "pass": true
+    },
+    {
+      "name": "investigate_unknown",
+      "pass": true,
+      "skipped": "set RUN_INVESTIGATE=1 for full scan test"
+    },
+    {
+      "name": "event_explanations",
+      "pass": true
+    },
+    {
+      "name": "explain_network_event",
+      "pass": true
+    }
+  ],
+  "performance_ms": {
+    "build_ndr_payload": 66257.8,
+    "get_device_detail": 15977.7,
+    "build_ndr_cached": 62970.9
+  },
+  "passed": true,
+  "forbidden_strings": [],
+  "audit": {
+    "improvements": [
+      "Leyenda de colores en radar NDR",
+      "Resumen ejecutivo superior (executive_summary)",
+      "Ficha técnica enriquecida con explicaciones por campo",
+      "Explicaciones en lenguaje sencillo para alertas y eventos",
+      "Botón Investigar en dispositivos desconocidos",
+      "Top tráfico ampliado (enviado/recibido, velocidad, %, actividad)",
+      "Animaciones suaves para dispositivos nuevos y cambios recientes",
+      "Caché de payload NDR (8s TTL) y caché de vulnerabilidades (60s)"
+    ],
+    "new_api_fields": [
+      "executive_summary",
+      "plain_explanation",
+      "confidence_score",
+      "confidence_label",
+      "os_estimate_short",
+      "is_new",
+      "recent_change",
+      "traffic_percent",
+      "last_activity",
+      "connected_since"
+    ],
+    "new_endpoints": [
+      "POST /api/network/ndr/device/<ip>/investigate"
+    ],
+    "data_sources": [
+      "ARP Scapy",
+      "psutil",
+      "SQLite inventory",
+      "MAC OUI",
+      "Adaptive Defense",
+      "ASPE",
+      "Threat Intelligence",
+      "Alertas DB"
+    ]
+  }
+}

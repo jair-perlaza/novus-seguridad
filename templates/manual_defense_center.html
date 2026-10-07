@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>NOVUS — Centro de Defensa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background: #06090f; color: #e5e7eb; font-family: Inter, sans-serif; }
+        .mech-card { border: 1px solid #1f2937; background: #0c121d; }
+        .mech-unavail { opacity: 0.55; }
+        .engine-activo { color: #34d399; }
+        .engine-analizando { color: #60a5fa; }
+        .engine-atencion { color: #fbbf24; }
+        .engine-no { color: #9ca3af; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="centro_defensa">
+    {% set active_module = 'centro_defensa' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 flex flex-col">
+        <header class="px-8 py-6 border-b border-gray-800 flex flex-wrap justify-between gap-4 items-center">
+            <div>
+                <h1 class="text-xl font-bold">Centro de Defensa</h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Operación manual centralizada — datos reales del host y la red</p>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+                <button type="button" id="btn-full-protection" class="px-4 py-2 bg-red-700/80 hover:bg-red-600 rounded-lg text-[10px] font-bold uppercase">
+                    Ejecutar defensa completa
+                </button>
+                <button type="button" id="btn-refresh-catalog" class="px-4 py-2 border border-gray-600 rounded-lg text-[10px] font-bold uppercase">Actualizar catálogo</button>
+            </div>
+        </header>
+
+        <div class="px-6 pb-2">
+            <div class="mech-card rounded-xl p-4 border-emerald-900/40">
+                <h2 class="text-xs font-bold text-emerald-400 uppercase mb-2"><i class="fas fa-network-wired mr-1"></i> Captura forense PCAP</h2>
+                <p class="text-[10px] text-gray-500 mb-3">Tráfico real del host — no simulado. Requiere Npcap y permisos de administrador en Windows.</p>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 text-[10px]">
+                    <label class="block">Interfaz<select id="pcap-iface" class="w-full mt-1 bg-black/40 border border-gray-700 rounded px-2 py-1"></select></label>
+                    <label class="block">Duración (s)<input id="pcap-duration" type="number" min="1" max="600" value="15" class="w-full mt-1 bg-black/40 border border-gray-700 rounded px-2 py-1" /></label>
+                    <label class="block">Máx. MB<input id="pcap-maxmb" type="number" min="1" max="500" value="25" class="w-full mt-1 bg-black/40 border border-gray-700 rounded px-2 py-1" /></label>
+                    <label class="block">Caso / incidente<input id="pcap-case" placeholder="opcional" class="w-full mt-1 bg-black/40 border border-gray-700 rounded px-2 py-1" /></label>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-3">
+                    <button type="button" id="btn-pcap-start" class="px-3 py-1.5 bg-emerald-800/80 hover:bg-emerald-700 rounded text-[10px] font-bold uppercase">Iniciar captura</button>
+                    <button type="button" id="btn-pcap-stop" class="px-3 py-1.5 border border-gray-600 rounded text-[10px] font-bold uppercase">Detener</button>
+                    <button type="button" id="btn-pcap-refresh" class="px-3 py-1.5 border border-gray-600 rounded text-[10px] font-bold uppercase">Actualizar estado</button>
+                </div>
+                <pre id="pcap-status" class="text-[10px] text-gray-400 mt-2 whitespace-pre-wrap">—</pre>
+            </div>
+        </div>
+
+        <div class="p-6 grid lg:grid-cols-3 gap-6 overflow-y-auto flex-1">
+            <section class="lg:col-span-2 space-y-4">
+                <div id="full-progress" class="hidden mech-card rounded-xl p-4 border-indigo-500/40">
+                    <div class="text-xs text-indigo-300 font-bold uppercase mb-2">Defensa completa</div>
+                    <div class="text-sm" id="full-progress-text">—</div>
+                    <div class="w-full bg-gray-800 h-2 rounded mt-2"><div id="full-progress-bar" class="bg-indigo-500 h-2 rounded" style="width:0%"></div></div>
+                </div>
+                <div id="catalog-root" class="space-y-6 text-sm">Cargando catálogo…</div>
+            </section>
+            <aside class="space-y-4">
+                <div class="mech-card rounded-xl p-4">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase mb-2">Estado de motores</h2>
+                    <ul id="engines-panel" class="text-[10px] space-y-2 text-gray-400">Cargando…</ul>
+                </div>
+                <div class="mech-card rounded-xl p-4 border-amber-900/40">
+                    <h2 class="text-xs font-bold text-amber-400 uppercase mb-2">ZDDE — Zero-Day Detection</h2>
+                    <p class="text-[9px] text-gray-500 mb-2">Correlación multicapa · sin firmas como método principal · sin claim CVE universal</p>
+                    <div id="zdde-panel" class="text-[10px] text-gray-400 space-y-1">Cargando…</div>
+                    <button type="button" id="btn-zdde-cycle" class="mt-2 px-3 py-1 border border-amber-800/60 rounded text-[9px] font-bold uppercase hover:bg-amber-900/30">Ejecutar ciclo</button>
+                </div>
+                <div class="mech-card rounded-xl p-4">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase mb-2">Resultado</h2>
+                    <div id="result-panel" class="text-[11px] text-gray-300 whitespace-pre-wrap">Seleccione un mecanismo y pulse Ejecutar ahora.</div>
+                </div>
+                <div class="mech-card rounded-xl p-4">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase mb-2">Kernel IA</h2>
+                    <pre id="kernel-panel" class="kernel-out text-gray-400">—</pre>
+                </div>
+                <div class="mech-card rounded-xl p-4">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase mb-2">Historial reciente</h2>
+                    <ul id="history-list" class="text-[10px] space-y-1 text-gray-500">—</ul>
+                </div>
+                <div class="mech-card rounded-xl p-4">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase mb-2">Auditoría de capacidades</h2>
+                    <div id="audit-panel" class="text-[10px] text-gray-500">
+                        {% if audit %}Implementados: {{ audit.total }} · Operativos: {{ audit.working|length }}{% endif %}
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+    {% include 'partials/remediation_modal.html' %}
+    {% include 'partials/ai_kernel_panel.html' %}
+    <script>
+    const CATEGORY_LABELS = {{ categories|tojson }};
+    NovusRemediation.isAdmin = {{ 'true' if user.role in ['super_admin', 'company_admin'] else 'false' }};
+    let catalog = [];
+    let selected = new Set();
+    let fullPoll = null;
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+    function renderCatalog() {
+        const root = document.getElementById('catalog-root');
+        if (!catalog.length) { root.textContent = 'Sin mecanismos.'; return; }
+        const byCat = {};
+        catalog.forEach(m => { (byCat[m.category] = byCat[m.category] || []).push(m); });
+        root.innerHTML = CATEGORY_LABELS.map(([key, label]) => {
+            const items = byCat[key] || [];
+            if (!items.length) return '';
+            const cards = items.map(m => {
+                const av = m.availability || {};
+                const unavail = !av.available;
+                const params = (m.params || []).join(', ');
+                return `<div class="mech-card rounded-lg p-3 ${unavail ? 'mech-unavail' : ''}" data-id="${esc(m.id)}">
+                    <div class="flex justify-between gap-2 items-start">
+                        <label class="flex items-start gap-2 cursor-pointer">
+                            <input type="checkbox" class="mt-1 mech-select" data-id="${esc(m.id)}" ${unavail ? 'disabled' : ''} />
+                            <span><span class="font-semibold text-white">${esc(m.title)}</span>
+                            ${unavail ? `<div class="text-amber-500 text-[10px] mt-1">${esc(av.reason || 'No disponible')}</div>` : ''}
+                            ${params ? `<div class="text-[10px] text-gray-500 mt-1">Parámetros: ${esc(params)}</div>` : ''}
+                            </span>
+                        </label>
+                        <div class="flex flex-col gap-1 shrink-0">
+                            <button type="button" class="px-2 py-1 text-[9px] uppercase bg-indigo-900/50 rounded btn-kernel" data-id="${esc(m.id)}">Consultar Kernel IA</button>
+                            <button type="button" class="px-2 py-1 text-[9px] uppercase bg-emerald-900/50 rounded btn-exec" data-id="${esc(m.id)}" ${unavail ? 'disabled' : ''}>Ejecutar ahora</button>
+                        </div>
+                    </div>
+                    <div class="hidden mt-2 param-row" data-for="${esc(m.id)}">
+                        ${(m.params||[]).map(p => `<input class="w-full mt-1 bg-black/40 border border-gray-700 rounded px-2 py-1 text-[10px] param-input" data-id="${esc(m.id)}" data-param="${esc(p)}" placeholder="${esc(p)}" />`).join('')}
+                    </div>
+                </div>`;
+            }).join('');
+            return `<div><h3 class="text-indigo-400 text-xs font-bold uppercase mb-2">${esc(label)}</h3><div class="space-y-2">${cards}</div></div>`;
+        }).join('');
+        root.querySelectorAll('.btn-kernel').forEach(b => b.addEventListener('click', () => consultKernel(b.dataset.id)));
+        root.querySelectorAll('.btn-exec').forEach(b => b.addEventListener('click', () => executeMech(b.dataset.id)));
+        root.querySelectorAll('.mech-select').forEach(cb => cb.addEventListener('change', () => {
+            if (cb.checked) selected.add(cb.dataset.id); else selected.delete(cb.dataset.id);
+        }));
+        root.querySelectorAll('.param-input').forEach(inp => {
+            const card = root.querySelector(`.param-row[data-for="${inp.dataset.id}"]`);
+            if (card) card.classList.remove('hidden');
+        });
+    }
+
+    function formatResult(data) {
+        if (!data || !data.result) {
+            return data?.report_id
+                ? `Informe ${data.report_id} — use «Ver informe» en el modal.`
+                : (data?.message || 'Ejecución registrada. Consulte el modal de progreso.');
+        }
+        const r = data.result;
+        const n = (r.findings || []).length;
+        return [
+            `Estado: ${r.status}`,
+            `Elementos analizados: ${r.analyzed}`,
+            `Hallazgos: ${n}`,
+            r.risks && r.risks.length ? `Riesgos: ${r.risks.join(', ')}` : '',
+            r.recommendations && r.recommendations.length ? `Recomendaciones: ${r.recommendations.slice(0, 3).join('; ')}` : '',
+            data.report_id ? `Informe: ${data.report_id}` : (data.report_error || ''),
+        ].filter(Boolean).join('\n');
+    }
+
+    function engineStateClass(state) {
+        if (state === 'activo') return 'engine-activo';
+        if (state === 'analizando') return 'engine-analizando';
+        if (state === 'requiere_atencion') return 'engine-atencion';
+        return 'engine-no';
+    }
+
+    async function loadEngines() {
+        const ul = document.getElementById('engines-panel');
+        try {
+            const res = await fetch('/api/manual-defense/engines', { credentials: 'same-origin' });
+            const js = await res.json();
+            if (js.status !== 'ok') { ul.textContent = js.message || 'Error'; return; }
+            ul.innerHTML = (js.engines || []).map(e => {
+                const lbl = { activo: 'Activo', analizando: 'Analizando', requiere_atencion: 'Requiere atención', no_disponible: 'No disponible', inactivo: 'Inactivo' }[e.state] || e.state;
+                return `<li><span class="font-semibold text-white">${esc(e.label)}</span> — <span class="${engineStateClass(e.state)}">${esc(lbl)}</span>${e.detail ? `<div class="text-gray-600 mt-0.5">${esc(e.detail)}</div>` : ''}</li>`;
+            }).join('');
+        } catch (err) {
+            ul.textContent = err.message;
+        }
+    }
+
+    async function loadCatalog() {
+        const res = await fetch('/api/manual-defense/catalog', { credentials: 'same-origin' });
+        const js = await res.json();
+        if (js.status !== 'ok') throw new Error(js.message || 'catalog error');
+        catalog = js.catalog || [];
+        renderCatalog();
+        const ap = document.getElementById('audit-panel');
+        if (js.audit) ap.textContent = `Implementados: ${js.audit.total} · Operativos: ${js.audit.working.length} · Integración correo pendiente: ${(js.audit.needs_future_integrations||[]).length} · SO: ${js.audit.host_os}`;
+        loadHistory();
+        loadEngines();
+    }
+
+    async function loadHistory() {
+        const res = await fetch('/api/manual-defense/history?limit=8', { credentials: 'same-origin' });
+        const js = await res.json();
+        const ul = document.getElementById('history-list');
+        if (!js.history || !js.history.length) { ul.textContent = 'Sin ejecuciones aún.'; return; }
+        ul.innerHTML = js.history.map(h => `<li>${esc(h.started_at)} · ${esc(h.user)} · ${esc(h.mechanisms)} · ${esc(h.duration_sec)}s</li>`).join('');
+    }
+
+    function collectParams(id) {
+        const params = {};
+        document.querySelectorAll(`.param-input[data-id="${id}"]`).forEach(inp => {
+            if (inp.value.trim()) params[inp.dataset.param] = inp.value.trim();
+        });
+        return params;
+    }
+
+    async function consultKernel(id) {
+        document.getElementById('kernel-panel').textContent = 'Consultando…';
+        const res = await fetch(`/api/manual-defense/kernel/${encodeURIComponent(id)}`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ execute: true })
+        });
+        const js = await res.json();
+        const text = js.reply || js.response || js.message || js.mechanism_prompt || 'Consulta registrada.';
+        document.getElementById('kernel-panel').textContent = typeof text === 'string' ? text : String(text);
+    }
+
+    async function executeMech(id) {
+        const params = collectParams(id);
+        const mech = catalog.find(m => m.id === id);
+        await NovusAction.runDefenseExecution({
+            mechanism_id: id,
+            params,
+            title: mech ? mech.title : id,
+            description: 'Análisis manual — telemetría real',
+            onComplete: () => { loadHistory(); document.getElementById('result-panel').textContent = 'Ver resumen en el modal.'; },
+        });
+    }
+
+    async function startFullProtection() {
+        const ids = selected.size ? Array.from(selected) : null;
+        NovusAction._restoreFooter();
+        NovusAction.open({ title: 'Defensa completa', description: 'Secuencia de mecanismos compatibles…' });
+        const res = await fetch('/api/manual-defense/full-protection', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mechanism_ids: ids })
+        });
+        const js = await res.json();
+        if (!js.run_id) {
+            document.getElementById('novus-modal-result').textContent = js.message || 'Error';
+            return;
+        }
+        const startTs = Date.now();
+        if (fullPoll) clearInterval(fullPoll);
+        fullPoll = setInterval(async () => {
+            const st = await fetch(`/api/manual-defense/full-protection/${js.run_id}`, { credentials: 'same-origin' });
+            const data = await st.json();
+            const pct = data.progress_pct || 0;
+            document.getElementById('novus-modal-progress').style.width = pct + '%';
+            document.getElementById('novus-modal-subtitle').textContent = data.current || '—';
+            const log = document.getElementById('novus-modal-log');
+            log.innerHTML = `<div class="novus-log-line done">${pct}% · ${Math.round((Date.now()-startTs)/1000)}s · ${data.current || ''}</div>`;
+            if (data.status === 'completed') {
+                clearInterval(fullPoll);
+                NovusAction._finalizeDefenseButtons({
+                    report_id: data.report_id,
+                    report_available: data.report_available,
+                    report_error: data.aggregate?.report_error,
+                    status: 'success',
+                    result: { findings: [], duration_sec: data.duration_sec, recommendations: [] },
+                    duration_seconds: data.duration_sec,
+                });
+                document.getElementById('novus-modal-result').textContent =
+                    `Defensa completa · ${(data.aggregate?.steps||[]).length} pasos · ${data.duration_sec}s`;
+                loadHistory();
+            }
+        }, 2000);
+    }
+
+    let lastPcapId = null;
+
+    async function loadPcapInterfaces() {
+        const sel = document.getElementById('pcap-iface');
+        try {
+            const res = await fetch('/api/forensic-pcap/interfaces', { credentials: 'same-origin' });
+            const js = await res.json();
+            const list = js.interfaces || [];
+            sel.innerHTML = '<option value="">(predeterminada)</option>' + list.map(i =>
+                `<option value="${esc(i.id)}">${esc(i.label || i.id)}</option>`).join('');
+        } catch (err) {
+            sel.innerHTML = '<option value="">—</option>';
+        }
+    }
+
+    function formatPcapReply(js) {
+        if (!js || typeof js !== 'object') return 'Respuesta no disponible.';
+        if (js.message && js.status === 'error') return js.message;
+        const id = js.capture_id || (js.meta && js.meta.capture_id);
+        const st = js.status || (js.meta && js.meta.status);
+        const lines = [];
+        if (id) lines.push(`Captura: ${id}`);
+        if (st) lines.push(`Estado: ${st}`);
+        if (js.note) lines.push(String(js.note));
+        if (js.meta && js.meta.duration_sec) lines.push(`Duración configurada: ${js.meta.duration_sec}s`);
+        return lines.length ? lines.join('\n') : 'Operación registrada.';
+    }
+
+    function formatPcapActive(stJs) {
+        const act = stJs.active || (stJs.active_captures && stJs.active_captures[0]);
+        if (!act) return 'Sin captura activa.';
+        return `En curso: ${act.capture_id || '—'} · ${act.status || 'running'} · ${act.duration_sec || '?'}s`;
+    }
+
+    async function refreshPcapStatus() {
+        const pre = document.getElementById('pcap-status');
+        try {
+            const cap = await fetch('/api/forensic-pcap/capability', { credentials: 'same-origin' });
+            const capJs = await cap.json();
+            const q = lastPcapId ? `?capture_id=${encodeURIComponent(lastPcapId)}` : '';
+            const st = await fetch('/api/forensic-pcap/status' + q, { credentials: 'same-origin' });
+            const stJs = await st.json();
+            const lst = await fetch('/api/forensic-pcap/list?limit=5', { credentials: 'same-origin' });
+            const lstJs = await lst.json();
+            const capLine = capJs.scapy_available
+                ? `Captura disponible · ${capJs.interfaces_detected || 0} interfaz(es) · Npcap: ${capJs.npcap_or_capture_ready ? 'sí' : 'revisar permisos'}`
+                : (capJs.error || 'Captura PCAP no disponible en este host.');
+            pre.textContent = [
+                capLine,
+                lastPcapId ? formatPcapActive(stJs) : '',
+                'Capturas recientes:',
+                ...(lstJs.captures || []).map(c =>
+                    `${c.capture_id} · ${c.status} · ${c.packet_count || 0} paquetes · hash ${(c.file_sha256 || '—').slice(0, 16)}…`),
+            ].filter(Boolean).join('\n');
+        } catch (err) {
+            pre.textContent = 'No se pudo consultar el estado de captura. Intente de nuevo.';
+        }
+    }
+
+    async function startPcapCapture() {
+        const body = {
+            interface: document.getElementById('pcap-iface').value || null,
+            duration_sec: Number(document.getElementById('pcap-duration').value) || 15,
+            max_mb: Number(document.getElementById('pcap-maxmb').value) || 25,
+            case_id: document.getElementById('pcap-case').value.trim() || null,
+        };
+        const res = await fetch('/api/forensic-pcap/start', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const js = await res.json();
+        lastPcapId = js.capture_id || lastPcapId;
+        document.getElementById('pcap-status').textContent = formatPcapReply(js);
+        setTimeout(refreshPcapStatus, 2000);
+    }
+
+    async function stopPcapCapture() {
+        if (!lastPcapId) { alert('No hay una captura activa.'); return; }
+        const res = await fetch('/api/forensic-pcap/stop', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ capture_id: lastPcapId }),
+        });
+        const js = await res.json();
+        document.getElementById('pcap-status').textContent = formatPcapReply(js) || 'Solicitud de detención enviada.';
+    }
+
+    document.getElementById('btn-pcap-start').addEventListener('click', () => startPcapCapture().catch(e => alert(e)));
+    document.getElementById('btn-pcap-stop').addEventListener('click', () => stopPcapCapture().catch(e => alert(e)));
+    document.getElementById('btn-pcap-refresh').addEventListener('click', () => refreshPcapStatus().catch(e => alert(e)));
+
+    document.getElementById('btn-full-protection').addEventListener('click', startFullProtection);
+    document.getElementById('btn-refresh-catalog').addEventListener('click', () => { loadCatalog().catch(e => alert(e)); loadEngines(); });
+    loadPcapInterfaces();
+    refreshPcapStatus();
+    loadCatalog().catch(e => { document.getElementById('catalog-root').textContent = e.message; });
+    loadEngines();
+    </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!-- Panel de detalle de informe — exclusivo módulo Reportes -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/novus-reports.css') }}">
+<div id="novus-report-detail-overlay" class="novus-report-overlay hidden" aria-hidden="true">
+    <div class="novus-report-dialog" role="dialog" aria-modal="true" aria-labelledby="novus-report-detail-title">
+        <header class="novus-report-dialog-header">
+            <div>
+                <h2 id="novus-report-detail-title">Informe</h2>
+                <p id="novus-report-detail-meta" class="novus-report-meta"></p>
+            </div>
+            <button type="button" class="novus-report-close" id="novus-report-detail-close" aria-label="Cerrar">&times;</button>
+        </header>
+        <nav class="novus-report-tabs" aria-label="Secciones del informe">
+            <button type="button" class="novus-report-tab active" id="novus-report-tab-executive">Informe ejecutivo</button>
+            <button type="button" class="novus-report-tab hidden" id="novus-report-tab-technical">Información técnica</button>
+        </nav>
+        <div id="novus-report-detail-body" class="novus-report-dialog-body">
+            <div id="novus-report-pane-executive"></div>
+            <div id="novus-report-pane-technical" class="hidden"></div>
+        </div>
+        <footer class="novus-report-dialog-footer">
+            <button type="button" class="novus-report-btn secondary" id="novus-report-detail-close-btn">Cerrar</button>
+            <button type="button" class="novus-report-btn primary" id="novus-report-detail-download">
+                <i class="fas fa-file-pdf"></i> Descargar PDF
+            </button>
+        </footer>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/novus-reports-module.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var c = document.getElementById('novus-report-detail-close');
+    var cb = document.getElementById('novus-report-detail-close-btn');
+    if (c) c.addEventListener('click', function () { NovusReports.closeDetail(); });
+    if (cb) cb.addEventListener('click', function () { NovusReports.closeDetail(); });
+});
+</script>

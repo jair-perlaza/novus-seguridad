@@ -1,0 +1,133 @@
+{# Barra lateral principal NOVUS — active_module: dashboard|inteligencia|network|topology|vulnerabilidades|playbooks|reportes|incidentes|xdr|endpoints|configuracion #}
+<aside class="novus-sidebar w-full lg:w-60 lg:h-screen border-r border-gray-800 flex flex-col bg-[#06090f] z-20 flex-shrink-0">
+    <div class="p-5 flex items-center justify-between">
+        <a href="{{ url_for('dashboard.dashboard_principal') }}" class="text-xl font-black tracking-tighter text-white uppercase no-underline">NOVUS</a>
+        <i class="fas fa-shield-halved text-indigo-500 text-xs"></i>
+    </div>
+    <nav class="flex-1 text-sm space-y-0.5 overflow-y-auto px-2 pb-4">
+        {% macro nav_item(module, url, icon, label) %}
+        <a href="{{ url }}" class="novus-nav-item{% if active_module == module %} novus-nav-item-active{% endif %} px-4 py-2.5 flex items-center gap-3 rounded-lg no-underline transition-all text-sm
+            {% if active_module == module %}bg-indigo-600/15 text-indigo-400 border-r-2 border-indigo-500{% else %}text-gray-400 hover:bg-gray-800/40 hover:text-white{% endif %}">
+            <i class="fas {{ icon }} w-5 text-center"></i><span>{{ label }}</span>
+        </a>
+        {% endmacro %}
+
+        {{ nav_item('dashboard', url_for('dashboard.dashboard_principal'), 'fa-th-large', 'Dashboard') }}
+        {{ nav_item('inteligencia', url_for('main.ruta_inteligencia'), 'fa-brain', 'Centro de Inteligencia') }}
+        {% if user.can_access.get('casos_estudio') %}
+        {{ nav_item('casos_estudio', url_for('main.ruta_casos_estudio'), 'fa-folder-open', 'Casos de Estudio') }}
+        {% endif %}
+        {% if user.can_access.get('centro_casos_estudio_novus') %}
+        {{ nav_item('centro_casos_estudio_novus', url_for('main.ruta_centro_casos_estudio_novus'), 'fa-flask', 'Centro Casos NOVUS') }}
+        {% endif %}
+        {% if user.can_access.get('verificador_evidencias') %}
+        {{ nav_item('verificador_evidencias', url_for('main.ruta_verificador_evidencias'), 'fa-fingerprint', 'Verificador Evidencias') }}
+        {% endif %}
+        {{ nav_item('network', url_for('network.network_route'), 'fa-network-wired', 'Network') }}
+        {{ nav_item('topology', url_for('main.ruta_topology'), 'fa-project-diagram', 'Topology') }}
+        {{ nav_item('inventario', url_for('main.ruta_inventario_activos'), 'fa-server', 'Inventario de Activos') }}
+        {{ nav_item('vulnerabilidades', url_for('main.ruta_vulnerabilidades'), 'fa-bug', 'Vulnerabilidades') }}
+        {% if user.can_access.get('xdr') %}
+        {{ nav_item('xdr', url_for('main.ruta_amenazas_realtime'), 'fa-biohazard', 'XDR') }}
+        {% endif %}
+        {% if user.can_access.get('web_shield') %}
+        {{ nav_item('web_shield', url_for('main.ruta_web_shield'), 'fa-globe-americas', 'Web Shield') }}
+        {% endif %}
+        {% if user.can_access.get('mail_shield') %}
+        {{ nav_item('mail_shield', url_for('main.ruta_mail_shield'), 'fa-envelope-open-text', 'Mail Shield') }}
+        {% endif %}
+        {{ nav_item('incidentes', url_for('main.ruta_incidentes'), 'fa-exclamation-triangle', 'Incidentes') }}
+        {{ nav_item('endpoints', url_for('main.ruta_endpoints_realtime'), 'fa-laptop-code', 'Endpoints') }}
+        {% if user.can_access.get('playbooks') %}
+        {{ nav_item('playbooks', url_for('main.ruta_automatizacion'), 'fa-robot', 'Playbooks') }}
+        {% endif %}
+        {{ nav_item('reportes', url_for('main.ruta_reportes_realtime'), 'fa-file-alt', 'Reportes') }}
+        {% if user.can_access.get('accesos') %}
+        {{ nav_item('accesos', url_for('main.ruta_historial_accesos'), 'fa-user-shield', 'Historial Accesos') }}
+        {% endif %}
+        {% if user.can_access.get('centro_bloqueos') %}
+        {{ nav_item('centro_bloqueos', url_for('main.ruta_centro_bloqueos'), 'fa-ban', 'Centro de Bloqueos') }}
+        {% endif %}
+        {% if user.can_access.get('platform_health') %}
+        {{ nav_item('platform_health', url_for('main.ruta_health_center'), 'fa-heartbeat', 'Health Center') }}
+        {{ nav_item('platform_health', url_for('main.ruta_platform_health'), 'fa-stethoscope', 'Platform Health') }}
+        {% endif %}
+        {% if is_v1_nav_visible('threat_intel') %}
+        {{ nav_item('threat_intel', url_for('main.ruta_tie_center'), 'fa-globe', 'Threat Intelligence') }}
+        {% endif %}
+        {% if is_v1_nav_visible('playbook_center') %}
+        {{ nav_item('playbook_center', url_for('main.ruta_playbook_center'), 'fa-cogs', 'Playbook Center') }}
+        {% endif %}
+        {% if is_v1_nav_visible('asm_center') %}
+        {{ nav_item('asm_center', url_for('main.ruta_asm_center'), 'fa-sitemap', 'Asset Intelligence') }}
+        {% endif %}
+        {% if is_v1_nav_visible('viem_center') %}
+        {{ nav_item('viem_center', url_for('main.ruta_viem_center'), 'fa-bug', 'Vulnerability Intel') }}
+        {% endif %}
+        {% if is_v1_nav_visible('imcm_center') %}
+        {{ nav_item('imcm_center', url_for('main.ruta_imcm_center'), 'fa-folder-open', 'Incident Management') }}
+        {% endif %}
+        {% if is_v1_nav_visible('soc_center') %}
+        {{ nav_item('soc_center', url_for('main.ruta_soc_center'), 'fa-shield-halved', 'Security Operations') }}
+        {% endif %}
+        {% if is_v1_nav_visible('sdl_center') %}
+        {{ nav_item('sdl_center', url_for('main.ruta_sdl_center'), 'fa-database', 'Security Data Lake') }}
+        {% endif %}
+        {% if is_v1_nav_visible('sdace_center') %}
+        {{ nav_item('sdace_center', url_for('main.ruta_sdace_center'), 'fa-project-diagram', 'Data Analytics') }}
+        {% endif %}
+        {% if is_v1_nav_visible('identity_intelligence') %}
+        {{ nav_item('identity_intelligence', url_for('main.ruta_identity_intelligence'), 'fa-user-secret', 'Identity Intelligence') }}
+        {% endif %}
+        {% if is_v1_nav_visible('iapa_center') %}
+        {{ nav_item('iapa_center', url_for('main.ruta_iapa_center'), 'fa-route', 'Attack Path') }}
+        {% endif %}
+        {% if is_v1_nav_visible('deception_center') %}
+        {{ nav_item('deception_center', url_for('main.ruta_deception_center'), 'fa-theater-masks', 'Deception') }}
+        {% endif %}
+        {% if is_v1_nav_visible('csv_bas_center') %}
+        {{ nav_item('csv_bas_center', url_for('main.ruta_csv_bas_center'), 'fa-vial', 'Security Validation') }}
+        {% endif %}
+        <div class="px-4 pt-3 pb-1 text-[9px] uppercase tracking-widest text-gray-600 font-bold">Motores de Defensa</div>
+        {% if is_v1_nav_visible('btde_obs') %}
+        {{ nav_item('btde_obs', url_for('main.ruta_btde_observability'), 'fa-user-ninja', 'BTDE') }}
+        {% endif %}
+        {% if is_v1_nav_visible('zdde_obs') %}
+        {{ nav_item('zdde_obs', url_for('main.ruta_zdde'), 'fa-bolt', 'ZDDE') }}
+        {% endif %}
+        {% if is_v1_nav_visible('swarm_obs') %}
+        {{ nav_item('swarm_obs', url_for('main.ruta_swarm_defense'), 'fa-users-cog', 'Swarm Defense') }}
+        {% endif %}
+        {% if is_v1_nav_visible('mesh_obs') %}
+        {{ nav_item('mesh_obs', url_for('main.ruta_swarm_mesh_observability'), 'fa-project-diagram', 'Swarm Mesh') }}
+        {% endif %}
+        {% if is_v1_nav_visible('adaptive_profile_obs') %}
+        {{ nav_item('adaptive_profile_obs', url_for('main.ruta_adaptive_profile_observability'), 'fa-sliders-h', 'Adaptive Profile') }}
+        {% endif %}
+        {% if is_v1_nav_visible('wsae_obs') %}
+        {{ nav_item('wsae_obs', url_for('main.ruta_wsae_observability'), 'fa-key', 'WSAE') }}
+        {% endif %}
+        {% if is_v1_nav_visible('cryptovault_obs') %}
+        {{ nav_item('cryptovault_obs', url_for('main.ruta_cryptovault_observability'), 'fa-lock', 'CryptoVault') }}
+        {% endif %}
+        {% if user.can_access.get('centro_evidencias') %}
+        {{ nav_item('centro_evidencias', url_for('main.ruta_centro_evidencias'), 'fa-fingerprint', 'Centro de Evidencias') }}
+        {% endif %}
+        {% if user.can_access.get('compliance_center') %}
+        {{ nav_item('compliance_center', url_for('main.ruta_compliance_center'), 'fa-balance-scale', 'Compliance Center') }}
+        {% endif %}
+        {% if user.can_access.get('centro_defensa') or user.can_access.get('manual_defense_center') %}
+        {{ nav_item('centro_defensa', url_for('main.ruta_centro_defensa'), 'fa-shield-virus', 'Centro de Defensa') }}
+        {% endif %}
+        {{ nav_item('historial_dispositivos', url_for('main.ruta_historial_dispositivos'), 'fa-plug', 'Historial Dispositivos') }}
+        {{ nav_item('historial_seguridad_red', url_for('main.ruta_historial_seguridad_red'), 'fa-history', 'Historial de Seguridad') }}
+        {% if user.can_access.get('configuracion') %}
+        {{ nav_item('configuracion', url_for('main.ruta_configuracion'), 'fa-cog', 'Configuración') }}
+        {% endif %}
+    </nav>
+    <div class="p-3 m-3 rounded-xl border border-gray-800 bg-[#0a0f18] text-[10px] text-center text-gray-500">
+        {% if user is defined and user.nodo %}{{ user.nodo }}{% else %}NOVUS SOC{% endif %}
+        {% include 'partials/kernel_consult_btn.html' %}
+    </div>
+</aside>
+{% include 'partials/ai_kernel_panel.html' %}

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — Mail Shield</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>body{background:#06090f;color:#e2e8f0;font-family:Inter,sans-serif}.ms-card{background:#0c121d;border:1px solid #1e293b;border-radius:12px}</style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="mail_shield">
+{% set active_module = 'mail_shield' %}
+{% include 'partials/novus_nav_sidebar.html' %}
+<main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+{% if monitoring_not_configured %}
+<div class="ms-card p-4 text-amber-200">{{ monitoring_message }}</div>
+{% else %}
+<header>
+    <h1 class="text-2xl font-bold uppercase tracking-tighter">NOVUS Mail Shield</h1>
+    <p class="text-[10px] text-gray-500 uppercase">Google Workspace · Microsoft 365 — OAuth 2.0 oficial</p>
+    <p id="ms-integ-msg" class="text-sm text-indigo-300 mt-2"></p>
+</header>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-center">
+    <div class="ms-card p-3"><div class="text-gray-500">Analizados</div><div id="ms-analyzed" class="text-xl font-bold">—</div></div>
+    <div class="ms-card p-3"><div class="text-gray-500">Cuarentena</div><div id="ms-q" class="text-xl font-bold text-amber-400">—</div></div>
+    <div class="ms-card p-3"><div class="text-gray-500">Phishing</div><div id="ms-phish" class="text-xl font-bold text-red-400">—</div></div>
+    <div class="ms-card p-3"><div class="text-gray-500">Último análisis</div><div id="ms-last" class="text-[10px] mt-2">—</div></div>
+</div>
+<div class="flex flex-wrap gap-2">
+    <a href="/api/mail-shield/google/oauth/start" class="px-4 py-2 bg-red-900/40 border border-red-500/50 rounded text-sm">Conectar Google Workspace</a>
+    <a href="/api/mail-shield/m365/oauth/start" class="px-4 py-2 bg-blue-900/40 border border-blue-500/50 rounded text-sm">Conectar Microsoft 365</a>
+    <button type="button" id="ms-sync" class="px-4 py-2 bg-indigo-600 rounded text-sm font-bold">Sincronizar ahora</button>
+</div>
+<div class="ms-card p-4">
+    <h2 class="text-sm font-bold mb-2">Eventos</h2>
+    <div id="ms-events" class="text-xs font-mono max-h-64 overflow-y-auto">No existen datos disponibles</div>
+</div>
+<div class="ms-card p-4">
+    <h2 class="text-sm font-bold mb-2">Cuarentena</h2>
+    <div id="ms-quarantine" class="text-xs">No existen datos disponibles</div>
+</div>
+{% endif %}
+</main>
+{% include 'partials/ai_kernel_panel.html' %}
+<script>
+async function refreshMailShield(){
+  try{
+    const st=await fetch('/api/mail-shield/status').then(r=>r.json());
+    const s=st.stats||{};
+    document.getElementById('ms-integ-msg').textContent=(st.integrations&&st.integrations.summary_message)||'';
+    if(!s.has_data){
+      ['ms-analyzed','ms-q','ms-phish'].forEach(id=>document.getElementById(id).textContent='No existen datos disponibles');
+      document.getElementById('ms-last').textContent='No existen datos disponibles';
+      return;
+    }
+    document.getElementById('ms-analyzed').textContent=s.emails_analyzed;
+    document.getElementById('ms-q').textContent=s.emails_quarantined;
+    document.getElementById('ms-phish').textContent=s.phishing_detected;
+    document.getElementById('ms-last').textContent=s.last_analysis_at;
+    const ev=await fetch('/api/mail-shield/events?limit=25').then(r=>r.json());
+    const box=document.getElementById('ms-events');
+    if(ev.events&&ev.events.length){
+      box.innerHTML=ev.events.map(e=>'<div>'+e.timestamp+' · '+e.event_type+' · '+((e.subject||'').substring(0,60))+'</div>').join('');
+    }
+    const q=await fetch('/api/mail-shield/quarantine').then(r=>r.json());
+    const qb=document.getElementById('ms-quarantine');
+    if(q.items&&q.items.length) qb.innerHTML=q.items.map(i=>'<div>'+i.timestamp+' · '+i.reason+' · '+i.message_id+'</div>').join('');
+  }catch(e){console.error(e);}
+}
+document.getElementById('ms-sync')?.addEventListener('click',()=>fetch('/api/mail-shield/sync',{method:'POST'}).then(refreshMailShield));
+{% if not monitoring_not_configured %}refreshMailShield();setInterval(refreshMailShield,15000);{% endif %}
+</script>
+</body>
+</html>

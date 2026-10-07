@@ -1,0 +1,9 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/novus-responsive.css') }}">
+<script src="{{ url_for('static', filename='js/novus-dom-safe.js') }}"></script>
+<script src="{{ url_for('static', filename='js/novus-progressive-fetch.js') }}"></script>
+<script src="{{ url_for('static', filename='js/novus-recovery-client.js') }}" defer></script>
+<script>
+document.documentElement.classList.add('novus-responsive-root');
+if (document.body) document.body.classList.add('novus-responsive');
+else document.addEventListener('DOMContentLoaded', () => document.body.classList.add('novus-responsive'));
+</script>

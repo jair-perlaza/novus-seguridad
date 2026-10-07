@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NOVUS</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: radial-gradient(ellipse at 50% 30%, #111827 0%, #06090f 55%);
+            color: #e2e8f0;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .wrap { max-width: 480px; text-align: center; }
+        .pulse {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 24px;
+            border-radius: 50%;
+            border: 3px solid rgba(99, 102, 241, 0.25);
+            border-top-color: #6366f1;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        h1 { font-size: 18px; font-weight: 600; margin: 0 0 12px; color: #a5b4fc; letter-spacing: 0.02em; }
+        p { font-size: 14px; line-height: 1.6; color: #94a3b8; margin: 0 0 8px; }
+        .dots::after { content: ''; animation: dots 1.4s steps(4, end) infinite; }
+        @keyframes dots {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+        }
+        .meta { font-size: 11px; color: #475569; margin-top: 20px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="pulse" aria-hidden="true"></div>
+        <h1>{{ message or 'NOVUS está recuperando el servicio...' }}<span class="dots"></span></h1>
+        <p id="retry-hint">Reintentando automáticamente</p>
+        <p class="meta" id="attempt-label">Intento 1</p>
+    </div>
+    <script>
+(function () {
+    var retryUrl = {{ (retry_url or '/')|tojson }};
+    var loginRequired = {{ 'true' if login_required else 'false' }};
+    var attempt = 0;
+    var maxAttempts = 12;
+    var delayMs = 3000;
+
+    function label() {
+        var el = document.getElementById('attempt-label');
+        if (el) el.textContent = 'Intento ' + attempt + ' de ' + maxAttempts;
+    }
+
+    function goLogin() {
+        window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname || '/');
+    }
+
+    function retry() {
+        attempt += 1;
+        label();
+        if (loginRequired && attempt > 2) {
+            goLogin();
+            return;
+        }
+        if (attempt > maxAttempts) {
+            window.location.href = '/';
+            return;
+        }
+        fetch(retryUrl, { credentials: 'same-origin', headers: { 'Accept': 'text/html,application/json' } })
+            .then(function (r) {
+                if (r.ok && !r.headers.get('X-Novus-Recovery')) {
+                    window.location.reload();
+                    return;
+                }
+                setTimeout(retry, delayMs);
+            })
+            .catch(function () { setTimeout(retry, delayMs); });
+    }
+
+    setTimeout(retry, 800);
+})();
+    </script>
+</body>
+</html>

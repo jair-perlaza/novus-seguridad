@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <title>ZDDE — Zero-Day Detection Observability</title>
+  <style>
+    :root { --bg:#0f1419; --fg:#e7ecf1; --muted:#8b9aab; --acc:#e8a317; --ok:#3dd68c; --card:#1a222c; }
+    body { margin:0; font-family: "Segoe UI", system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+    main { max-width:960px; margin:0 auto; padding:2rem 1.25rem; }
+    h1 { font-size:1.4rem; font-weight:600; margin:0 0 .25rem; }
+    h2 { font-size:1rem; margin:1.75rem 0 .75rem; }
+    .sub { color:var(--muted); font-size:.9rem; margin-bottom:1.5rem; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+    .card { background:var(--card); border:1px solid #2a3542; border-radius:8px; padding:14px 16px; }
+    .card .k { color:var(--muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
+    .card .v { font-size:1.25rem; margin-top:6px; font-variant-numeric:tabular-nums; word-break:break-word; }
+    pre { background:var(--card); border:1px solid #2a3542; border-radius:8px; padding:12px; overflow:auto; font-size:.8rem; }
+    a { color:var(--acc); }
+    button { background:transparent; border:1px solid #5a4a20; color:var(--acc); padding:8px 14px; border-radius:6px; cursor:pointer; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>ZDDE — Zero-Day Detection Engine</h1>
+  <p class="sub">Correlación multicapa de comportamiento. Sin firmas como método principal. Sin claim de CVE zero-day universal. Campos vacíos se omiten.</p>
+  <p><button type="button" id="run">Ejecutar ciclo</button></p>
+  <div class="grid" id="cards"></div>
+  <h2>Detalle</h2>
+  <pre id="raw">Cargando…</pre>
+  <p class="sub"><a href="/api/zdde/dashboard">API dashboard</a> · <a href="/api/zdde/limitations">Limitaciones</a> · <a href="/centro-defensa">Centro de Defensa</a></p>
+</main>
+<script>
+function card(k,v){
+  if (v === undefined || v === null || v === '') return '';
+  return `<div class="card"><div class="k">${k}</div><div class="v">${typeof v === 'object' ? JSON.stringify(v) : v}</div></div>`;
+}
+async function load() {
+  const r = await fetch('/api/zdde/dashboard', {credentials:'same-origin'});
+  const d = await r.json();
+  const dash = d.dashboard || {};
+  document.getElementById('raw').textContent = JSON.stringify(d, null, 2);
+  const items = [
+    ['Estado', dash.state],
+    ['Clasificación', dash.classification],
+    ['Riesgo', dash.risk && (dash.risk.score + ' / ' + dash.risk.level)],
+    ['Confianza', dash.confidence_level],
+    ['Motores señal', dash.motors_participants],
+    ['Capas online', dash.layers_online],
+    ['Explicación', dash.explanation],
+    ['Análisis (ms)', dash.analysis_time_ms],
+    ['Ciclos', dash.stats && dash.stats.cycles],
+    ['Eventos analizados', dash.stats && dash.stats.events_analyzed],
+    ['Candidatos', dash.stats && dash.stats.candidates],
+    ['Insuficiente', dash.stats && dash.stats.insufficient],
+    ['Detecta todos 0-day', dash.claims && dash.claims.detects_all_zero_days === false ? 'NO' : null],
+  ];
+  document.getElementById('cards').innerHTML = items.map(([k,v]) => card(k,v)).filter(Boolean).join('') || card('Datos', 'Sin ciclo aún');
+}
+document.getElementById('run').onclick = async () => {
+  document.getElementById('raw').textContent = 'Ejecutando…';
+  await fetch('/api/zdde/cycle', {method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body:'{}'});
+  await load();
+};
+load().catch(e => { document.getElementById('raw').textContent = String(e); });
+setInterval(load, 15000);
+</script>
+</body>
+</html>

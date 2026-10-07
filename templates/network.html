@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Network NDR Radar</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #010204; color: #00f2ff; font-family: monospace; }
+
+        .novus-container {
+            display: flex; flex-direction: column;
+            min-height: 100vh; max-height: 100vh;
+            padding: clamp(8px, 2vw, 16px); gap: 10px;
+            overflow: hidden;
+        }
+        @media (max-width: 767px) {
+            .novus-container { max-height: none; min-height: 100vh; overflow-y: auto; }
+        }
+
+        .tech-header {
+            border-bottom: 1px solid #00f2ff33;
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: clamp(10px, 2.5vw, 12px); padding-bottom: 8px; gap: 8px; flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+        .header-links { display: flex; flex-wrap: wrap; gap: 8px; }
+        .header-links a { color: #00f2ff; text-decoration: none; font-size: 11px; }
+        .header-links a.logout { color: #ff3131; }
+
+        .ndr-status-bar {
+            display: flex; flex-wrap: wrap; gap: 12px; font-size: 10px;
+            padding: 6px 0; flex-shrink: 0;
+        }
+        .status-pill {
+            padding: 3px 10px; border-radius: 12px; border: 1px solid;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .status-pill.seguro { border-color: #39ff1444; color: #39ff14; }
+        .status-pill.observacion { border-color: #ffcc0044; color: #ffcc00; }
+        .status-pill.riesgo { border-color: #ff993344; color: #ff9933; }
+        .status-pill.critico { border-color: #ff313144; color: #ff3131; }
+
+        .network-body {
+            flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0;
+        }
+        @media (min-width: 768px) {
+            .network-body { flex-direction: row; }
+        }
+
+        .info-panel {
+            border: 1px solid #00f2ff22; background: rgba(5, 15, 30, 0.95);
+            border-radius: 8px; padding: 12px; overflow-y: auto; font-size: 10px;
+            flex: 0 0 auto; max-height: 35vh;
+        }
+        @media (min-width: 768px) {
+            .info-panel { width: min(300px, 30vw); max-height: none; flex-shrink: 0; }
+        }
+
+        .info-panel h3 { color: #00f2ff; font-size: 11px; margin-bottom: 10px; letter-spacing: 1px; }
+        .info-row { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid #00f2ff11; }
+        .info-label { color: #6b8fa3; flex-shrink: 0; }
+        .info-value { color: #39ff14; text-align: right; word-break: break-all; }
+
+        .section-title {
+            font-size: 10px; color: #00f2ff; margin: 12px 0 6px;
+            border-top: 1px solid #00f2ff22; padding-top: 8px;
+        }
+
+        .top-traffic-item, .unknown-item, .alert-item {
+            padding: 5px 0; border-bottom: 1px solid #00f2ff11;
+            font-size: 9px; color: #dbe7ff; cursor: pointer;
+        }
+        .top-traffic-item:hover, .unknown-item:hover { background: rgba(0,242,255,0.05); }
+        .alert-item { cursor: default; color: #ffcc00; }
+
+        .discovery-notice {
+            border: 1px solid #ffcc0044;
+            background: rgba(255, 204, 0, 0.08);
+            color: #ffcc00;
+            font-size: 10px;
+            line-height: 1.5;
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+        .discovery-notice.normal {
+            border-color: #39ff1444;
+            background: rgba(57, 255, 20, 0.06);
+            color: #39ff14;
+        }
+        .freshness-pill {
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid #00f2ff44;
+            color: #00f2ff;
+        }
+        .freshness-pill.stale { border-color: #ff993344; color: #ff9933; }
+        .freshness-pill.cached { border-color: #ffcc0044; color: #ffcc00; }
+        .hidden { display: none !important; }
+
+        .radar-log-container {
+            flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0;
+        }
+        @media (min-width: 900px) {
+            .radar-log-container { flex-direction: row; }
+        }
+
+        .radar-zone {
+            border: 1px solid #00f2ff22; background: #000; position: relative;
+            border-radius: 8px; flex: 1 1 55%; min-height: 180px;
+            max-height: min(48vh, 440px); display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        @media (min-width: 900px) {
+            .radar-zone { max-height: none; min-height: 220px; }
+        }
+
+        .radar-overlay {
+            position: absolute; top: 8px; left: 8px; right: 8px;
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;
+            font-size: 9px; opacity: 0.85; z-index: 2; pointer-events: none;
+        }
+
+        #novusRadar { display: block; max-width: 100%; max-height: 100%; cursor: crosshair; }
+
+        .log-zone {
+            flex: 1 1 40%; min-height: 140px; max-height: min(32vh, 260px);
+            background: rgba(5, 15, 30, 0.95); border: 1px solid #00f2ff22;
+            padding: 12px; border-radius: 8px; overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        @media (min-width: 900px) {
+            .log-zone { max-height: none; min-width: 260px; max-width: 38%; }
+        }
+        .log-zone h3 { font-size: 11px; margin-bottom: 8px; color: #00f2ff; flex-shrink: 0; }
+        #realtime-logs { flex: 1; overflow-y: auto; min-height: 0; }
+
+        .log-entry { font-size: 10px; color: #39ff14; margin-bottom: 6px; border-left: 2px solid #39ff14; padding-left: 8px; }
+        .log-entry.warn { color: #ffcc00; border-left-color: #ffcc00; }
+        .log-entry.alert { color: #ff3131; border-left-color: #ff3131; font-weight: bold; }
+        .log-entry.info { color: #7dd3fc; border-left-color: #7dd3fc; }
+
+        .btn-scan {
+            margin-top: 8px; width: 100%; background: rgba(0, 242, 255, 0.08);
+            border: 1px solid #00f2ff55; color: #00f2ff; padding: 8px; cursor: pointer;
+            border-radius: 6px; font-size: 10px; font-weight: bold;
+        }
+        .btn-scan:hover { background: rgba(0, 242, 255, 0.15); }
+
+        /* Panel lateral de detalle */
+        .device-panel {
+            position: fixed; top: 0; right: -420px; width: min(400px, 95vw);
+            height: 100vh; background: rgba(3, 10, 22, 0.98);
+            border-left: 1px solid #00f2ff44; z-index: 1000;
+            transition: right 0.35s ease; overflow-y: auto;
+            padding: 16px; font-size: 10px;
+        }
+        .device-panel.open { right: 0; }
+        .device-panel h2 { font-size: 13px; color: #00f2ff; margin-bottom: 12px; }
+        .device-panel .close-btn {
+            position: absolute; top: 12px; right: 12px;
+            background: none; border: none; color: #ff3131; font-size: 18px; cursor: pointer;
+        }
+        .panel-section { margin-bottom: 14px; }
+        .panel-section h4 { color: #6b8fa3; font-size: 10px; margin-bottom: 6px; text-transform: uppercase; }
+        .panel-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #00f2ff11; }
+        .panel-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
+        .panel-tab {
+            padding: 4px 8px; border: 1px solid #00f2ff33; background: transparent;
+            color: #00f2ff; cursor: pointer; border-radius: 4px; font-size: 9px;
+        }
+        .panel-tab.active { background: rgba(0,242,255,0.12); border-color: #00f2ff; }
+        .panel-content { display: none; }
+        .panel-content.active { display: block; }
+        .panel-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+        .panel-actions button {
+            flex: 1 1 45%; padding: 7px; font-size: 9px;
+            border: 1px solid #00f2ff55; background: rgba(0,242,255,0.06);
+            color: #00f2ff; cursor: pointer; border-radius: 5px;
+        }
+        .panel-actions button:hover { background: rgba(0,242,255,0.14); }
+        .risk-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 9px;
+        }
+        .risk-badge.seguro { background: #39ff1422; color: #39ff14; }
+        .risk-badge.observacion { background: #ffcc0022; color: #ffcc00; }
+        .risk-badge.riesgo { background: #ff993322; color: #ff9933; }
+        .risk-badge.critico { background: #ff313122; color: #ff3131; }
+
+        @keyframes soft-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.65; }
+        }
+        .pulse-indicator { animation: soft-pulse 2.5s ease-in-out infinite; }
+
+        /* Resumen ejecutivo */
+        .exec-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px; padding: 10px 12px;
+            border: 1px solid #00f2ff22; border-radius: 8px;
+            background: rgba(5, 15, 30, 0.85); flex-shrink: 0;
+        }
+        .exec-card {
+            padding: 6px 8px; border-left: 2px solid #00f2ff44;
+            font-size: 9px;
+        }
+        .exec-card .exec-label { color: #6b8fa3; display: block; margin-bottom: 2px; }
+        .exec-card .exec-value { color: #39ff14; font-size: 11px; font-weight: bold; }
+        .exec-card.warn .exec-value { color: #ffcc00; }
+        .exec-card.crit .exec-value { color: #ff3131; }
+
+        /* Leyenda radar */
+        .radar-legend {
+            position: absolute; bottom: 8px; left: 8px; right: 8px;
+            display: flex; flex-wrap: wrap; gap: 6px 10px; justify-content: center;
+            font-size: 8px; color: #6b8fa3; z-index: 2; pointer-events: none;
+            background: rgba(0, 0, 0, 0.55); padding: 4px 8px; border-radius: 6px;
+        }
+        .radar-legend span { white-space: nowrap; }
+
+        .unknown-section { border: 1px solid #ffcc0033; border-radius: 6px; padding: 6px; margin-top: 4px; }
+        .unknown-item { padding: 6px 0; }
+        .btn-investigate {
+            margin-top: 4px; padding: 4px 8px; font-size: 8px;
+            border: 1px solid #ffcc0066; background: rgba(255,204,0,0.08);
+            color: #ffcc00; cursor: pointer; border-radius: 4px; width: 100%;
+        }
+        .btn-investigate:hover { background: rgba(255,204,0,0.18); }
+        .btn-investigate:disabled { opacity: 0.5; cursor: wait; }
+
+        .top-traffic-item .traffic-detail { color: #6b8fa3; font-size: 8px; margin-top: 2px; }
+
+        .log-explanation {
+            font-size: 9px; color: #94a3b8; margin: 2px 0 8px 12px;
+            padding-left: 8px; border-left: 1px solid #00f2ff22;
+        }
+        .field-reason { font-size: 8px; color: #64748b; display: block; margin-top: 1px; }
+
+        @keyframes device-appear {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .metric-flash { transition: color 0.4s ease; }
+        .metric-flash.updated { color: #00f2ff; }
+    </style>
+</head>
+<body data-novus-module="network">
+
+<div class="novus-container">
+    <div class="tech-header">
+        <div><strong>NOVUS | NETWORK NDR</strong> — <span id="scan-status">Inicializando...</span></div>
+        {% if monitoring_not_configured %}
+        <div id="monitoring-not-configured-banner" class="status-pill" style="border-color:#f59e0b;color:#fcd34d;width:100%;justify-content:center;margin-top:8px;">
+            {{ monitoring_message or 'El monitoreo de red aún no está configurado para esta empresa.' }}
+        </div>
+        {% endif %}
+        <div class="header-links">
+            <a href="{{ url_for('dashboard.dashboard_principal') }}"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="/topology"><i class="fas fa-project-diagram"></i> Topology</a>
+            <a href="{{ url_for('main.ruta_configuracion') }}"><i class="fas fa-cog"></i> Config</a>
+            <a href="{{ url_for('auth.logout_seguro') }}" class="logout"><i class="fas fa-sign-out-alt"></i> Salir</a>
+            <button type="button" class="btn-investigate" style="width:auto;padding:4px 10px;margin:0;" onclick="consultKernelIA('network', window.NovusModuleExtra || {})" title="Consultar Kernel IA con contexto de red">
+                <i class="fas fa-brain"></i> Consultar Kernel IA
+            </button>
+        </div>
+    </div>
+
+    <div class="ndr-status-bar" id="ndr-status-bar">
+        <span class="status-pill seguro"><span>🟢</span> Seguro: <strong id="count-seguro">0</strong></span>
+        <span class="status-pill observacion"><span>🟡</span> Observación: <strong id="count-observacion">0</strong></span>
+        <span class="status-pill riesgo"><span>🟠</span> Riesgo: <strong id="count-riesgo">0</strong></span>
+        <span class="status-pill critico"><span>🔴</span> Crítico: <strong id="count-critico">0</strong></span>
+        <span class="status-pill observacion"><span>⚫</span> Pendiente AIE: <strong id="count-unknown">0</strong></span>
+    </div>
+
+    <div class="exec-summary" id="exec-summary">
+        <div class="exec-card"><span class="exec-label">Estado general</span><span class="exec-value" id="exec-overall">—</span></div>
+        <div class="exec-card"><span class="exec-label">Salud de red</span><span class="exec-value" id="exec-health">—</span></div>
+        <div class="exec-card"><span class="exec-label">Observados (live)</span><span class="exec-value" id="exec-devices">—</span></div>
+        <div class="exec-card warn"><span class="exec-label">En observación</span><span class="exec-value" id="exec-observation">—</span></div>
+        <div class="exec-card crit"><span class="exec-label">Riesgos críticos</span><span class="exec-value" id="exec-critical">—</span></div>
+        <div class="exec-card warn"><span class="exec-label">Amenazas activas</span><span class="exec-value" id="exec-threats">—</span></div>
+        <div class="exec-card"><span class="exec-label">Último análisis</span><span class="exec-value" id="exec-last">—</span></div>
+        <div class="exec-card"><span class="exec-label">Protección</span><span class="exec-value" id="exec-protection">—</span></div>
+    </div>
+
+    <div id="discovery-notice" class="discovery-notice hidden"></div>
+
+    <div class="network-body">
+        <div class="info-panel">
+            <h3><i class="fas fa-network-wired"></i> CENTRO NDR</h3>
+            <div class="info-row"><span class="info-label">IP local</span><span class="info-value" id="info-local-ip">—</span></div>
+            <div class="info-row"><span class="info-label">Gateway</span><span class="info-value" id="info-gateway">—</span></div>
+            <div class="info-row"><span class="info-label">Red CIDR</span><span class="info-value" id="info-range">—</span></div>
+            <div class="info-row"><span class="info-label">Máscara</span><span class="info-value" id="info-netmask">—</span></div>
+            <div class="info-row"><span class="info-label">SSID</span><span class="info-value" id="info-ssid">—</span></div>
+            <div class="info-row"><span class="info-label">Freshness</span><span class="info-value"><span class="freshness-pill" id="info-freshness">—</span></span></div>
+            <div class="info-row"><span class="info-label">Observados (live)</span><span class="info-value" id="info-node-count">—</span></div>
+            <div class="info-row"><span class="info-label">Pendientes AIE</span><span class="info-value" id="info-unknown-count">—</span></div>
+            <div class="info-row"><span class="info-label">Alertas NDR</span><span class="info-value" id="info-alert-count">—</span></div>
+            <div class="info-row"><span class="info-label">Último escaneo</span><span class="info-value" id="info-last-scan">—</span></div>
+            <button class="btn-scan" onclick="iniciarEscaneo()"><i class="fas fa-satellite-dish"></i> ESCANEO ARP</button>
+
+            <div class="section-title"><i class="fas fa-chart-bar"></i> TOP 5 TRÁFICO / ACTIVIDAD</div>
+            <div id="top-traffic-list"><div class="top-traffic-item">Sin datos disponibles</div></div>
+
+            <div class="section-title"><i class="fas fa-clipboard-check"></i> PENDIENTES DE APROBACIÓN (AIE)</div>
+            <div id="unknown-list" class="unknown-section"><div class="unknown-item">Sin dispositivos pendientes</div></div>
+
+            <div class="section-title"><i class="fas fa-satellite"></i> MOTOR DE MONITOREO DE RED</div>
+            <div id="nme-panel" class="unknown-section" style="font-size:10px;line-height:1.6;">
+                <div class="info-row"><span class="info-label">Estado</span><span class="info-value" id="nme-status">—</span></div>
+                <div class="info-row"><span class="info-label">Último escaneo</span><span class="info-value" id="nme-last-scan">—</span></div>
+                <div class="info-row"><span class="info-label">Próximo escaneo</span><span class="info-value" id="nme-next-scan">—</span></div>
+                <div class="info-row"><span class="info-label">Modo actual</span><span class="info-value" id="nme-mode">—</span></div>
+                <div class="info-row"><span class="info-label">Monitorizados</span><span class="info-value" id="nme-devices">—</span></div>
+                <div class="info-row"><span class="info-label">Autorizados</span><span class="info-value" id="nme-authorized">—</span></div>
+                <div class="info-row"><span class="info-label">Pendientes</span><span class="info-value" id="nme-pending">—</span></div>
+                <div class="info-row"><span class="info-label">Cambios hoy</span><span class="info-value" id="nme-changes">—</span></div>
+                <div class="info-row"><span class="info-label">Actividad monitor</span><span class="info-value" id="nme-uptime">—</span></div>
+                <div class="info-row"><span class="info-label">CPU NOVUS</span><span class="info-value" id="nme-cpu">—</span></div>
+                <div class="info-row"><span class="info-label">RAM NOVUS</span><span class="info-value" id="nme-ram">—</span></div>
+            </div>
+
+            <div class="section-title"><i class="fas fa-plug"></i> CONEXIONES / DESCONEXIONES</div>
+            <div id="connection-events-list" class="unknown-section"><div class="unknown-item">Sin eventos — requieren escaneos ARP consecutivos</div></div>
+        </div>
+
+        <div class="radar-log-container">
+            <div class="radar-zone" id="radar-zone">
+                <div class="radar-overlay">
+                    <span id="network-segment-label">NDR ACTIVO</span>
+                    <span id="radar-device-count">0 en radar</span>
+                </div>
+                <canvas id="novusRadar"></canvas>
+                <div class="radar-legend">
+                    <span>🟢 Seguro</span>
+                    <span>🟡 En observación</span>
+                    <span>🟠 Riesgo alto</span>
+                    <span>🔴 Riesgo crítico</span>
+                    <span>⚫ Dispositivo desconocido</span>
+                </div>
+            </div>
+
+            <div class="log-zone">
+                <h3><i class="fas fa-stream"></i> EVENTOS Y ALERTAS NDR</h3>
+                <div id="realtime-logs">
+                    <div class="log-entry info">Cargando telemetría real...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Panel de detalle de dispositivo -->
+<div class="device-panel" id="device-panel">
+    <button class="close-btn" onclick="cerrarPanel()">&times;</button>
+    <h2 id="panel-title">Dispositivo</h2>
+    <div id="panel-known-badge"></div>
+    <div class="panel-tabs">
+        <button class="panel-tab active" data-tab="general" onclick="switchTab('general')">General</button>
+        <button class="panel-tab" data-tab="historial" onclick="switchTab('historial')">Historial</button>
+        <button class="panel-tab" data-tab="puertos" onclick="switchTab('puertos')">Puertos</button>
+        <button class="panel-tab" data-tab="consumo" onclick="switchTab('consumo')">Consumo</button>
+        <button class="panel-tab" data-tab="riesgo" onclick="switchTab('riesgo')">Riesgo</button>
+        <button class="panel-tab" data-tab="proteccion" onclick="switchTab('proteccion')">Protección</button>
+    </div>
+    <div id="tab-general" class="panel-content active"></div>
+    <div id="tab-historial" class="panel-content"></div>
+    <div id="tab-puertos" class="panel-content"></div>
+    <div id="tab-consumo" class="panel-content"></div>
+    <div id="tab-riesgo" class="panel-content"></div>
+    <div id="tab-proteccion" class="panel-content"></div>
+    <div class="panel-actions">
+        <button onclick="accionEscanear()"><i class="fas fa-search"></i> Escanear</button>
+        <button onclick="accionActualizar()"><i class="fas fa-sync"></i> Actualizar</button>
+        <button onclick="switchTab('historial')"><i class="fas fa-history"></i> Ver historial</button>
+        <button onclick="switchTab('consumo')"><i class="fas fa-chart-line"></i> Analizar tráfico</button>
+        <button onclick="accionReporte()"><i class="fas fa-file-alt"></i> Generar reporte</button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/novus-metrics.js') }}"></script>
+<script>
+    function formatAlertEvidence(alert) {
+        if (!alert) return 'Sin datos disponibles';
+        if (alert.plain_explanation) return alert.plain_explanation;
+        if (typeof alert.evidence === 'string') return alert.evidence;
+        if (typeof NovusMetrics !== 'undefined') return NovusMetrics.formatEvidenceValue(alert.evidence);
+        return 'Sin datos disponibles';
+    }
+
+    const canvas = document.getElementById('novusRadar');
+    const ctx = canvas.getContext('2d');
+    const radarZone = document.getElementById('radar-zone');
+    let scanAngle = 0;
+    let ndrData = { nodes: [], alerts: [], top_traffic: [], unknown_devices: [], meta: {} };
+    let networkEvents = [];
+    let nodePositions = [];
+    let selectedIp = null;
+    let dpr = window.devicePixelRatio || 1;
+    let prevNodeIps = new Set();
+    let newDeviceIps = new Set();
+    let appearAnim = {};
+
+    const RISK_COLORS = {
+        seguro: '#39ff14',
+        observacion: '#ffcc00',
+        riesgo: '#ff9933',
+        critico: '#ff3131',
+    };
+
+    function displayField(field) {
+        if (field && typeof field === 'object' && field.display !== undefined) return field.display;
+        return fmt(field);
+    }
+
+    function fmt(val) {
+        if (val === null || val === undefined || val === '' || val === 'Sin datos disponibles') {
+            return '—';
+        }
+        return String(val);
+    }
+
+    function fmtBytes(n) {
+        if (typeof n !== 'number') return fmt(n);
+        if (n >= 1073741824) return (n / 1073741824).toFixed(2) + ' GB';
+        if (n >= 1048576) return (n / 1048576).toFixed(2) + ' MB';
+        if (n >= 1024) return (n / 1024).toFixed(2) + ' KB';
+        return n + ' B';
+    }
+
+    function resizeRadar() {
+        const rect = radarZone.getBoundingClientRect();
+        const size = Math.floor(Math.min(rect.width - 16, rect.height - 16, 520));
+        if (size < 80) return;
+        canvas.width = size * dpr;
+        canvas.height = size * dpr;
+        canvas.style.width = size + 'px';
+        canvas.style.height = size + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function setText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value ?? 'Sin datos disponibles';
+    }
+
+    let ndrRevision = 0;
+    let monitorRevision = 0;
+    let pollMs = 3000;
+    let pollTimer = null;
+
+    function schedulePoll() {
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(() => { cargarMonitor(); cargarNDR(false); }, pollMs);
+    }
+
+    async function cargarMonitor() {
+        try {
+            const r = await fetch('/api/network/monitor/status', { credentials: 'same-origin' });
+            const data = await r.json();
+            if (data.status !== 'success' || !data.monitor) return;
+            const m = data.monitor;
+            flashMetric('nme-status', m.status === 'activo' ? 'Activo' : 'Inactivo');
+            flashMetric('nme-last-scan', m.last_scan_label || '—');
+            flashMetric('nme-next-scan', m.next_scan_label || '—');
+            flashMetric('nme-mode', m.mode_label || m.mode || '—');
+            flashMetric('nme-devices', String(m.devices_monitored ?? '—'));
+            flashMetric('nme-authorized', String(m.devices_authorized ?? '—'));
+            flashMetric('nme-pending', String(m.devices_pending ?? '—'));
+            flashMetric('nme-changes', String(m.changes_today ?? '—'));
+            flashMetric('nme-uptime', m.uptime_label || '—');
+            flashMetric('nme-cpu', m.cpu_percent != null ? m.cpu_percent + '%' : '—');
+            flashMetric('nme-ram', m.memory_mb != null ? m.memory_mb + ' MB' : '—');
+            if (m.mode === 'intensive') pollMs = 1500;
+            else pollMs = 3000;
+            schedulePoll();
+            if (m.revision && m.revision !== monitorRevision) {
+                monitorRevision = m.revision;
+                cargarNDR(false);
+            }
+        } catch (_) {}
+    }
+
+    async function cargarNDR(force = false) {
+        try {
+            const url = force ? '/api/network/ndr?force=true' : '/api/network/ndr';
+            const [ndrRes, eventsRes] = await Promise.all([
+                fetch(url),
+                fetch('/api/network/events?limit=40'),
+            ]);
+            const ndr = await ndrRes.json();
+            const eventsData = await eventsRes.json();
+
+            if (NovusMetrics.isMonitoringNotConfigured(ndr)) {
+                setText('scan-status', NovusMetrics.monitoringNotConfiguredMessage(ndr));
+                ndrData = { nodes: [], alerts: [], meta: {} };
+                networkEvents = [];
+                actualizarUI();
+                return;
+            }
+
+            if (ndr.status === 'success') {
+                ndrData = ndr;
+                networkEvents = eventsData.events || [];
+                actualizarUI();
+            } else {
+                setText('scan-status', 'Error NDR');
+            }
+        } catch (e) {
+            setText('scan-status', 'Error de conexión');
+        }
+    }
+
+    function flashMetric(id, value) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.textContent !== String(value)) {
+            el.textContent = value ?? '—';
+            el.classList.add('metric-flash', 'updated');
+            setTimeout(() => el.classList.remove('updated'), 600);
+        }
+    }
+
+    function actualizarUI() {
+        const meta = ndrData.meta || {};
+        const nodes = ndrData.nodes || [];
+        const summary = ndrData.executive_summary || {};
+        const assessment = ndrData.discovery_assessment || {};
+        const freshness = (ndrData.snapshot_meta && ndrData.snapshot_meta.data_freshness) || ndrData.data_freshness || 'unknown';
+        const observedCount = ndrData.observed_device_count ?? (
+            freshness === 'live' ? (ndrData.device_count ?? nodes.length) : 0
+        );
+        const VISIBILITY_LIMITED_MSG = 'Visibilidad de red limitada: NOVUS solo puede mostrar dispositivos que puede observar mediante las fuentes de descubrimiento disponibles.';
+
+        flashMetric('info-local-ip', meta.local_ip);
+        flashMetric('info-gateway', meta.gateway);
+        flashMetric('info-range', meta.network_range);
+        flashMetric('info-netmask', meta.netmask || '—');
+        flashMetric('info-ssid', assessment.ssid || meta.ssid || '—');
+        const freshEl = document.getElementById('info-freshness');
+        if (freshEl) {
+            freshEl.textContent = String(freshness).toUpperCase();
+            freshEl.className = 'freshness-pill ' + (freshness === 'stale' ? 'stale' : freshness === 'cached' ? 'cached' : '');
+        }
+        const notice = document.getElementById('discovery-notice');
+        if (notice) {
+            const parts = [];
+            if (assessment.visibility === 'limited' || assessment.classification === 'REAL_DATA_LIMITED_VISIBILITY') {
+                parts.push(VISIBILITY_LIMITED_MSG);
+            }
+            if (assessment.user_message) {
+                parts.push(assessment.user_message);
+            }
+            if (parts.length) {
+                notice.textContent = parts.join(' ');
+                notice.classList.remove('hidden');
+                notice.classList.toggle('normal', assessment.visibility === 'normal');
+            } else {
+                notice.classList.add('hidden');
+            }
+        }
+        flashMetric('info-node-count', String(observedCount));
+        flashMetric('info-unknown-count', String(ndrData.pending_count ?? ndrData.unknown_count ?? 0));
+        flashMetric('info-alert-count', String(ndrData.alert_count ?? 0));
+        flashMetric('info-last-scan', ndrData.timestamp || ndrData.cache?.last_scan);
+        setText('scan-status', 'Monitorizando NDR');
+        setText('network-segment-label', meta.network_range ? `SEG: ${meta.network_range}` : 'NDR ACTIVO');
+        setText('radar-device-count', `${observedCount} dispositivos observados`);
+
+        const riskCounts = summary.risk_counts || { seguro: 0, observacion: 0, riesgo: 0, critico: 0 };
+        if (!summary.risk_counts) {
+            nodes.forEach(n => { if (riskCounts[n.risk_level] !== undefined) riskCounts[n.risk_level]++; });
+        }
+        setText('count-seguro', riskCounts.seguro);
+        setText('count-observacion', riskCounts.observacion);
+        setText('count-riesgo', riskCounts.riesgo);
+        setText('count-critico', riskCounts.critico);
+        setText('count-unknown', ndrData.pending_count ?? ndrData.unknown_count ?? 0);
+
+        setText('exec-overall', summary.overall_status || '—');
+        setText('exec-health', summary.network_health || '—');
+        setText('exec-devices', summary.observed_device_count ?? observedCount);
+        setText('exec-observation', summary.observation_count ?? 0);
+        setText('exec-critical', summary.critical_risks ?? 0);
+        setText('exec-threats', summary.active_threats ?? 0);
+        setText('exec-last', summary.last_analysis || ndrData.timestamp || '—');
+        setText('exec-protection', summary.protection_level || '—');
+
+        const currentIps = new Set(nodes.map(n => n.ip));
+        newDeviceIps = new Set([...currentIps].filter(ip => !prevNodeIps.has(ip)));
+        newDeviceIps.forEach(ip => { appearAnim[ip] = Date.now(); });
+        prevNodeIps = currentIps;
+
+        renderTopTraffic(ndrData.top_traffic || []);
+        renderUnknown(ndrData.pending_devices || ndrData.unknown_devices || []);
+        renderConnectionEvents(ndrData.connection_events || []);
+        actualizarLogs();
+        if (selectedIp) abrirPanel(selectedIp, true);
+    }
+
+    function renderTopTraffic(top) {
+        const el = document.getElementById('top-traffic-list');
+        if (!top.length) {
+            el.innerHTML = '<div class="top-traffic-item">No hay tráfico medible — psutil solo reporta bytes del host local y conexiones activas hacia IPs remotas.</div>';
+            return;
+        }
+        el.innerHTML = top.map((t, i) => {
+            const bw = typeof t.bandwidth_mbps === 'number' ? `${t.bandwidth_mbps} Mbps` : '—';
+            const pct = typeof t.traffic_percent === 'number' ? `${t.traffic_percent}%` : '—';
+            const recv = typeof t.bytes_recv === 'number' ? fmtBytes(t.bytes_recv) : '—';
+            const sent = typeof t.bytes_sent === 'number' ? fmtBytes(t.bytes_sent) : '—';
+            return `
+            <div class="top-traffic-item" onclick="abrirPanel('${t.ip}')">
+                <strong>#${i+1} ${t.ip}</strong> — ${fmt(t.name)} (${fmt(t.device_type)})<br>
+                ${fmt(t.metric_label)}: ${fmt(t.metric)}
+                <div class="traffic-detail">
+                    ↓ Recibido: ${recv} &nbsp; ↑ Enviado: ${sent}<br>
+                    Velocidad: ${bw} &nbsp;|&nbsp; ${pct} del total<br>
+                    Última actividad: ${fmt(t.last_activity)} &nbsp;|&nbsp; Conectado desde: ${fmt(t.connected_since)}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function renderConnectionEvents(events) {
+        const el = document.getElementById('connection-events-list');
+        if (!el) return;
+        if (!events.length) {
+            el.innerHTML = '<div class="unknown-item">Sin eventos — se registran al detectar cambios entre escaneos ARP reales.</div>';
+            return;
+        }
+        const labels = { connect: 'CONECTADO', disconnect: 'DESCONECTADO', ip_change: 'CAMBIO IP', hostname_change: 'CAMBIO HOST' };
+        el.innerHTML = events.slice(0, 12).map(ev => `
+            <div class="unknown-item" onclick="${ev.ip ? "abrirPanel('" + ev.ip + "')" : ''}">
+                <strong>${labels[ev.event_type] || ev.event_type}</strong> · ${ev.timestamp || '—'}<br>
+                <span style="color:#6b8fa3">${ev.ip || '—'} · ${ev.mac || '—'} · Trust ${ev.trust_score ?? '—'}</span>
+            </div>`).join('');
+    }
+
+    function renderUnknown(unknown) {
+        const el = document.getElementById('unknown-list');
+        if (!unknown.length) {
+            el.innerHTML = '<div class="unknown-item">Sin dispositivos pendientes de aprobación.</div>';
+            return;
+        }
+        el.innerHTML = unknown.map(u => `
+            <div class="unknown-item" onclick="selectNode('${u.ip}')">
+                <strong>${u.ip}</strong> · ${u.asset_status_label || u.status_display || 'Pendiente de aprobación'}<br>
+                <span style="color:#6b8fa3">${u.mac || '—'} · Trust ${u.trust_score ?? '—'}%</span>
+            </div>`).join('');
+    }
+
+    async function investigarDispositivo(ip) {
+        const btnId = 'inv-' + ip.replace(/\./g, '-');
+        const btn = document.getElementById(btnId);
+        if (btn) { btn.disabled = true; btn.textContent = 'Analizando...'; }
+        try {
+            const res = await fetch(`/api/network/ndr/device/${encodeURIComponent(ip)}/investigate`, { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                await cargarNDR(true);
+                abrirPanel(ip);
+                if (window.NovusAIKernel && NovusAIKernel.consultModule) {
+                    NovusAIKernel.consultModule('network', { ip, investigation: true });
+                }
+            } else {
+                alert(data.message || 'No se pudo investigar el dispositivo.');
+            }
+        } catch (e) {
+            alert('Error de conexión al investigar dispositivo.');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-microscope"></i> Investigar';
+            }
+        }
+    }
+
+    function actualizarLogs() {
+        const logs = [];
+        (ndrData.alerts || []).forEach(a => {
+            logs.push(`<div class="log-entry warn"><strong>[${a.time}] ${a.title}</strong><br><small>${formatAlertEvidence(a)} (${a.motor}, ${a.confidence})</small></div>`);
+            if (a.plain_explanation) {
+                logs.push(`<div class="log-explanation"><strong>Explicación:</strong> ${a.plain_explanation}</div>`);
+            }
+        });
+        networkEvents.forEach(ev => {
+            const css = ev.level === 'alert' ? 'alert' : (ev.level === 'warn' ? 'warn' : 'info');
+            logs.push(`<div class="log-entry ${css}"><strong>[${ev.time}]</strong> ${ev.message}</div>`);
+            if (ev.plain_explanation) {
+                logs.push(`<div class="log-explanation"><strong>Explicación:</strong> ${ev.plain_explanation}</div>`);
+            }
+        });
+        if (!logs.length) {
+            logs.push('<div class="log-entry info">Sin alertas NDR. Monitorizando tráfico real en segmento local...</div>');
+        }
+        document.getElementById('realtime-logs').innerHTML = logs.join('');
+    }
+
+    function drawRadar() {
+        const w = canvas.width / dpr;
+        const h = canvas.height / dpr;
+        if (w < 10) { requestAnimationFrame(drawRadar); return; }
+
+        ctx.clearRect(0, 0, w, h);
+        const cx = w / 2, cy = h / 2;
+        const r = Math.min(w, h) / 2.2;
+        const nodes = ndrData.nodes || [];
+        nodePositions = [];
+
+        ctx.strokeStyle = '#00f2ff22';
+        ctx.lineWidth = 1;
+        for (let i = 1; i <= 4; i++) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r * i / 4, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
+
+        const count = nodes.length;
+        nodes.forEach((node, index) => {
+            const angle = count ? (index / count) * 2 * Math.PI - Math.PI / 2 : 0;
+            const dist = r * (0.45 + (index % 3) * 0.12);
+            const x = cx + dist * Math.cos(angle);
+            const y = cy + dist * Math.sin(angle);
+            const color = RISK_COLORS[node.risk_level] || RISK_COLORS.seguro;
+            const radius = Math.max(5, r * 0.025);
+
+            nodePositions.push({ ip: node.ip, x, y, r: radius + 4 });
+
+            const appearStart = appearAnim[node.ip];
+            let scale = 1;
+            if (appearStart) {
+                const elapsed = Date.now() - appearStart;
+                if (elapsed < 1200) scale = 0.4 + 0.6 * (elapsed / 1200);
+                else delete appearAnim[node.ip];
+            }
+            const drawR = radius * scale;
+
+            if (node.recent_change) {
+                ctx.strokeStyle = '#00f2ff88';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y, drawR + 7, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = color + '33';
+            ctx.beginPath();
+            ctx.arc(x, y, drawR + 3, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, drawR, 0, 2 * Math.PI);
+            ctx.fill();
+
+            if (node.is_pending_approval || node.requires_attention) {
+                ctx.strokeStyle = '#888888';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(x, y, drawR + 5, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.fillStyle = '#888888';
+                ctx.beginPath();
+                ctx.arc(x, y, drawR * 0.5, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            if (node.is_new && !node.is_pending_approval) {
+                ctx.strokeStyle = '#00f2ff66';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(x, y, drawR + 8 + Math.sin(Date.now() / 300) * 2, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+
+            if (r > 80) {
+                ctx.fillStyle = '#00f2ff';
+                ctx.font = `${Math.max(7, r * 0.035)}px monospace`;
+                ctx.fillText(node.ip, x + radius + 4, y - 2);
+            }
+        });
+
+        ctx.strokeStyle = '#39ff1466';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + r * Math.cos(scanAngle), cy + r * Math.sin(scanAngle));
+        ctx.stroke();
+
+        scanAngle += 0.018;
+        requestAnimationFrame(drawRadar);
+    }
+
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        for (const np of nodePositions) {
+            const dx = mx - np.x, dy = my - np.y;
+            if (Math.sqrt(dx*dx + dy*dy) <= np.r) {
+                abrirPanel(np.ip);
+                return;
+            }
+        }
+    });
+
+    async function abrirPanel(ip, silent = false) {
+        selectedIp = ip;
+        window.NovusModuleExtra = { ip, investigation: false };
+        const panel = document.getElementById('device-panel');
+        if (!silent) panel.classList.add('open');
+
+        try {
+            const res = await fetch(`/api/network/ndr/device/${encodeURIComponent(ip)}`);
+            const data = await res.json();
+            if (data.status === 'success') {
+                renderPanel(
+                    data.device,
+                    data.alerts || [],
+                    data.history || [],
+                    data.vulnerabilities_related || [],
+                    data.recommendations || []
+                );
+                if (!silent) panel.classList.add('open');
+            }
+        } catch (e) {}
+    }
+
+    function panelRow(label, field) {
+        if (field && typeof field === 'object' && field.display !== undefined) {
+            if (field.value == null && field.reason) {
+                return `<div class="panel-row"><span>${label}</span><span class="field-reason">${field.display}</span></div>`;
+            }
+            return `<div class="panel-row"><span>${label}</span><span>${field.display}</span></div>`;
+        }
+        return `<div class="panel-row"><span>${label}</span><span>${fmt(field)}</span></div>`;
+    }
+
+    function renderPanel(node, alerts, history, vulns, recommendations) {
+        const name = displayField(node.name_display) !== '—' ? displayField(node.name_display) : (node.ip || 'Dispositivo');
+        document.getElementById('panel-title').textContent = name;
+        const knownHtml = node.is_pending_approval
+            ? `<div class="pulse-indicator" style="color:#ffcc00;margin-bottom:8px;">⏳ ${node.asset_status_label || 'Pendiente de aprobación'} — requiere revisión en Inventario de Activos</div>`
+            : `<div style="color:#39ff14;margin-bottom:8px;">✓ ${node.asset_status_label || node.status_display || 'Monitorizado'}</div>`;
+        document.getElementById('panel-known-badge').innerHTML = knownHtml;
+
+        const risk = node.risk_level || 'seguro';
+        const conf = node.confidence || { score: node.confidence_score, label: node.confidence_label };
+        document.getElementById('tab-general').innerHTML = `
+            <div class="panel-section">
+                <span class="risk-badge ${risk}">${risk.toUpperCase()}</span>
+            </div>
+            <div class="panel-section">
+                <h4>Identificación</h4>
+                ${panelRow('Nombre', node.name_display || node.hostname || node.name)}
+                ${panelRow('IP', node.ip_display || node.ip)}
+                ${panelRow('MAC', node.mac_display || node.mac)}
+                ${panelRow('Fabricante', node.vendor_display || node.vendor)}
+                ${panelRow('SO estimado', node.os_estimate || node.os_estimate_short)}
+                ${panelRow('Tipo', node.device_type_display || node.device_type)}
+                ${panelRow('Estado AIE', node.status_display || node.asset_status_label)}
+                ${panelRow('Trust Score', node.trust_display || (node.trust_score != null ? node.trust_score + '%' : '—'))}
+                ${panelRow('Riesgo', node.risk_display || node.risk_level)}
+                <div class="panel-row"><span>Confianza análisis</span><span>${conf.label || '—'} (${conf.score ?? '—'}%)</span></div>
+                ${panelRow('Tiempo conectado', node.connected_since_display || node.connected_since)}
+                ${panelRow('Última actividad', node.last_activity_display || node.last_seen)}
+                ${panelRow('Veces visto', node.times_seen)}
+            </div>`;
+
+        document.getElementById('tab-historial').innerHTML = history.length
+            ? history.slice().reverse().map(h => `
+                <div class="panel-row"><span>${fmt(h.time)}</span><span>${fmt(h.ip)} — ${fmt(h.device_type)} ${fmt(h.vendor)}</span></div>
+            `).join('')
+            : '<div class="panel-row"><span colspan="2">Sin historial — el dispositivo aún no acumula registros en el inventario SQLite.</span></div>';
+
+        const ports = node.open_ports_display || node.open_ports || [];
+        document.getElementById('tab-puertos').innerHTML = ports.length
+            ? ports.map(p => `<div class="panel-row"><span>Puerto ${p.port}</span><span>${fmt(p.service || p.state || 'TCP')}</span></div>`).join('')
+            : '<div class="panel-row"><span>Puertos</span><span>No detectados — el escaneo de puertos no encontró servicios expuestos en este host.</span></div>';
+
+        const services = node.services_display || node.services || [];
+        let svcHtml = services.length
+            ? services.map(s => `<div class="panel-row"><span>${s.port || '—'}</span><span>${fmt(s.service)}</span></div>`).join('')
+            : '';
+        if (!svcHtml) svcHtml = '<div class="panel-row"><span>Servicios</span><span>Sin servicios identificados en el último escaneo activo.</span></div>';
+
+        const t = node.traffic || {};
+        document.getElementById('tab-consumo').innerHTML = `
+            ${panelRow('Tráfico recibido', node.traffic_recv_display || (typeof t.bytes_recv === 'number' ? {display: fmtBytes(t.bytes_recv)} : t.bytes_recv))}
+            ${panelRow('Tráfico enviado', node.traffic_sent_display || (typeof t.bytes_sent === 'number' ? {display: fmtBytes(t.bytes_sent)} : t.bytes_sent))}
+            ${panelRow('Ancho de banda', node.bandwidth_display || (typeof t.bandwidth_mbps === 'number' ? {display: t.bandwidth_mbps + ' Mbps'} : t.bandwidth_mbps))}
+            <div class="panel-row"><span>Sockets red (host NOVUS)</span><span>${fmt(t.connections_active)}</span></div>
+            <div class="panel-row"><span>Fuente telemetría</span><span>${fmt(t.source)}</span></div>
+            <h4 style="margin-top:10px;color:#6b8fa3;">Servicios detectados</h4>${svcHtml}`;
+
+        let riesgoHtml = alerts.length
+            ? alerts.map(a => `
+                <div class="alert-item">
+                    <strong>[${a.confidence}] ${a.title}</strong><br>
+                    <small>${formatAlertEvidence(a)}</small><br>
+                    <small>Motor: ${a.motor} — ${a.time}</small>
+                    ${a.plain_explanation ? `<div class="log-explanation">${a.plain_explanation}</div>` : ''}
+                </div>`).join('')
+            : '<div class="panel-row"><span>Sin alertas con evidencia verificable en este dispositivo.</span></div>';
+
+        if (vulns.length) {
+            riesgoHtml += '<h4 style="margin-top:10px;color:#ff9933;">Vulnerabilidades relacionadas</h4>';
+            riesgoHtml += vulns.map(v => `<div class="panel-row"><span>${fmt(v.title || v.id)}</span><span>${fmt(v.severity)}</span></div>`).join('');
+        } else {
+            riesgoHtml += '<div class="panel-row" style="margin-top:8px;"><span>Vulnerabilidades</span><span>Ninguna vinculada a esta IP en el último escaneo NOVUS.</span></div>';
+        }
+
+        const incidents = node.incidents || [];
+        if (incidents.length) {
+            riesgoHtml += '<h4 style="margin-top:10px;color:#ff3131;">Incidentes relacionados</h4>';
+            riesgoHtml += incidents.map(inc => `<div class="panel-row"><span>${fmt(inc.title || inc.id)}</span><span>${fmt(inc.severity || inc.status)}</span></div>`).join('');
+        }
+
+        const recs = recommendations || node.recommendations || [];
+        if (recs.length) {
+            riesgoHtml += '<h4 style="margin-top:10px;color:#00f2ff;">Recomendaciones automáticas</h4>';
+            riesgoHtml += recs.map(r => `<div class="log-explanation">• ${r}</div>`).join('');
+        }
+        document.getElementById('tab-riesgo').innerHTML = riesgoHtml;
+
+        const adaptive = node.adaptive_defense || {};
+        const motors = node.protection_motors || ndrData.motors || [];
+        document.getElementById('tab-proteccion').innerHTML = `
+            <div class="panel-section">
+                <h4>Adaptive Defense</h4>
+                <div class="panel-row"><span>Actuando</span><span>${adaptive.display || (adaptive.active ? 'Sí' : 'No')}</span></div>
+            </div>
+            <div class="panel-section">
+                <h4>Motores de protección activos</h4>
+                ${motors.map(m => `<div class="panel-row"><span>•</span><span>${m}</span></div>`).join('')}
+            </div>`;
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.panel-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+        document.querySelectorAll('.panel-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + tab));
+    }
+
+    function cerrarPanel() {
+        document.getElementById('device-panel').classList.remove('open');
+        selectedIp = null;
+    }
+
+    async function iniciarEscaneo() {
+        setText('scan-status', 'Escaneando ARP...');
+        await fetch('/api/network/refresh', { method: 'POST' });
+        setTimeout(() => cargarNDR(true), 3500);
+    }
+
+    function accionEscanear() { iniciarEscaneo(); }
+    function accionActualizar() { cargarNDR(true); }
+
+    function accionReporte() {
+        if (!selectedIp) return;
+        const node = (ndrData.nodes || []).find(n => n.ip === selectedIp);
+        if (!node) return;
+        const alerts = (ndrData.alerts || []).filter(a => a.ip === selectedIp);
+        const lines = [
+            'NOVUS — Reporte NDR de dispositivo',
+            '================================',
+            `Generado: ${new Date().toLocaleString()}`,
+            `IP: ${node.ip}`,
+            `MAC: ${fmt(node.mac)}`,
+            `Hostname: ${fmt(node.hostname || node.name)}`,
+            `Fabricante: ${fmt(node.vendor)}`,
+            `Tipo: ${fmt(node.device_type)}`,
+            `Estado AIE: ${node.asset_status_label || node.status_display || '—'}`,
+            `Trust Score: ${node.trust_score ?? '—'}%`,
+            `Riesgo: ${node.risk_level}`,
+            `Primera vez: ${fmt(node.first_seen)}`,
+            `Última vez: ${fmt(node.last_seen)}`,
+            '',
+            '--- Tráfico ---',
+            JSON.stringify(node.traffic || {}, null, 2),
+            '',
+            '--- Alertas ---',
+            ...alerts.map(a => `[${a.confidence}] ${a.title}: ${formatAlertEvidence(a)} (${a.motor})`),
+        ];
+        const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `novus-ndr-${selectedIp.replace(/\./g,'-')}.txt`;
+        a.click();
+    }
+
+    new ResizeObserver(() => resizeRadar()).observe(radarZone);
+    window.addEventListener('orientationchange', resizeRadar);
+    resizeRadar();
+    cargarNDR(false);
+    cargarMonitor();
+    schedulePoll();
+    drawRadar();
+</script>
+{% include 'partials/global_search.html' %}
+{% include 'partials/ai_kernel_panel.html' %}
+</body>
+</html>

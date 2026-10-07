@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Historial de Seguridad de la Red</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #06090f; color: white; font-family: 'Inter', sans-serif; }
+        .hist-card { background: #0c121d; border: 1px solid #1e293b; border-radius: 12px; }
+        .evt-sev-high { border-left: 3px solid #ef4444; }
+        .evt-sev-medium { border-left: 3px solid #f59e0b; }
+        .evt-sev-info { border-left: 3px solid #6366f1; }
+        .unavail { color: #64748b; font-style: italic; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="historial_seguridad_red">
+    {% set active_module = 'historial_seguridad_red' %}
+    {% set idn = summary.identification or {} %}
+    {% set st = summary.state or {} %}
+    {% set unavail = summary.unavailable_label or 'Información no disponible mediante análisis local.' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <header>
+            <h1 class="text-2xl font-bold uppercase tracking-tighter">Historial de Seguridad</h1>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest">Red local conectada — solo análisis reales de NOVUS</p>
+        </header>
+
+        <div class="hist-card p-4 border-indigo-500/30">
+            <p class="text-sm text-indigo-200">{{ summary.disclaimer or 'Sin aviso de monitoreo aún.' }}</p>
+            {% if summary.first_analysis_at %}
+            <p class="text-[10px] text-gray-500 mt-2">
+                Primer análisis: {{ summary.first_analysis_at }}
+                {% if summary.last_analysis_at %} · Último: {{ summary.last_analysis_at }}{% endif %}
+                · Alcance: <span class="font-mono">{{ summary.scope_id }}</span>
+            </p>
+            {% endif %}
+        </div>
+
+        <section>
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-3">Identificación de red</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {% macro field(label, val) %}
+                <div class="hist-card p-4">
+                    <div class="text-[10px] text-gray-500 uppercase">{{ label }}</div>
+                    <div class="text-sm font-mono break-all">{% if val is none or val == '' %}<span class="unavail">{{ unavail }}</span>{% else %}{{ val }}{% endif %}</div>
+                </div>
+                {% endmacro %}
+                {{ field('SSID', idn.ssid) }}
+                {{ field('BSSID', idn.bssid) }}
+                {{ field('Gateway', idn.gateway) }}
+                {{ field('Rango IP', idn.ip_range) }}
+                <div class="hist-card p-4">
+                    <div class="text-[10px] text-gray-500 uppercase">DNS</div>
+                    <div class="text-sm font-mono break-all">
+                        {% if idn.dns and idn.dns != unavail %}
+                            {{ idn.dns }}
+                        {% else %}
+                            <span class="unavail">DNS no disponible</span>
+                        {% endif %}
+                    </div>
+                    {% if idn.dns_structured and idn.dns_structured.servers %}
+                    <div class="text-[10px] text-gray-500 mt-2">
+                        Interfaz: {{ idn.dns_structured.interface or '—' }}
+                        · Fuente: {{ idn.dns_structured.source or '—' }}
+                        · {{ idn.dns_structured.data_freshness or 'LIVE' }}
+                        {% if idn.dns_structured.timestamp %} · {{ idn.dns_structured.timestamp }}{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {{ field('IP pública', idn.public_ip) }}
+                {{ field('ISP', idn.isp) }}
+                {{ field('Cifrado', idn.encryption_type or st.encryption_type) }}
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-3">Estado (último análisis)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {{ field('Nivel de riesgo', st.risk_level) }}
+                {{ field('Confianza', st.confidence_level) }}
+                {{ field('Firewall', st.firewall_detected) }}
+                {{ field('Segmentación', st.segmentation) }}
+                {{ field('Estado general', st.overall_status) }}
+                {{ field('Dispositivos visibles', summary.network_context.visible_devices_count if summary.network_context.visible_devices_count is defined else none) }}
+            </div>
+        </section>
+
+        {% set ki = summary.kernel_insights or {} %}
+        <section class="hist-card p-4">
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-2">Kernel IA — lectura del historial</h2>
+            {% if not ki.sufficient_data %}
+            <p class="text-sm text-gray-400">{{ ki.message or 'Datos insuficientes para conclusiones.' }}</p>
+            {% else %}
+            <ul class="text-sm space-y-2 list-disc list-inside text-gray-300">
+                {% for ins in ki.insights or [] %}
+                <li>{{ ins.summary }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </section>
+
+        <section>
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-3">Sesiones de análisis</h2>
+            <div class="space-y-2">
+                {% for s in summary.analysis_sessions or [] %}
+                <div class="hist-card p-3 text-xs">
+                    <div class="flex flex-wrap justify-between gap-2">
+                        <span class="font-mono text-indigo-300">{{ s.started_at or '—' }}</span>
+                        <span class="text-gray-500">{{ s.status or '—' }}</span>
+                    </div>
+                    <div class="mt-1">Usuario: {{ s.user_email or '—' }} · Equipo: {{ (s.equipment or {}).get('hostname', '—') }} ({{ (s.equipment or {}).get('os_name', '—') }})</div>
+                    <div class="text-gray-500 mt-1">Duración: {{ s.duration_sec if s.duration_sec is not none else '—' }} s · Motores: {{ (s.motors_used or [])|join(', ') if s.motors_used else '—' }}</div>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">Sin sesiones registradas. Se documentan al iniciar sesión con monitoreo activo.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="flex flex-wrap gap-2">
+            <select id="filter-type" class="bg-[#06090f] border border-gray-800 rounded-lg px-3 py-2 text-xs">
+                <option value="">Todos los tipos</option>
+                <option value="device_connect">Conexión dispositivo</option>
+                <option value="device_disconnect">Desconexión</option>
+                <option value="device_new">Dispositivo nuevo</option>
+                <option value="malware">Malware</option>
+                <option value="ransomware">Ransomware</option>
+                <option value="brute_force">Fuerza bruta</option>
+                <option value="arp_spoofing">ARP Spoofing</option>
+                <option value="port_scan">Escaneo de puertos</option>
+                <option value="vulnerability_found">Vulnerabilidad</option>
+                <option value="analysis_session">Sesión de análisis</option>
+                <option value="novus_auto_action">Acción NOVUS</option>
+            </select>
+            <button type="button" onclick="reloadEvents()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-xs font-bold">ACTUALIZAR</button>
+        </div>
+
+        <section>
+            <h2 class="text-xs font-bold text-indigo-400 uppercase mb-3">Amenazas y eventos (<span id="event-count">{{ summary.event_count or 0 }}</span>)</h2>
+            <div id="events-list" class="space-y-2">
+                {% for e in summary.recent_events or [] %}
+                <div class="hist-card p-3 evt-sev-{{ e.severity if e.severity in ['high','medium','info'] else 'info' }}">
+                    <div class="flex flex-wrap justify-between gap-2">
+                        <span class="text-[10px] font-bold uppercase text-indigo-300">{{ e.event_type }}</span>
+                        <span class="text-[10px] text-gray-500">{{ e.timestamp }}</span>
+                    </div>
+                    <div class="text-sm mt-1">{{ e.title }}</div>
+                    <div class="text-[10px] text-gray-400 mt-1">Motor: {{ e.motor or '—' }} · Severidad: {{ e.severity or '—' }} · Estado: {{ e.status or 'recorded' }}</div>
+                    {% if e.action_taken %}<div class="text-[10px] text-gray-500 mt-1">Acción: {{ e.action_taken }}</div>{% endif %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">Sin eventos registrados en esta red. El historial se construye cuando NOVUS detecta actividad verificable.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+    <script>
+        async function reloadEvents() {
+            const t = document.getElementById('filter-type').value;
+            let url = '/api/network-security-history/events?limit=100';
+            if (t) url += '&type=' + encodeURIComponent(t);
+            const res = await fetch(url, { credentials: 'same-origin' });
+            const data = await res.json();
+            const list = document.getElementById('events-list');
+            const countEl = document.getElementById('event-count');
+            if (data.status !== 'success') {
+                list.innerHTML = '<p class="text-red-400 text-sm">Error al cargar eventos.</p>';
+                return;
+            }
+            countEl.textContent = data.count;
+            if (!data.events || !data.events.length) {
+                list.innerHTML = '<p class="text-gray-500 text-sm">Sin eventos para el filtro seleccionado.</p>';
+                return;
+            }
+            list.innerHTML = data.events.map(e => {
+                const sev = ['high','medium','info'].includes(e.severity) ? e.severity : 'info';
+                const action = e.action_taken ? `<div class="text-[10px] text-gray-500 mt-1">Acción: ${e.action_taken}</div>` : '';
+                return `<div class="hist-card p-3 evt-sev-${sev}">
+                    <div class="flex flex-wrap justify-between gap-2">
+                        <span class="text-[10px] font-bold uppercase text-indigo-300">${e.event_type || ''}</span>
+                        <span class="text-[10px] text-gray-500">${e.timestamp || ''}</span>
+                    </div>
+                    <div class="text-sm mt-1">${e.title || ''}</div>
+                    <div class="text-[10px] text-gray-400 mt-1">Motor: ${e.motor || '—'} · Severidad: ${e.severity || '—'}</div>
+                    ${action}
+                </div>`;
+            }).join('');
+        }
+    </script>
+</body>
+</html>

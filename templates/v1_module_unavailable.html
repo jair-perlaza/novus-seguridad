@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — {{ title or 'No disponible' }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>body { background-color: #06090f; color: white; font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen">
+    {% set active_module = active_module or 'dashboard' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 p-8">
+        <div class="max-w-xl mx-auto mt-16 rounded-xl border border-gray-800 bg-[#0c121d] p-8 text-center">
+            <i class="fas fa-hourglass-half text-4xl text-gray-500 mb-4"></i>
+            <h1 class="text-xl font-bold text-white mb-2">{{ title or 'Módulo no disponible' }}</h1>
+            <p class="text-sm text-gray-400 leading-relaxed">{{ message }}</p>
+            <a href="{{ url_for('dashboard.dashboard_principal') }}" class="inline-block mt-6 text-indigo-400 text-sm no-underline hover:text-indigo-300">
+                ← Volver al Dashboard
+            </a>
+        </div>
+    </main>
+</body>
+</html>

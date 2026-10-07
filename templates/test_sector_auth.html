@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Pruebas de Autenticación Sectorial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header h1 {
+            color: #1e3c72;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .test-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .test-card h2 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .credentials-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .credential-item {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            border-left: 4px solid #1e3c72;
+        }
+        
+        .credential-item h4 {
+            color: #1e3c72;
+            margin-bottom: 8px;
+        }
+        
+        .credential-item p {
+            color: #666;
+            margin: 4px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .test-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 10px;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+        
+        .test-button.danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        
+        .test-button.danger:hover {
+            box-shadow: 0 10px 20px rgba(220, 53, 69, 0.3);
+        }
+        
+        .results-area {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .results-area h2 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+        }
+        
+        .result-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .result-item.success {
+            border-left-color: #28a745;
+        }
+        
+        .result-item.error {
+            border-left-color: #dc3545;
+        }
+        
+        .result-item h4 {
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .result-item p {
+            color: #666;
+            font-size: 0.9em;
+            margin: 4px 0;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box h3 {
+            color: #004085;
+            margin-bottom: 10px;
+        }
+        
+        .info-box p {
+            color: #004085;
+            line-height: 1.5;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .warning-box h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .warning-box p {
+            color: #856404;
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 768px) {
+            .test-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="header">
+            <h1>🧪 NOVUS - Pruebas de Autenticación Sectorial</h1>
+            <p>Sistema de pruebas para validación de acceso por sectores con control de dispositivo</p>
+        </div>
+        
+        <div class="test-grid">
+            <div class="test-card">
+                <h2>🔐 Sector Fintech</h2>
+                
+                <div class="info-box">
+                    <h3>Usuarios Autorizados</h3>
+                    <p>CISO y CTO con acceso exclusivo e ilimitado al sector financiero.</p>
+                </div>
+                
+                <div class="credentials-list">
+                    <div class="credential-item">
+                        <h4>CISO - Chief Information Security Officer</h4>
+                        <p><strong>Email:</strong> ciso@novus.local</p>
+                        <p><strong>Contraseña:</strong> CISO!FINTECH#2026</p>
+                    </div>
+                    <div class="credential-item">
+                        <h4>CTO - Chief Technology Officer</h4>
+                        <p><strong>Email:</strong> cto@novus.local</p>
+                        <p><strong>Contraseña:</strong> CTO!FINTECH#2026</p>
+                    </div>
+                </div>
+                
+                <button class="test-button" onclick="testAccess('fintech', 'ciso@novus.local', 'CISO!FINTECH#2026')">
+                    ✅ Test Acceso Válido - CISO
+                </button>
+                <button class="test-button" onclick="testAccess('fintech', 'cto@novus.local', 'CTO!FINTECH#2026')">
+                    ✅ Test Acceso Válido - CTO
+                </button>
+                <button class="test-button danger" onclick="testAccess('fintech', 'unauthorized@novus.local', 'wrong123')">
+                    ❌ Test Acceso No Autorizado
+                </button>
+            </div>
+            
+            <div class="test-card">
+                <h2>🚛 Sector Logística/Movilidad</h2>
+                
+                <div class="info-box">
+                    <h3>Usuarios Autorizados</h3>
+                    <p>CPO y CSO con acceso exclusivo e ilimitado al sector logístico y de movilidad.</p>
+                </div>
+                
+                <div class="credentials-list">
+                    <div class="credential-item">
+                        <h4>CPO - Chief Product Officer</h4>
+                        <p><strong>Email:</strong> cpo@novus.local</p>
+                        <p><strong>Contraseña:</strong> CPO!LOGISTICA#2026</p>
+                    </div>
+                    <div class="credential-item">
+                        <h4>CSO - Chief Security Officer</h4>
+                        <p><strong>Email:</strong> cso@novus.local</p>
+                        <p><strong>Contraseña:</strong> CSO!LOGISTICA#2026</p>
+                    </div>
+                </div>
+                
+                <button class="test-button" onclick="testAccess('logistica_movil', 'cpo@novus.local', 'CPO!LOGISTICA#2026')">
+                    ✅ Test Acceso Válido - CPO
+                </button>
+                <button class="test-button" onclick="testAccess('logistica_movil', 'cso@novus.local', 'CSO!LOGISTICA#2026')">
+                    ✅ Test Acceso Válido - CSO
+                </button>
+                <button class="test-button danger" onclick="testAccess('logistica_movil', 'unauthorized@novus.local', 'wrong123')">
+                    ❌ Test Acceso No Autorizado
+                </button>
+            </div>
+        </div>
+        
+        <div class="test-card">
+            <h2>🧪 Pruebas Cruzadas (Cross-Sector)</h2>
+            
+            <div class="warning-box">
+                <h3>⚠️ Pruebas de Seguridad</h3>
+                <p>Estas pruebas verifican que los usuarios no puedan acceder a sectores no autorizados. Cada intento generará una alerta de seguridad.</p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                <button class="test-button danger" onclick="testAccess('fintech', 'cpo@novus.local', 'CPO!LOGISTICA#2026')">
+                    ❌ CPO intentando Fintech
+                </button>
+                <button class="test-button danger" onclick="testAccess('fintech', 'cso@novus.local', 'CSO!LOGISTICA#2026')">
+                    ❌ CSO intentando Fintech
+                </button>
+                <button class="test-button danger" onclick="testAccess('logistica_movil', 'ciso@novus.local', 'CISO!FINTECH#2026')">
+                    ❌ CISO intentando Logística
+                </button>
+                <button class="test-button danger" onclick="testAccess('logistica_movil', 'cto@novus.local', 'CTO!FINTECH#2026')">
+                    ❌ CTO intentando Logística
+                </button>
+            </div>
+        </div>
+        
+        <div class="results-area">
+            <h2>📋 Resultados de Pruebas</h2>
+            <div id="resultsContainer">
+                <p style="text-align: center; color: #666;">Los resultados de las pruebas aparecerán aquí...</p>
+            </div>
+        </div>
+        
+        <div class="test-card" style="margin-top: 30px;">
+            <h2>🔍 Información del Sistema</h2>
+            
+            <div class="info-box">
+                <h3>Características de Seguridad Implementadas</h3>
+                <ul style="color: #004085; line-height: 1.6; margin-left: 20px;">
+                    <li><strong>Validación de Dispositivo:</strong> Cada usuario está vinculado a un dispositivo específico</li>
+                    <li><strong>Aislamiento de Sector:</strong> Acceso exclusivo por sector con usuarios predefinidos</li>
+                    <li><strong>Alertas en Tiempo Real:</strong> Generación automática de alertas críticas para accesos no autorizados</li>
+                    <li><strong>Registro Completo:</strong> Auditoría detallada de todos los intentos de acceso</li>
+                    <li><strong>Sesión Segura:</strong> Monitoreo constante y cierre automático por inactividad</li>
+                </ul>
+            </div>
+            
+            <button class="test-button" onclick="window.location.href='/sector-login'">
+                🚀 Ir al Sistema de Autenticación
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        function addResult(type, title, message, details = null) {
+            const container = document.getElementById('resultsContainer');
+            const resultItem = document.createElement('div');
+            resultItem.className = `result-item ${type}`;
+            
+            let html = `<h4>${type === 'success' ? '✅' : '❌'} ${title}</h4>`;
+            html += `<p>${message}</p>`;
+            
+            if (details) {
+                html += '<div style="margin-top: 10px; font-size: 0.85em; color: #555;">';
+                for (const [key, value] of Object.entries(details)) {
+                    html += `<p><strong>${key}:</strong> ${value}</p>`;
+                }
+                html += '</div>';
+            }
+            
+            resultItem.innerHTML = html;
+            
+            // Limpiar mensaje inicial si existe
+            if (container.querySelector('p')) {
+                container.innerHTML = '';
+            }
+            
+            container.insertBefore(resultItem, container.firstChild);
+        }
+        
+        async function testAccess(sector, email, password) {
+            const testName = `Test: ${email} → ${sector}`;
+            
+            try {
+                // Simular datos del dispositivo
+                const deviceData = {
+                    ip_address: '127.0.0.1',
+                    user_agent: navigator.userAgent,
+                    device_id: 'test-device-pending'
+                };
+                
+                // Crear formulario de prueba
+                const formData = new FormData();
+                formData.append('email', email);
+                formData.append('password', password);
+                formData.append('sector', sector);
+                
+                const response = await fetch('/sector-auth', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Device-ID': deviceData.device_id
+                    }
+                });
+                
+                if (response.ok) {
+                    // Si la respuesta es exitosa, verificar si redirige o muestra acceso denegado
+                    const responseText = await response.text();
+                    
+                    if (responseText.includes('sector-dashboard')) {
+                        addResult('success', testName, 'Acceso concedido correctamente', {
+                            'Sector': sector,
+                            'Usuario': email,
+                            'Estado': 'Autenticado',
+                            'Dispositivo': deviceData.device_id.substring(0, 8) + '...'
+                        });
+                    } else if (responseText.includes('access-denied')) {
+                        addResult('error', testName, 'Acceso denegado - Alerta generada', {
+                            'Sector': sector,
+                            'Usuario': email,
+                            'Estado': 'Bloqueado',
+                            'Motivo': 'Validación de seguridad fallida'
+                        });
+                    } else {
+                        addResult('error', testName, 'Respuesta inesperada del servidor', {
+                            'HTTP Status': response.status,
+                            'Response Length': responseText.length
+                        });
+                    }
+                } else {
+                    addResult('error', testName, 'Error en la petición', {
+                        'HTTP Status': response.status,
+                        'Status Text': response.statusText
+                    });
+                }
+                
+            } catch (error) {
+                addResult('error', testName, 'Error de conexión', {
+                    'Error': error.message
+                });
+            }
+        }
+        
+        // Función para limpiar resultados
+        function clearResults() {
+            document.getElementById('resultsContainer').innerHTML = '<p style="text-align: center; color: #666;">Los resultados de las pruebas aparecerán aquí...</p>';
+        }
+        
+        // Botón de limpiar resultados
+        document.addEventListener('DOMContentLoaded', function() {
+            const resultsArea = document.querySelector('.results-area h2');
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'test-button danger';
+            clearBtn.style.cssText = 'float: right; padding: 8px 16px; font-size: 14px;';
+            clearBtn.textContent = 'Limpiar Resultados';
+            clearBtn.onclick = clearResults;
+            resultsArea.appendChild(clearBtn);
+        });
+    </script>
+</body>
+</html>

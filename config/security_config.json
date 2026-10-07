@@ -1,0 +1,329 @@
+{
+  "sector_shield_state": {
+    "sector": "fintech",
+    "last_rules_update": "2026-09-14 19:54:58",
+    "controls": [
+      "Fraude BEC",
+      "Integridad de pagos",
+      "Validacion de cuenta destino"
+    ],
+    "motors": [
+      "BEC Shield (validate_transactional_integrity)",
+      "ATO Analyzer (analyze_ato_risk)",
+      "Phishing Shield (inspect_email_integrity)",
+      "CryptoVault AES-256-GCM",
+      "API Shield (validate_api_request)"
+    ]
+  },
+  "user_sector_profiles": {
+    "operaciones@novapay-fintech.co": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-12 08:44:55",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p03x.f58d1a@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-09 21:46:26",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p03.b.af119a22@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-09 21:46:56",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p03.a.af119a22@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-09 21:51:20",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p03e2e.a.a429f718@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-09 21:53:04",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p03e2e.b.a429f718@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-09 21:55:35",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p03e2e.a.f209d8b6@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-09 22:19:07",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p03e2e.b.f209d8b6@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-09 22:26:30",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p03e2e.notenant.f209d8b6@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-09 22:16:51",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p03e2e.a.540bca31@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-09 22:43:25",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p03e2e.b.540bca31@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-09 22:45:05",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p03e2e.notenant.540bca31@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-09 22:40:42",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p05http.an.cdd7cc4b@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-10 20:11:17",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p05http.an.917c63fd@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-10 20:16:52",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p05http.an.a451015f@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-10 20:17:38",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "p1c001.probe@novus-client.test": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-12 08:43:10",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "synthetic.reg.a@novus.test.local": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-14 19:54:50",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "synthetic.reg.b@novus.test.local": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-14 19:54:12",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    },
+    "synthetic.reg.http@novus.test.local": {
+      "sector_key": "fintech",
+      "label": "Fintech",
+      "applied_at": "2026-09-14 19:54:58",
+      "modules_active": [
+        "dashboard",
+        "xdr",
+        "vulnerabilidades",
+        "reportes",
+        "inteligencia",
+        "topology",
+        "network",
+        "incidentes",
+        "playbooks"
+      ]
+    }
+  },
+  "sector_activo": "fintech",
+  "pentest_mode": "estandar",
+  "whatsapp_alerts": true,
+  "email_reports": false,
+  "auto_remediation": false
+}

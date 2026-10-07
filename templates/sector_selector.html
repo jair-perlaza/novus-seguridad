@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Selector de Sectores CEO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --bg-dark: #06090f; --card: rgba(10, 20, 35, 0.9); --accent: #5d5fef; }
+        body { background: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; }
+        .sector-card { 
+            background: var(--card); 
+            border: 1px solid rgba(93, 95, 239, 0.2); 
+            border-radius: 16px; 
+            padding: 40px; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .sector-card:hover { 
+            transform: translateY(-4px); 
+            border-color: var(--accent); 
+            box-shadow: 0 12px 40px rgba(93, 95, 239, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-8">
+    <div class="max-w-4xl w-full">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">
+                CEO Dashboard
+            </h1>
+            <p class="text-gray-400 text-lg">Seleccione el sector a monitorear</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div onclick="selectSector('fintech')" class="sector-card">
+                <div class="text-center">
+                    <div class="text-5xl mb-4">💳</div>
+                    <h2 class="text-2xl font-bold mb-3">Fintech</h2>
+                    <p class="text-gray-400 text-sm">Pagos Digitales, Neobancos, Criptomonedas</p>
+                    <div class="mt-6">
+                        <span class="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-xs">Transacciones</span>
+                    </div>
+                </div>
+            </div>
+
+            <div onclick="selectSector('logistica')" class="sector-card">
+                <div class="text-center">
+                    <div class="text-5xl mb-4">🚚</div>
+                    <h2 class="text-2xl font-bold mb-3">Logística</h2>
+                    <p class="text-gray-400 text-sm">Transporte, Almacenamiento, Distribución</p>
+                    <div class="mt-6">
+                        <span class="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs">Operaciones</span>
+                    </div>
+                </div>
+            </div>
+
+            <div onclick="selectSector('apps')" class="sector-card">
+                <div class="text-center">
+                    <div class="text-5xl mb-4">📱</div>
+                    <h2 class="text-2xl font-bold mb-3">Apps</h2>
+                    <p class="text-gray-400 text-sm">Aplicaciones Móviles, Banking, Wallet</p>
+                    <div class="mt-6">
+                        <span class="bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full text-xs">Usuarios</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectSector(sector) {
+            // Redirigir al dashboard específico del sector
+            window.location.href = `/dashboard`;
+        }
+    </script>
+</body>
+</html>

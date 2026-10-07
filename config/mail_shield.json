@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "sensitivity": "balanced",
+  "mode": "quarantine",
+  "risk_block_threshold": 75,
+  "risk_warn_threshold": 45,
+  "whitelist_domains": [],
+  "blacklist_domains": [],
+  "quarantine_policy": "label_and_remove_inbox",
+  "notify_admin": true,
+  "auto_quarantine": true,
+  "analyze_links_with_web_shield": true
+}

@@ -1,0 +1,1246 @@
+{
+  "scan": {
+    "total_hits": 392,
+    "hits": [
+      {
+        "file": "services\\adaptive_defense_engine.py",
+        "line": 20,
+        "type": "NO_DATA literal",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\adaptive_defense_engine.py",
+        "line": 20,
+        "type": "Sin datos disponibles",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\adaptive_defense_engine.py",
+        "line": 287,
+        "type": "NO_DATA literal",
+        "snippet": "\"detail\": f\"Escaneo sectorial ejecutado — sector {result.get('sector', NO_DATA)}\","
+      },
+      {
+        "file": "services\\adaptive_defense_engine.py",
+        "line": 372,
+        "type": "NO_DATA literal",
+        "snippet": "\"detail\": rem.get(\"message\", NO_DATA),"
+      },
+      {
+        "file": "services\\adaptive_defense_engine.py",
+        "line": 540,
+        "type": "NO_DATA literal",
+        "snippet": "hallazgos = ep.get(\"hallazgos\") if ep.get(\"hallazgos\") != NO_DATA else ep.get(\"findings\")"
+      },
+      {
+        "file": "services\\adaptive_defense_engine.py",
+        "line": 598,
+        "type": "NO_DATA literal",
+        "snippet": "\"detalle\": (a.get(\"actions\") or [{}])[0].get(\"detail\") if a.get(\"actions\") else NO_DATA,"
+      },
+      {
+        "file": "services\\adaptive_sector_protection_engine.py",
+        "line": 20,
+        "type": "NO_DATA literal",
+        "snippet": "NO_DATA = \"Sin datos disponibles\" = os.path.join(os.path.dirname(os.path.dirname(__file__)), \"data\", \"aspe\")"
+      },
+      {
+        "file": "services\\adaptive_sector_protection_engine.py",
+        "line": 20,
+        "type": "Sin datos disponibles",
+        "snippet": "NO_DATA = \"Sin datos disponibles\" = os.path.join(os.path.dirname(os.path.dirname(__file__)), \"data\", \"aspe\")"
+      },
+      {
+        "file": "services\\adaptive_sector_protection_engine.py",
+        "line": 221,
+        "type": "NO_DATA literal",
+        "snippet": "\"confidence_level\": NO_DATA,"
+      },
+      {
+        "file": "services\\adaptive_sector_protection_engine.py",
+        "line": 354,
+        "type": "NO_DATA literal",
+        "snippet": "\"result\": {\"vault_active\": active, \"tls\": vault.get_tls_status() if vault else NO_DATA},"
+      },
+      {
+        "file": "services\\adaptive_sector_protection_engine.py",
+        "line": 808,
+        "type": "NO_DATA literal",
+        "snippet": "return f\"Mobile/UI Shield activado dinámicamente: {ui_dyn[0].get('reason', NO_DATA)}\""
+      },
+      {
+        "file": "services\\adaptive_sector_protection_engine.py",
+        "line": 821,
+        "type": "NO_DATA literal",
+        "snippet": "return f\"Escudo Fintech activado temporalmente: {fin_dyn[0].get('reason', NO_DATA)}\""
+      },
+      {
+        "file": "services\\adaptive_sector_protection_engine.py",
+        "line": 847,
+        "type": "NO_DATA literal",
+        "snippet": "lines.append(f\"Adaptive Defense: {panel.get('adaptive_defense', {}).get('estado', NO_DATA)}\")"
+      },
+      {
+        "file": "services\\ai_capability_registry.py",
+        "line": 582,
+        "type": "Sin datos disponibles",
+        "snippet": "\"tls_label\": vault.get_tls_status() if vault else \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\ai_kernel.py",
+        "line": 211,
+        "type": "Sin datos disponibles",
+        "snippet": "\"safe\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\data_audit_registry.py",
+        "line": 80,
+        "type": "Sin datos disponibles",
+        "snippet": "_entry(\"Automatización ejecuciones/mes\", \"N/A\", \"N/A\", \"routes/main.py\", \"automatizacion\", \"SIN FUENTE\", \"Muestra Sin da"
+      },
+      {
+        "file": "services\\deep_scan_engine.py",
+        "line": 249,
+        "type": "Sin datos disponibles",
+        "snippet": "\"publisher\": finding.get(\"publisher\", \"Sin datos disponibles\"),"
+      },
+      {
+        "file": "services\\deep_scan_engine.py",
+        "line": 311,
+        "type": "Sin datos disponibles",
+        "snippet": "return {\"publisher\": \"Sin datos disponibles\", \"digital_signature\": \"No verificado (no Windows/ruta)\"}"
+      },
+      {
+        "file": "services\\deep_scan_engine.py",
+        "line": 333,
+        "type": "Sin datos disponibles",
+        "snippet": "return {\"publisher\": \"Sin datos disponibles\", \"digital_signature\": \"Error al verificar\"}"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 15,
+        "type": "NO_DATA literal",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 15,
+        "type": "Sin datos disponibles",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 46,
+        "type": "NO_DATA literal",
+        "snippet": "empresa = NO_DATA"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 47,
+        "type": "NO_DATA literal",
+        "snippet": "sector = NO_DATA"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 57,
+        "type": "NO_DATA literal",
+        "snippet": "sector = user.sector or NO_DATA"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 100,
+        "type": "NO_DATA literal",
+        "snippet": "confianza = round(sum(conf_values) / len(conf_values)) if conf_values else NO_DATA"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 105,
+        "type": "NO_DATA literal",
+        "snippet": "\"nivel_confianza\": f\"{confianza}%\" if confianza != NO_DATA else NO_DATA,"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 122,
+        "type": "NO_DATA literal",
+        "snippet": "\"gateway\": topo.get(\"summary\", {}).get(\"gateway\", NO_DATA),"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 165,
+        "type": "NO_DATA literal",
+        "snippet": "\"ip\": get_local_ip() or NO_DATA,"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 185,
+        "type": "NO_DATA literal",
+        "snippet": "\"bytes_enviados\": net.bytes_sent if net else NO_DATA,"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 186,
+        "type": "NO_DATA literal",
+        "snippet": "\"bytes_recibidos\": net.bytes_recv if net else NO_DATA,"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 223,
+        "type": "NO_DATA literal",
+        "snippet": "\"cpu\": endpoints.get(\"cpu_percent\", NO_DATA),"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 224,
+        "type": "NO_DATA literal",
+        "snippet": "\"ram\": endpoints.get(\"ram_percent\", NO_DATA),"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 225,
+        "type": "NO_DATA literal",
+        "snippet": "\"disco\": endpoints.get(\"disk_percent\", NO_DATA),"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 232,
+        "type": "NO_DATA literal",
+        "snippet": "\"bytes_enviados_mb\": round(system.get(\"bytes_enviados\", 0) / 1_048_576, 1) if isinstance(system.get(\"bytes_enviados\"), i"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 233,
+        "type": "NO_DATA literal",
+        "snippet": "\"bytes_recibidos_mb\": round(system.get(\"bytes_recibidos\", 0) / 1_048_576, 1) if isinstance(system.get(\"bytes_recibidos\")"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 260,
+        "type": "NO_DATA literal",
+        "snippet": "\"motor\": finding.get(\"motor\") or tech.get(\"motor\") or NO_DATA,"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 261,
+        "type": "NO_DATA literal",
+        "snippet": "\"confianza\": finding.get(\"confianza_etiqueta\") or tech.get(\"nivel_confianza\") or NO_DATA,"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 262,
+        "type": "NO_DATA literal",
+        "snippet": "\"confianza_porcentaje\": finding.get(\"confianza_porcentaje\", NO_DATA),"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 263,
+        "type": "NO_DATA literal",
+        "snippet": "\"riesgo\": finding.get(\"impacto_nivel\") or tech.get(\"riesgo_sistema\") or NO_DATA,"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 264,
+        "type": "NO_DATA literal",
+        "snippet": "\"fecha\": finding.get(\"fecha\") or NO_DATA,"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 265,
+        "type": "NO_DATA literal",
+        "snippet": "\"hora\": finding.get(\"hora\") or NO_DATA,"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 267,
+        "type": "NO_DATA literal",
+        "snippet": "\"impacto\": finding.get(\"impacto_potencial\") or tech.get(\"consecuencias\") or NO_DATA,"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 277,
+        "type": "NO_DATA literal",
+        "snippet": "main_problem = NO_DATA"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 288,
+        "type": "NO_DATA literal",
+        "snippet": "\"estado_general\": general.get(\"estado_general\", NO_DATA),"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 295,
+        "type": "NO_DATA literal",
+        "snippet": "\"nivel_seguridad\": general.get(\"nivel_riesgo\", NO_DATA),"
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 297,
+        "type": "NO_DATA literal",
+        "snippet": "f\"El estado general de seguridad es {general.get('estado_general', NO_DATA)} \""
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 298,
+        "type": "NO_DATA literal",
+        "snippet": "f\"con nivel de riesgo {general.get('nivel_riesgo', NO_DATA)}. \""
+      },
+      {
+        "file": "services\\enterprise_report_service.py",
+        "line": 352,
+        "type": "NO_DATA literal",
+        "snippet": "\"nivel_seguridad\": executive.get(\"nivel_seguridad\", NO_DATA),"
+      },
+      {
+        "file": "services\\global_search_index.py",
+        "line": 3,
+        "type": "SIMULATED",
+        "snippet": "Fuzzy matching; no simulated results."
+      },
+      {
+        "file": "services\\intel_operational_service.py",
+        "line": 23,
+        "type": "NO_DATA literal",
+        "snippet": "NO_DATA = \"Sin datos disponibles\"  # legado — preferir explain() en nuevas rutas"
+      },
+      {
+        "file": "services\\intel_operational_service.py",
+        "line": 23,
+        "type": "Sin datos disponibles",
+        "snippet": "NO_DATA = \"Sin datos disponibles\"  # legado — preferir explain() en nuevas rutas"
+      },
+      {
+        "file": "services\\intel_operational_service.py",
+        "line": 605,
+        "type": "NO_DATA literal",
+        "snippet": "return {\"motor\": \"Adaptive Defense Engine\", \"estado_actual\": NO_DATA}"
+      },
+      {
+        "file": "services\\intel_operational_service.py",
+        "line": 614,
+        "type": "NO_DATA literal",
+        "snippet": "return {\"motor\": \"Adaptive Sector Protection Engine\", \"sector_key\": NO_DATA}"
+      },
+      {
+        "file": "services\\intel_operational_service.py",
+        "line": 635,
+        "type": "NO_DATA literal",
+        "snippet": "f\"• {brief.get('que_ocurre', NO_DATA)}\\n\""
+      },
+      {
+        "file": "services\\intel_operational_service.py",
+        "line": 636,
+        "type": "NO_DATA literal",
+        "snippet": "f\"• Acciones automáticas: {brief.get('acciones_automaticas', NO_DATA)}\\n\""
+      },
+      {
+        "file": "services\\intel_operational_service.py",
+        "line": 637,
+        "type": "NO_DATA literal",
+        "snippet": "f\"• Requiere atención: {brief.get('requiere_atencion', NO_DATA)}\""
+      },
+      {
+        "file": "services\\intel_operational_service.py",
+        "line": 640,
+        "type": "NO_DATA literal",
+        "snippet": "return f\"Mayor riesgo actual: {brief.get('mayor_riesgo', NO_DATA)}. Nivel: {summary.get('nivel_riesgo')}.\""
+      },
+      {
+        "file": "services\\intel_operational_service.py",
+        "line": 652,
+        "type": "NO_DATA literal",
+        "snippet": "return brief.get(\"cambios_desde_ayer\", NO_DATA)"
+      },
+      {
+        "file": "services\\intel_operational_service.py",
+        "line": 658,
+        "type": "NO_DATA literal",
+        "snippet": "return brief.get(\"requiere_atencion\", NO_DATA)"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 17,
+        "type": "NO_DATA literal",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 17,
+        "type": "Sin datos disponibles",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 167,
+        "type": "NO_DATA literal",
+        "snippet": "archivo = ev.get(\"archivo\") or finding.get(\"file\") or finding.get(\"componente\") or NO_DATA"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 168,
+        "type": "NO_DATA literal",
+        "snippet": "proceso = ev.get(\"proceso\") or finding.get(\"nombre\") or NO_DATA"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 169,
+        "type": "NO_DATA literal",
+        "snippet": "ruta_exe = ev.get(\"ruta\") or NO_DATA"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 170,
+        "type": "NO_DATA literal",
+        "snippet": "servicio = NO_DATA"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 171,
+        "type": "NO_DATA literal",
+        "snippet": "ventana = NO_DATA"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 172,
+        "type": "NO_DATA literal",
+        "snippet": "config_mod = NO_DATA"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 180,
+        "type": "NO_DATA literal",
+        "snippet": "servicio = owner.get(\"nombre_servicio\") or NO_DATA"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 288,
+        "type": "NO_DATA literal",
+        "snippet": "motivo = NO_DATA"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 296,
+        "type": "NO_DATA literal",
+        "snippet": "\"donde_esta_el_problema\": finding.get(\"recurso_afectado\") or finding.get(\"causa_probable\") or NO_DATA,"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 298,
+        "type": "NO_DATA literal",
+        "snippet": "\"puerto_abierto\": port if port else NO_DATA,"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 301,
+        "type": "NO_DATA literal",
+        "snippet": "\"pid\": pid if pid else NO_DATA,"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 305,
+        "type": "NO_DATA literal",
+        "snippet": "\"ruta_exacta\": ruta_exe if ruta_exe != NO_DATA else (f\"Puerto {port} en {format_ip_or_unavailable(get_local_ip())}\" if p"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 308,
+        "type": "NO_DATA literal",
+        "snippet": "\"riesgo_asociado\": finding.get(\"impacto_potencial\") or NO_DATA,"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 309,
+        "type": "NO_DATA literal",
+        "snippet": "\"dificultad\": finding.get(\"dificultad\") or NO_DATA,"
+      },
+      {
+        "file": "services\\manual_remediation_guide.py",
+        "line": 310,
+        "type": "NO_DATA literal",
+        "snippet": "\"tiempo_estimado\": finding.get(\"tiempo_correccion\") or NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 18,
+        "type": "NO_DATA literal",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 18,
+        "type": "Sin datos disponibles",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 333,
+        "type": "NO_DATA literal",
+        "snippet": "\"bytes_sent\": NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 334,
+        "type": "NO_DATA literal",
+        "snippet": "\"bytes_recv\": NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 335,
+        "type": "NO_DATA literal",
+        "snippet": "\"bandwidth_mbps\": NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 336,
+        "type": "NO_DATA literal",
+        "snippet": "\"usage_percent\": NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 337,
+        "type": "NO_DATA literal",
+        "snippet": "\"connections_active\": cstat.get(\"connections\") if cstat else NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 342,
+        "type": "NO_DATA literal",
+        "snippet": "active_conn = NO_DATA"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 352,
+        "type": "NO_DATA literal",
+        "snippet": "\"bandwidth_mbps\": bandwidth_mbps if bandwidth_mbps is not None else NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 353,
+        "type": "NO_DATA literal",
+        "snippet": "\"usage_percent\": NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 361,
+        "type": "NO_DATA literal",
+        "snippet": "\"vendor\": node.get(\"vendor\") or NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 362,
+        "type": "NO_DATA literal",
+        "snippet": "\"hostname\": node.get(\"name\") or NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 366,
+        "type": "NO_DATA literal",
+        "snippet": "\"first_seen\": inv.first_seen if inv else NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 367,
+        "type": "NO_DATA literal",
+        "snippet": "\"last_seen\": inv.last_seen if inv else NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 368,
+        "type": "NO_DATA literal",
+        "snippet": "\"times_seen\": inv.times_seen if inv else NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 369,
+        "type": "NO_DATA literal",
+        "snippet": "\"connected_since\": inv.first_seen if inv else NO_DATA,"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 482,
+        "type": "NO_DATA literal",
+        "snippet": "return {\"status\": \"not_found\", \"message\": NO_DATA}"
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 508,
+        "type": "Sin datos disponibles",
+        "snippet": "return \"Sin datos disponibles de consumo por dispositivo. Solo el host local reporta bytes vía psutil.\""
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 551,
+        "type": "Sin datos disponibles",
+        "snippet": "return \"Sin datos disponibles de conexiones por dispositivo remoto.\""
+      },
+      {
+        "file": "services\\network_ndr_service.py",
+        "line": 562,
+        "type": "NO_DATA literal",
+        "snippet": "return NO_DATA"
+      },
+      {
+        "file": "services\\network_scanner.py",
+        "line": 194,
+        "type": "Sin datos disponibles",
+        "snippet": "\"name\": hostname if hostname != \"Unknown\" else \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\network_scanner.py",
+        "line": 198,
+        "type": "Sin datos disponibles",
+        "snippet": "\"response_time_ms\": response_ms if response_ms is not None else \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\platform_metrics_service.py",
+        "line": 28,
+        "type": "Sin datos disponibles",
+        "snippet": "return \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\platform_metrics_service.py",
+        "line": 71,
+        "type": "Sin datos disponibles",
+        "snippet": "\"hallazgos\": hallazgos_local if hallazgos_local is not None else \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\platform_metrics_service.py",
+        "line": 77,
+        "type": "Sin datos disponibles",
+        "snippet": "\"cpu\": f\"{cpu_actual:.1f}%\" if cpu_actual is not None else \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\platform_metrics_service.py",
+        "line": 78,
+        "type": "Sin datos disponibles",
+        "snippet": "\"ram\": f\"{ram_pct:.1f}%\" if ram_pct is not None else \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\platform_metrics_service.py",
+        "line": 89,
+        "type": "Sin datos disponibles",
+        "snippet": "\"ip\": node_ip or \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\platform_metrics_service.py",
+        "line": 90,
+        "type": "Sin datos disponibles",
+        "snippet": "\"mac\": node.get(\"mac\") or \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\remediation_orchestrator.py",
+        "line": 23,
+        "type": "NO_DATA literal",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\remediation_orchestrator.py",
+        "line": 23,
+        "type": "Sin datos disponibles",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\remediation_orchestrator.py",
+        "line": 409,
+        "type": "NO_DATA literal",
+        "snippet": "ade_result.get(\"message\", NO_DATA),"
+      },
+      {
+        "file": "services\\report_pdf_service.py",
+        "line": 69,
+        "type": "Sin datos disponibles",
+        "snippet": "_write_section(pdf, \"\", \"Sin datos disponibles para grafico.\")"
+      },
+      {
+        "file": "services\\sector_profile_service.py",
+        "line": 450,
+        "type": "NO_DATA literal",
+        "snippet": "if profile_resp.get(\"status\") in (\"NO_DATA\", \"unavailable\", None):"
+      },
+      {
+        "file": "services\\sector_profile_service.py",
+        "line": 483,
+        "type": "NO_DATA literal",
+        "snippet": "\"Conectar telemetría real del sector para eliminar NO_DATA en perfiles.\","
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 17,
+        "type": "NO_DATA literal",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 17,
+        "type": "Sin datos disponibles",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 123,
+        "type": "NO_DATA literal",
+        "snippet": "\"descripcion_tecnica\": enriched.get(\"descripcion_tecnica\") or NO_DATA,"
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 126,
+        "type": "NO_DATA literal",
+        "snippet": "\"origen\": enriched.get(\"causa_probable\") or NO_DATA,"
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 127,
+        "type": "NO_DATA literal",
+        "snippet": "\"causa_probable\": enriched.get(\"causa_probable\") or NO_DATA,"
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 128,
+        "type": "NO_DATA literal",
+        "snippet": "\"impacto_potencial\": enriched.get(\"impacto_potencial\") or NO_DATA,"
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 130,
+        "type": "NO_DATA literal",
+        "snippet": "\"evidencias\": [str(enriched.get(\"evidencia\"))] if enriched.get(\"evidencia\") else [NO_DATA],"
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 133,
+        "type": "NO_DATA literal",
+        "snippet": "\"consecuencias\": enriched.get(\"impacto_potencial\") or NO_DATA,"
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 143,
+        "type": "NO_DATA literal",
+        "snippet": "\"referencias\": [enriched.get(\"referencia_tecnica\")] if enriched.get(\"referencia_tecnica\") != NO_DATA else [],"
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 145,
+        "type": "NO_DATA literal",
+        "snippet": "\"motor\": enriched.get(\"motor\") or NO_DATA,"
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 146,
+        "type": "NO_DATA literal",
+        "snippet": "\"fuente_evidencia\": enriched.get(\"fuente_evidencia\") or NO_DATA,"
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 147,
+        "type": "NO_DATA literal",
+        "snippet": "\"tiempo_correccion\": enriched.get(\"tiempo_correccion\") or NO_DATA,"
+      },
+      {
+        "file": "services\\security_report_service.py",
+        "line": 148,
+        "type": "NO_DATA literal",
+        "snippet": "\"dificultad\": enriched.get(\"dificultad\") or NO_DATA,"
+      },
+      {
+        "file": "services\\system_monitor.py",
+        "line": 138,
+        "type": "Sin datos disponibles",
+        "snippet": "\"ram_total\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\system_monitor.py",
+        "line": 139,
+        "type": "Sin datos disponibles",
+        "snippet": "\"ram_usada\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\system_monitor.py",
+        "line": 140,
+        "type": "Sin datos disponibles",
+        "snippet": "\"ram_disponible\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\system_monitor.py",
+        "line": 141,
+        "type": "Sin datos disponibles",
+        "snippet": "\"disk_total\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\system_monitor.py",
+        "line": 142,
+        "type": "Sin datos disponibles",
+        "snippet": "\"disk_usado\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\system_monitor.py",
+        "line": 143,
+        "type": "Sin datos disponibles",
+        "snippet": "\"disk_free\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\system_monitor.py",
+        "line": 144,
+        "type": "Sin datos disponibles",
+        "snippet": "\"network_bytes_sent\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\system_monitor.py",
+        "line": 145,
+        "type": "Sin datos disponibles",
+        "snippet": "\"network_bytes_recv\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\system_monitor.py",
+        "line": 148,
+        "type": "Sin datos disponibles",
+        "snippet": "\"uptime_horas\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\system_monitor.py",
+        "line": 149,
+        "type": "Sin datos disponibles",
+        "snippet": "\"uptime_dias\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\system_monitor.py",
+        "line": 151,
+        "type": "Sin datos disponibles",
+        "snippet": "\"frecuencia_cpu\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\system_monitor.py",
+        "line": 152,
+        "type": "Sin datos disponibles",
+        "snippet": "\"boot_time\": \"Sin datos disponibles\","
+      },
+      {
+        "file": "services\\telemetry_resolver.py",
+        "line": 11,
+        "type": "NO_DATA literal",
+        "snippet": "\"\", \"n/d\", \"n/a\", \"null\", \"none\", \"unknown\", \"no_data\","
+      },
+      {
+        "file": "services\\telemetry_resolver.py",
+        "line": 12,
+        "type": "Sin datos disponibles",
+        "snippet": "\"sin datos disponibles\", \"sin datos\", \"cargando...\", \"—\", \"-\","
+      },
+      {
+        "file": "services\\telemetry_resolver.py",
+        "line": 13,
+        "type": "PLACEHOLDER",
+        "snippet": "\"no data\", \"placeholder\", \"simulated\", \"static\", \"default\","
+      },
+      {
+        "file": "services\\telemetry_resolver.py",
+        "line": 13,
+        "type": "SIMULATED",
+        "snippet": "\"no data\", \"placeholder\", \"simulated\", \"static\", \"default\","
+      },
+      {
+        "file": "services\\threat_intelligence_service.py",
+        "line": 76,
+        "type": "Sin datos disponibles",
+        "snippet": "ctx[\"empresa\"] = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\threat_intelligence_service.py",
+        "line": 77,
+        "type": "Sin datos disponibles",
+        "snippet": "ctx[\"sector\"] = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 13,
+        "type": "NO_DATA literal",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 13,
+        "type": "Sin datos disponibles",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 38,
+        "type": "NO_DATA literal",
+        "snippet": "if not gateway or gateway == NO_DATA:"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 99,
+        "type": "NO_DATA literal",
+        "snippet": "node[\"status_label\"] = \"Activo (ARP)\" if node.get(\"ip\") else NO_DATA"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 125,
+        "type": "NO_DATA literal",
+        "snippet": "\"gateway\": gateway if gateway else NO_DATA,"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 126,
+        "type": "NO_DATA literal",
+        "snippet": "\"last_scan\": (ndr.get(\"cache\") or {}).get(\"last_scan\") or NO_DATA,"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 163,
+        "type": "NO_DATA literal",
+        "snippet": "\"ip\": device.get(\"ip\") or NO_DATA,"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 164,
+        "type": "NO_DATA literal",
+        "snippet": "\"mac\": device.get(\"mac\") or NO_DATA,"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 165,
+        "type": "NO_DATA literal",
+        "snippet": "\"fabricante\": device.get(\"vendor\") or NO_DATA,"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 166,
+        "type": "NO_DATA literal",
+        "snippet": "\"tipo_dispositivo\": device.get(\"device_type\") or NO_DATA,"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 170,
+        "type": "NO_DATA literal",
+        "snippet": "\"tiempo_conectado\": device.get(\"connected_since\") or device.get(\"first_seen\") or NO_DATA,"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 171,
+        "type": "NO_DATA literal",
+        "snippet": "\"ultima_actividad\": device.get(\"last_seen\") or NO_DATA,"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 173,
+        "type": "NO_DATA literal",
+        "snippet": "\"bytes_enviados\": traffic.get(\"bytes_sent\", NO_DATA),"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 174,
+        "type": "NO_DATA literal",
+        "snippet": "\"bytes_recibidos\": traffic.get(\"bytes_recv\", NO_DATA),"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 175,
+        "type": "NO_DATA literal",
+        "snippet": "\"ancho_banda_mbps\": traffic.get(\"bandwidth_mbps\", NO_DATA),"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 176,
+        "type": "NO_DATA literal",
+        "snippet": "\"conexiones_activas\": traffic.get(\"connections_active\", NO_DATA),"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 177,
+        "type": "NO_DATA literal",
+        "snippet": "\"fuente\": traffic.get(\"source\", NO_DATA),"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 216,
+        "type": "NO_DATA literal",
+        "snippet": "f\"Último escaneo: {summary.get('last_scan', NO_DATA)}.\""
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 223,
+        "type": "NO_DATA literal",
+        "snippet": "return NO_DATA"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 240,
+        "type": "NO_DATA literal",
+        "snippet": "[n for n in nodes if n.get(\"first_seen\") and n.get(\"first_seen\") != NO_DATA],"
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 266,
+        "type": "NO_DATA literal",
+        "snippet": "f\"gateway {summary.get('gateway', NO_DATA)}.\\n\""
+      },
+      {
+        "file": "services\\topology_service.py",
+        "line": 273,
+        "type": "NO_DATA literal",
+        "snippet": "f\"Gateway: {summary.get('gateway', NO_DATA)}. \""
+      },
+      {
+        "file": "services\\universal_compatibility_engine.py",
+        "line": 21,
+        "type": "NO_DATA literal",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\universal_compatibility_engine.py",
+        "line": 21,
+        "type": "Sin datos disponibles",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\universal_compatibility_engine.py",
+        "line": 123,
+        "type": "NO_DATA literal",
+        "snippet": "\"label\": f\"{system} {release}\".strip() if system else NO_DATA,"
+      },
+      {
+        "file": "services\\universal_compatibility_engine.py",
+        "line": 126,
+        "type": "NO_DATA literal",
+        "snippet": "\"system\": system or NO_DATA,"
+      },
+      {
+        "file": "services\\universal_compatibility_engine.py",
+        "line": 127,
+        "type": "NO_DATA literal",
+        "snippet": "\"release\": release or NO_DATA,"
+      },
+      {
+        "file": "services\\universal_compatibility_engine.py",
+        "line": 128,
+        "type": "NO_DATA literal",
+        "snippet": "\"machine\": machine or NO_DATA,"
+      },
+      {
+        "file": "services\\universal_compatibility_engine.py",
+        "line": 129,
+        "type": "NO_DATA literal",
+        "snippet": "\"version\": (version or \"\")[:120] or NO_DATA,"
+      },
+      {
+        "file": "services\\universal_compatibility_engine.py",
+        "line": 340,
+        "type": "NO_DATA literal",
+        "snippet": "\"label\": f\"NAS / Almacenamiento ({node.get('ip') or NO_DATA})\","
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 20,
+        "type": "NO_DATA literal",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 20,
+        "type": "Sin datos disponibles",
+        "snippet": "NO_DATA = \"Sin datos disponibles\""
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 22,
+        "type": "NO_DATA literal",
+        "snippet": "\"\", NO_DATA.lower(), \"n/d\", \"unknown\", \"none\", \"null\","
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 119,
+        "type": "NO_DATA literal",
+        "snippet": "f\"advanced_detector.scan_running_processes. Ruta: {ev.get('ruta') or NO_DATA}.\""
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 152,
+        "type": "NO_DATA literal",
+        "snippet": "return NO_DATA"
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 243,
+        "type": "NO_DATA literal",
+        "snippet": "referencia = NO_DATA"
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 310,
+        "type": "NO_DATA literal",
+        "snippet": "return f\"Puerto {port} — {ev.get('descripcion') or finding.get('descripcion') or NO_DATA}\""
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 315,
+        "type": "NO_DATA literal",
+        "snippet": "return finding.get(\"nombre\") or finding.get(\"ip\") or NO_DATA"
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 374,
+        "type": "NO_DATA literal",
+        "snippet": "\"motor\": finding.get(\"motor\") or finding.get(\"fuente\") or NO_DATA,"
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 383,
+        "type": "NO_DATA literal",
+        "snippet": "\"fuente_evidencia\": finding.get(\"fuente\") or finding.get(\"motor\") or NO_DATA,"
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 414,
+        "type": "NO_DATA literal",
+        "snippet": "return text.lower() not in INVALID_VALUES and text != NO_DATA"
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 477,
+        "type": "NO_DATA literal",
+        "snippet": "if motor and motor != NO_DATA:"
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 583,
+        "type": "NO_DATA literal",
+        "snippet": "motor = NO_DATA"
+      },
+      {
+        "file": "services\\vulnerability_analyst_service.py",
+        "line": 585,
+        "type": "NO_DATA literal",
+        "snippet": "detail = NO_DATA"
+      },
+      {
+        "file": "api\\dashboard.py",
+        "line": 20,
+        "type": "Sin datos disponibles",
+        "snippet": "return \"Sin datos disponibles\""
+      },
+      {
+        "file": "api\\dashboard.py",
+        "line": 24,
+        "type": "Sin datos disponibles",
+        "snippet": "return \"Sin datos disponibles\""
+      },
+      {
+        "file": "api\\dashboard.py",
+        "line": 63,
+        "type": "Sin datos disponibles",
+        "snippet": "\"procesos\": status.get('procesos_activos') if status.get('procesos_activos') is not None else \"Sin datos disponibles\","
+      },
+      {
+        "file": "api\\dashboard.py",
+        "line": 64,
+        "type": "Sin datos disponibles",
+        "snippet": "\"usuarios\": status.get('usuarios_conectados') if status.get('usuarios_conectados') is not None else \"Sin datos disponibl"
+      },
+      {
+        "file": "api\\dashboard.py",
+        "line": 65,
+        "type": "Sin datos disponibles",
+        "snippet": "\"conexiones\": network_stats.get('connections') if network_stats.get('connections') is not None else \"Sin datos disponibl"
+      },
+      {
+        "file": "api\\dashboard.py",
+        "line": 66,
+        "type": "Sin datos disponibles",
+        "snippet": "\"amenazas\": amenazas if amenazas is not None else \"Sin datos disponibles\","
+      },
+      {
+        "file": "api\\network.py",
+        "line": 28,
+        "type": "Sin datos disponibles",
+        "snippet": "\"gateway\": meta.get(\"gateway\") or primary.get(\"gateway\") or \"Sin datos disponibles\","
+      },
+      {
+        "file": "api\\network.py",
+        "line": 29,
+        "type": "Sin datos disponibles",
+        "snippet": "\"netmask\": meta.get(\"netmask\") or primary.get(\"netmask\") or \"Sin datos disponibles\","
+      },
+      {
+        "file": "api\\network.py",
+        "line": 30,
+        "type": "Sin datos disponibles",
+        "snippet": "\"network_range\": meta.get(\"network_range\") or \"Sin datos disponibles\","
+      },
+      {
+        "file": "api\\network.py",
+        "line": 31,
+        "type": "Sin datos disponibles",
+        "snippet": "\"adapter\": meta.get(\"adapter\") or primary.get(\"adapter\") or \"Sin datos disponibles\","
+      },
+      {
+        "file": "api\\network.py",
+        "line": 32,
+        "type": "Sin datos disponibles",
+        "snippet": "\"mac\": meta.get(\"mac\") or primary.get(\"mac\") or \"Sin datos disponibles\","
+      },
+      {
+        "file": "api\\network.py",
+        "line": 33,
+        "type": "Sin datos disponibles",
+        "snippet": "\"connection_type\": meta.get(\"connection_type\") or primary.get(\"connection_type\") or \"Sin datos disponibles\","
+      },
+      {
+        "file": "api\\network.py",
+        "line": 34,
+        "type": "Sin datos disponibles",
+        "snippet": "\"speed_mbps\": meta.get(\"speed_mbps\") or primary.get(\"speed_mbps\") or \"Sin datos disponibles\","
+      },
+      {
+        "file": "api\\network.py",
+        "line": 35,
+        "type": "Sin datos disponibles",
+        "snippet": "\"hostname\": hostname if hostname != \"Unknown\" else \"Sin datos disponibles\","
+      },
+      {
+        "file": "api\\network.py",
+        "line": 37,
+        "type": "Sin datos disponibles",
+        "snippet": "\"last_scan\": cache_info.get(\"last_scan\") or \"Sin datos disponibles\","
+      }
+    ]
+  },
+  "verification": {
+    "build_sector_protection": {
+      "status": "unavailable",
+      "has_telemetry": false,
+      "no_data": false
+    },
+    "kernel_context_dashboard": {
+      "has_real_data": true,
+      "prompt_len": 3136
+    },
+    "kernel_context_vulnerabilidades": {
+      "has_real_data": true,
+      "prompt_len": 6403
+    },
+    "kernel_context_network": {
+      "has_real_data": true,
+      "prompt_len": 5816
+    },
+    "kernel_context_inteligencia": {
+      "has_real_data": true,
+      "prompt_len": 6346
+    }
+  },
+  "kernel_consult_api": "/api/ai/module-consult",
+  "sendMessage_fixed": true,
+  "consultModule_modules": [
+    "dashboard",
+    "inteligencia",
+    "vulnerabilidades",
+    "network",
+    "topology",
+    "endpoints",
+    "reportes",
+    "xdr",
+    "incidentes",
+    "playbooks",
+    "configuracion",
+    "aspe"
+  ]
+}

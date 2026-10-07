@@ -1,0 +1,46 @@
+{
+  "module": "NOVUS Digital Case Intelligence (NDCI)",
+  "status": "operational",
+  "case_id_format": "NOVUS-CS-YYYY-NNNNNN",
+  "storage": {
+    "database_table": "ndci_casos",
+    "json_backup": "data/ndci/cases/{id}.json",
+    "knowledge_feed": "data/ndci/knowledge.jsonl",
+    "pdf_output": "data/ndci/{id}.pdf",
+    "immutable": true
+  },
+  "integrations": [
+    "deep_scan_engine (hook: Crear Caso de Estudio post-scan)",
+    "kernel_coordinator (op.collected + ndci_create action)",
+    "platform_metrics_service",
+    "network_ndr_service",
+    "novus_security_integration",
+    "vulnerability_analyst_service",
+    "adaptive_defense_engine",
+    "kernel_agent (answer_kernel_query)",
+    "report_pdf_service / ndci_pdf",
+    "module_kernel_context (consultModule)"
+  ],
+  "api_endpoints": [
+    "GET /api/ndci/cases",
+    "GET /api/ndci/cases/{id}",
+    "POST /api/ndci/cases/create",
+    "GET /api/ndci/cases/compare?a=&b=",
+    "GET /api/ndci/cases/{id}/pdf"
+  ],
+  "ui": "/casos-estudio",
+  "kernel_learning": "Evidencia técnica en knowledge.jsonl + kernel_operations.jsonl — no conversaciones",
+  "test_result": "scripts/test_ndci.py ALL PASS",
+  "limitations": [
+    "VLANs requieren telemetría de switch no disponible sin integración SNMP",
+    "Credenciales débiles no evaluadas sin módulo de auditoría de credenciales",
+    "Bandwidth por dispositivo limitado a contadores NDR/OS",
+    "Resumen ejecutivo es síntesis determinística de datos reales, no LLM generativo"
+  ],
+  "future_improvements": [
+    "Auto-crear caso opcional al completar Deep Scan sin confirmación",
+    "Comparación visual side-by-side en UI",
+    "Enlace bidireccional CASO-* Threat Intel ↔ NOVUS-CS-* NDCI",
+    "Gráficas en PDF desde métricas históricas"
+  ]
+}

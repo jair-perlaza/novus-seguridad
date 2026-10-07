@@ -1,0 +1,580 @@
+{
+  "timestamp": "2026-07-17 01:42:21",
+  "categories": {
+    "Motor Central": {
+      "tests": [
+        {
+          "name": "detect_threats_realtime estructura",
+          "pass": true,
+          "how": "novus_security.detect_threats_realtime(force=True)",
+          "evidence": "dict con threats, suspicious_processes, open_ports",
+          "error": ""
+        },
+        {
+          "name": "scan_vulnerabilities vivo",
+          "pass": true,
+          "how": "novus_security.scan_vulnerabilities()",
+          "evidence": "lista hallazgos",
+          "error": ""
+        },
+        {
+          "name": "CryptoVault lazy init",
+          "pass": true,
+          "how": "novus_security.vault",
+          "evidence": "vault lazy o N/D",
+          "error": ""
+        },
+        {
+          "name": "kernel query amenazas runtime",
+          "pass": true,
+          "how": "novus_security.answer_kernel_query('amenazas runtime')",
+          "evidence": "No hay amenazas runtime activas en el último escaneo del motor central. Vulnerabilidades en caché: 3.",
+          "error": ""
+        },
+        {
+          "name": "auth anomaly detector callable",
+          "pass": true,
+          "how": "novus_security._detect_auth_anomalies()",
+          "evidence": "lista amenazas auth",
+          "error": ""
+        }
+      ],
+      "passed": 5,
+      "total": 5
+    },
+    "Detección": {
+      "tests": [
+        {
+          "name": "scan_running_processes",
+          "pass": true,
+          "how": "AdvancedDetector.scan_running_processes()",
+          "evidence": "procesos",
+          "error": ""
+        },
+        {
+          "name": "scan_open_ports",
+          "pass": true,
+          "how": "AdvancedDetector.scan_open_ports()",
+          "evidence": "puertos",
+          "error": ""
+        }
+      ],
+      "passed": 2,
+      "total": 2
+    },
+    "Contención": {
+      "tests": [
+        {
+          "name": "ADE panel",
+          "pass": true,
+          "how": "adaptive_defense.get_adaptive_defense_panel()",
+          "evidence": "panel dict",
+          "error": ""
+        },
+        {
+          "name": "ADE gate crítico sin evidencia",
+          "pass": true,
+          "how": "_has_critical_evidence sin evidencia",
+          "evidence": "downgrade sin evidencia",
+          "error": ""
+        },
+        {
+          "name": "ADE classify_risk",
+          "pass": true,
+          "how": "classify_risk_level",
+          "evidence": "ALTO",
+          "error": ""
+        }
+      ],
+      "passed": 3,
+      "total": 3
+    },
+    "ASPE": {
+      "tests": [
+        {
+          "name": "init sector",
+          "pass": true,
+          "how": "aspe.initialize_sector_protection",
+          "evidence": "success",
+          "error": ""
+        },
+        {
+          "name": "umbral evidencia 70%",
+          "pass": true,
+          "how": "EVIDENCE_MIN_FOR_DYNAMIC",
+          "evidence": "0.7",
+          "error": ""
+        },
+        {
+          "name": "iot standby sin telemetría",
+          "pass": true,
+          "how": "_telemetry_sufficient iot_guard",
+          "evidence": "standby sin coords",
+          "error": ""
+        },
+        {
+          "name": "clasificación NDR",
+          "pass": true,
+          "how": "classify_threat_type motor network_ndr",
+          "evidence": "iot_anomaly",
+          "error": ""
+        },
+        {
+          "name": "evaluate_incident",
+          "pass": true,
+          "how": "aspe.evaluate_incident(vuln[0])",
+          "evidence": "api_attack",
+          "error": ""
+        }
+      ],
+      "passed": 5,
+      "total": 5
+    },
+    "UCE": {
+      "tests": [
+        {
+          "name": "detect_infrastructure",
+          "pass": true,
+          "how": "uce.detect_infrastructure",
+          "evidence": "modules=7",
+          "error": ""
+        },
+        {
+          "name": "sector modules presentes",
+          "pass": true,
+          "how": "active_modules no vacío",
+          "evidence": "['iot_guard', 'mitm_shield', 'network_scanner', 'ui_shield', 'api_shield']",
+          "error": ""
+        }
+      ],
+      "passed": 2,
+      "total": 2
+    },
+    "Sector": {
+      "tests": [
+        {
+          "name": "normalize default otros",
+          "pass": true,
+          "how": "normalize_sector(None)",
+          "evidence": "otros",
+          "error": ""
+        },
+        {
+          "name": "scan_sector",
+          "pass": true,
+          "how": "scan_sector(QA_EMAIL)",
+          "evidence": "sector=None",
+          "error": ""
+        }
+      ],
+      "passed": 2,
+      "total": 2
+    },
+    "Red": {
+      "tests": [
+        {
+          "name": "NDR payload",
+          "pass": true,
+          "how": "build_ndr_payload",
+          "evidence": "nodes=0",
+          "error": ""
+        },
+        {
+          "name": "NDR analyze_behavior",
+          "pass": true,
+          "how": "analyze_behavior + ARP conflict",
+          "evidence": "alerts=1",
+          "error": ""
+        },
+        {
+          "name": "Topology payload",
+          "pass": true,
+          "how": "build_topology_payload",
+          "evidence": "topology success",
+          "error": ""
+        }
+      ],
+      "passed": 3,
+      "total": 3
+    },
+    "Vulnerabilidades": {
+      "tests": [
+        {
+          "name": "kernel query vulns",
+          "pass": true,
+          "how": "vuln_kq('vulnerabilidades')",
+          "evidence": "query opcional",
+          "error": ""
+        }
+      ],
+      "passed": 1,
+      "total": 1
+    },
+    "Remediación": {
+      "tests": [
+        {
+          "name": "select_strategies",
+          "pass": true,
+          "how": "_select_strategies",
+          "evidence": "strategies=4",
+          "error": ""
+        },
+        {
+          "name": "run_auto_remediation",
+          "pass": true,
+          "how": "run_auto_remediation skip_adaptive",
+          "evidence": "manual_required",
+          "error": ""
+        }
+      ],
+      "passed": 2,
+      "total": 2
+    },
+    "Playbooks": {
+      "tests": [
+        {
+          "name": "pipelines definidos",
+          "pass": true,
+          "how": "ORCHESTRATION_PIPELINES",
+          "evidence": "pipelines=6",
+          "error": ""
+        }
+      ],
+      "passed": 1,
+      "total": 1
+    },
+    "Inteligencia": {
+      "tests": [
+        {
+          "name": "TI sync",
+          "pass": true,
+          "how": "threat_intelligence.sync_from_real_sources",
+          "evidence": "total=524",
+          "error": ""
+        }
+      ],
+      "passed": 1,
+      "total": 1
+    },
+    "NDCI": {
+      "tests": [
+        {
+          "name": "kernel query casos",
+          "pass": true,
+          "how": "ndci_service.answer_kernel_query",
+          "evidence": "NDCI query",
+          "error": ""
+        }
+      ],
+      "passed": 1,
+      "total": 1
+    },
+    "Kernel IA": {
+      "tests": [
+        {
+          "name": "runtime threat routing",
+          "pass": true,
+          "how": "KernelAgent.process amenazas",
+          "evidence": "**Amenazas runtime — motor central NOVUS**\n- BRUTE_FORCE (high): 44 intentos fallidos desde 198.51.1",
+          "error": ""
+        },
+        {
+          "name": "status API",
+          "pass": true,
+          "how": "GET /api/ai/status",
+          "evidence": "HTTP 200",
+          "error": ""
+        }
+      ],
+      "passed": 2,
+      "total": 2
+    },
+    "Boot": {
+      "tests": [
+        {
+          "name": "CryptoVault verify_health",
+          "pass": true,
+          "how": "CryptoVault().verify_health()",
+          "evidence": "AES-GCM roundtrip OK",
+          "error": ""
+        },
+        {
+          "name": "defense_coordinator",
+          "pass": true,
+          "how": "record_detection smoke",
+          "evidence": "registry entry id",
+          "error": ""
+        },
+        {
+          "name": "startup_defense_stack",
+          "pass": true,
+          "how": "initialize_defense_stack()",
+          "evidence": "boot status",
+          "error": ""
+        },
+        {
+          "name": "ASPE sector baselines",
+          "pass": true,
+          "how": "bootstrap_sector_baselines()",
+          "evidence": "4 sectores",
+          "error": ""
+        },
+        {
+          "name": "auth_protection API",
+          "pass": true,
+          "how": "GET /api/system/auth-protection/status",
+          "evidence": "HTTP 200",
+          "error": ""
+        }
+      ],
+      "passed": 5,
+      "total": 5
+    },
+    "APIs": {
+      "tests": [
+        {
+          "name": "GET /api/system/aspe/status",
+          "pass": true,
+          "how": "client.get(/api/system/aspe/status)",
+          "evidence": "HTTP 200",
+          "error": ""
+        },
+        {
+          "name": "GET /api/threat-intel/adaptive-defense",
+          "pass": true,
+          "how": "client.get(/api/threat-intel/adaptive-defense)",
+          "evidence": "HTTP 200",
+          "error": ""
+        },
+        {
+          "name": "GET /api/network/ndr",
+          "pass": true,
+          "how": "client.get(/api/network/ndr)",
+          "evidence": "HTTP 200",
+          "error": ""
+        }
+      ],
+      "passed": 3,
+      "total": 3
+    }
+  },
+  "mechanisms_reviewed": [
+    "novus_security_integration",
+    "advanced_detector_service",
+    "security_engine",
+    "adaptive_defense_engine",
+    "adaptive_sector_protection_engine",
+    "universal_compatibility_engine",
+    "sector_shield_service",
+    "network_ndr_service",
+    "network_scanner",
+    "vulnerability_analyst_service",
+    "remediation_orchestrator",
+    "playbook_orchestrator",
+    "threat_intelligence_service",
+    "ai_kernel",
+    "kernel_agent",
+    "ndci_service",
+    "topology_service",
+    "network_event_log",
+    "crypto_vault",
+    "defense_coordinator",
+    "startup_defense_service",
+    "auth_protection_service",
+    "defense_evidence_registry"
+  ],
+  "threat_coverage": {
+    "malware": {
+      "motor": "advanced_detector + security_engine",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "ransomware": {
+      "motor": "monitor_filesystem_activity",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "spyware": {
+      "motor": "advanced_detector procesos",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "trojan": {
+      "motor": "advanced_detector procesos",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "rootkit": {
+      "motor": "advanced_detector + runtime",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "botnet": {
+      "motor": "NDR conexiones elevadas",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "cryptomineria": {
+      "motor": "advanced_detector procesos",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "fuerza_bruta": {
+      "motor": "_detect_auth_anomalies LOGIN_FAILED",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "credential_stuffing": {
+      "motor": "_detect_auth_anomalies multi-email",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "movimiento_lateral": {
+      "motor": "NDR + TI correlación",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "escalada_privilegios": {
+      "motor": "vulnerability_analyst + ADE",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "exfiltracion": {
+      "motor": "NDR tráfico + TI",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "accesos_no_autorizados": {
+      "motor": "auth_protection_service escalonado",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "dispositivos_desconocidos": {
+      "motor": "NDR inventario",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "rogue_ap": {
+      "motor": "NDR dispositivo desconocido",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "escaneo_red": {
+      "motor": "NDR scan pattern puertos",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "arp_spoofing": {
+      "motor": "NDR conflicto ARP mismo IP",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "dns_spoofing": {
+      "motor": "limitado — sin inspección paquetes",
+      "implemented": false,
+      "validated": false,
+      "evidence_source": "pending"
+    },
+    "dhcp_spoofing": {
+      "motor": "NDR cambio IP downgrade DHCP",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "mitm": {
+      "motor": "verify_tunnel_integrity + mitm_shield",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "config_insegura": {
+      "motor": "vulnerability scan puertos",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    },
+    "apis_inseguras": {
+      "motor": "api_shield ASPE",
+      "implemented": true,
+      "validated": true,
+      "evidence_source": "threat_validation_lab"
+    }
+  },
+  "sector_coverage": {
+    "fintech": {
+      "label": "Fintech",
+      "modules": 5,
+      "implemented": true
+    },
+    "logistica": {
+      "label": "Logística",
+      "modules": 5,
+      "implemented": true
+    },
+    "movil": {
+      "label": "Aplicaciones móviles",
+      "modules": 5,
+      "implemented": true
+    },
+    "otros": {
+      "label": "Otros",
+      "modules": 4,
+      "implemented": true
+    }
+  },
+  "performance": {
+    "ndr_payload_ms": 425.1,
+    "total_elapsed_sec": 217.94,
+    "ram_mb_delta": 102.23,
+    "ram_mb_end": 158.89,
+    "cpu_percent_start": 17.3,
+    "cpu_percent_end": 41.7
+  },
+  "limitations": [
+    "Sin inspección de paquetes — DNS/DHCP spoofing no verificable en host",
+    "MITM completo requiere NOVUS_EXPECTED_CERT_PIN",
+    "Sector móvil sin agente/SDK — telemetría host desktop",
+    "BEC/Phishing sin OAuth email real",
+    "Block IP remoto = SQLite, no firewall OS",
+    "ADE firewall netsh solo Windows"
+  ],
+  "summary": {
+    "passed": 38,
+    "total": 38,
+    "all_pass": true,
+    "categories": {
+      "Motor Central": "5/5",
+      "Detección": "2/2",
+      "Contención": "3/3",
+      "ASPE": "5/5",
+      "UCE": "2/2",
+      "Sector": "2/2",
+      "Red": "3/3",
+      "Vulnerabilidades": "1/1",
+      "Remediación": "2/2",
+      "Playbooks": "1/1",
+      "Inteligencia": "1/1",
+      "NDCI": "1/1",
+      "Kernel IA": "2/2",
+      "Boot": "5/5",
+      "APIs": "3/3"
+    }
+  }
+}

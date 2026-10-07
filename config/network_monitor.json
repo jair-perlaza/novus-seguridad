@@ -1,0 +1,9 @@
+{
+  "normal_interval_min_sec": 2,
+  "normal_interval_max_sec": 5,
+  "intensive_interval_sec": 1,
+  "intensive_stable_cycles": 5,
+  "full_port_rescan_sec": 300,
+  "traffic_change_threshold_connections": 15,
+  "traffic_change_threshold_percent": 25
+}

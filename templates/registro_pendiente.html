@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — Solicitud enviada</title>
+    {% include 'partials/membership_styles.html' %}
+</head>
+<body>
+<div class="nv-page">
+    <header class="nv-hero">
+        <div class="nv-hero-inner">
+            <p class="nv-eyebrow">Registro empresarial NOVUS</p>
+            <h1>Solicitud recibida</h1>
+            <p class="nv-lead">Su solicitud para <strong>{{ company_name }}</strong> ({{ email }}) está <strong>pendiente de autorización</strong> del administrador principal.</p>
+            <p class="nv-lead">Cuando sea aprobada, recibirá un enlace para establecer su contraseña y completar el acceso.</p>
+            <div class="nv-hero-actions">
+                <a href="{{ url_for('auth.login') }}" class="nv-btn nv-btn-ghost"><i class="fas fa-sign-in-alt"></i> Ir a inicio de sesión</a>
+            </div>
+        </div>
+    </header>
+</div>
+</body>
+</html>

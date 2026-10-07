@@ -1,0 +1,164 @@
+{
+  "status": "success",
+  "tests_passed": 9,
+  "tests_total": 9,
+  "tests": {
+    "uce_detects_os": true,
+    "aspe_initializes": true,
+    "aspe_has_active_modules": true,
+    "aspe_has_standby": true,
+    "sector_resolved": true,
+    "confidence_matrix_defined": true,
+    "protection_modules_real": true,
+    "aspe_evaluates_incident": true,
+    "threat_classified": true
+  },
+  "sector": "logistica",
+  "uce": {
+    "technologies": [
+      "Windows 11",
+      "Windows Firewall",
+      "Red monitoreada NOVUS"
+    ],
+    "count": 3
+  },
+  "aspe_panel": {
+    "activas": 7,
+    "standby": 8,
+    "dinamicas": 0
+  },
+  "audit": {
+    "generated_at": "2026-07-14 15:27:57",
+    "tecnologias_detectadas": [
+      "Windows 11",
+      "Windows Firewall",
+      "Red monitoreada NOVUS"
+    ],
+    "sector_detectado": "logistica",
+    "sector_label": "Logística",
+    "protecciones_activas": [
+      {
+        "id": "api_shield",
+        "label": "API Shield",
+        "mode": "active",
+        "sector": "fintech"
+      },
+      {
+        "id": "iot_guard",
+        "label": "IoT Guard / Escudo Logística",
+        "mode": "active",
+        "sector": "logistica"
+      },
+      {
+        "id": "mitm_shield",
+        "label": "MITM Shield",
+        "mode": "active",
+        "sector": "logistica"
+      },
+      {
+        "id": "network_scanner",
+        "label": "Network Scanner",
+        "mode": "active",
+        "sector": "logistica"
+      },
+      {
+        "id": "ui_shield",
+        "label": "UI Shield / Mobile Shield",
+        "mode": "active",
+        "sector": "aplicaciones_moviles"
+      },
+      {
+        "id": "cryptovault",
+        "label": "CryptoVault",
+        "mode": "active",
+        "sector": null
+      },
+      {
+        "id": "adaptive_defense",
+        "label": "Adaptive Defense",
+        "mode": "active",
+        "sector": null
+      }
+    ],
+    "protecciones_standby": [
+      {
+        "id": "bec_shield",
+        "label": "BEC Shield / Escudo Fintech",
+        "mode": "standby",
+        "sector": "fintech"
+      },
+      {
+        "id": "ato_analyzer",
+        "label": "ATO Analyzer",
+        "mode": "standby",
+        "sector": "fintech"
+      },
+      {
+        "id": "phishing_shield",
+        "label": "Phishing Shield",
+        "mode": "standby",
+        "sector": "fintech"
+      },
+      {
+        "id": "clickjacking_guard",
+        "label": "Clickjacking Guard",
+        "mode": "standby",
+        "sector": "aplicaciones_moviles"
+      },
+      {
+        "id": "sim_identity",
+        "label": "SIM Identity",
+        "mode": "standby",
+        "sector": "aplicaciones_moviles"
+      },
+      {
+        "id": "runtime_integrity",
+        "label": "Runtime Integrity",
+        "mode": "standby",
+        "sector": "aplicaciones_moviles"
+      },
+      {
+        "id": "sqli_shield",
+        "label": "SQLi Shield",
+        "mode": "standby",
+        "sector": "otros"
+      },
+      {
+        "id": "ransom_sentinel",
+        "label": "Ransom Sentinel",
+        "mode": "standby",
+        "sector": "otros"
+      }
+    ],
+    "protecciones_dinamicas": [],
+    "motores_utilizados_pruebas": [
+      {
+        "motor": "ATO Analyzer",
+        "threat": "credential_stuffing",
+        "fecha": "2026-07-14 14:30:38"
+      }
+    ],
+    "compatibilidad_lograda": 61,
+    "fortalezas": [
+      "3 tecnología(s) identificada(s) con evidencia real",
+      "Sistema operativo: Windows 11"
+    ],
+    "limitaciones": [
+      "Puertos abiertos no disponibles hasta ejecutar escaneo de seguridad NOVUS"
+    ],
+    "oportunidades_mejora": [
+      "Ejecutar escaneo completo NOVUS para enriquecer puertos y amenazas",
+      "Conectar OAuth Gmail/Microsoft para detección productividad",
+      "Activar Network Radar para inventario LAN extendido"
+    ],
+    "confidence_level": "Alta",
+    "adaptive_defense": {
+      "estado": "Sin activación reciente",
+      "contenciones": 0
+    }
+  },
+  "eval_sample": {
+    "threat_type": "credential_stuffing",
+    "dynamic_activated": 1
+  }
+}

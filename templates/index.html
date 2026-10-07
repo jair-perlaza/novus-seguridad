@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - Cyber Command Center</title>
+
+    <!-- Diseño original Tailwind browser; mirror jsDelivr (CDN principal no resuelve en este entorno) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.tailwind && typeof window.tailwind.refresh === 'function') {
+        window.tailwind.refresh();
+      }
+    });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/novus-metrics.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/alerts-module.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard-investigation.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/novus-dashboard-cache.js') }}?v=perf-1"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    {% include 'partials/responsive_assets.html' %}
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+
+        :root {
+            --bg-dark: #06090f;
+            --panel-dark: #0c121d;
+            --accent-blue: #5d5fef;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sidebar-item-active {
+            background: linear-gradient(90deg, rgba(93, 95, 239, 0.2) 0%, rgba(93, 95, 239, 0) 100%);
+            border-right: 3px solid var(--accent-blue);
+            color: #a5a6f6;
+        }
+
+        .grid-bg {
+            background-image: radial-gradient(circle, #1a1f2e 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .module-locked {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .lock-tag {
+            font-size: 7px;
+            background: #1e293b;
+            color: #94a3b8;
+            padding: 2px 4px;
+            border-radius: 3px;
+            margin-left: auto;
+            border: 1px solid #334155;
+        }
+
+        @keyframes priority-border-pulse {
+            0%, 100% {
+                border-color: rgba(245, 158, 11, 0.35);
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+            }
+            50% {
+                border-color: rgba(245, 158, 11, 1);
+                box-shadow: 0 0 14px 2px rgba(245, 158, 11, 0.12);
+            }
+        }
+
+        .priority-alert-pulse {
+            animation: priority-border-pulse 2s ease-in-out infinite;
+        }
+
+        .dashboard-kpi-clickable {
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.15s;
+        }
+        .dashboard-kpi-clickable:hover {
+            border-color: rgba(93, 95, 239, 0.5);
+            transform: translateY(-1px);
+        }
+
+        /* Twin hero cards — same size always (enterprise SOC style) */
+        .novus-hero-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            align-items: stretch;
+        }
+        @media (min-width: 1024px) {
+            .novus-hero-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .novus-hero-card {
+            height: 300px;
+            min-height: 300px;
+            max-height: 300px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 1rem;
+            border: 1px solid #1f2937;
+            background: #0c121d;
+            padding: 1rem 1.15rem;
+            box-sizing: border-box;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+        }
+        @media (min-width: 768px) {
+            .novus-hero-card {
+                height: 300px;
+                min-height: 300px;
+                max-height: 300px;
+                padding: 1.1rem 1.2rem;
+            }
+        }
+        .novus-hero-card-priority {
+            background: linear-gradient(105deg, #0c121d 0%, #0d1524 52%, #0c121d 100%);
+            border-color: rgba(16, 185, 129, 0.28);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .novus-hero-card-priority:hover {
+            border-color: rgba(99, 102, 241, 0.45);
+        }
+        .novus-hero-card-priority.priority-alert-pulse {
+            border-color: rgba(245, 158, 11, 0.4);
+            background: linear-gradient(105deg, #0c121d 0%, #141018 52%, #0c121d 100%);
+        }
+        .novus-hero-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+        .novus-hero-footer {
+            flex: 0 0 auto;
+            margin-top: auto;
+            padding-top: 0.65rem;
+            border-top: 1px solid rgba(31, 41, 55, 0.95);
+            overflow: hidden;
+        }
+        .novus-eg-progress-track {
+            height: 8px;
+            max-height: 20px;
+            background: #1e293b;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .novus-eg-progress-track > div {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #6366f1, #22d3ee);
+            transition: width 0.45s ease-out;
+        }
+        .novus-eg-chip-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.28rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .novus-eg-chip-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 11px;
+            color: #cbd5e1;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .novus-eg-more {
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 0.15rem;
+        }
+        .novus-eg-status-badge {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            white-space: nowrap;
+        }
+        .novus-eg-status-badge.ok { color: #6ee7b7; border-color: #059669; background: rgba(5,150,105,0.12); }
+        .novus-eg-status-badge.warn { color: #fcd34d; border-color: #d97706; background: rgba(217,119,6,0.12); }
+        .novus-eg-status-badge.crit { color: #fca5a5; border-color: #dc2626; background: rgba(220,38,38,0.12); }
+        .novus-eg-status-badge.na { color: #cbd5e1; border-color: #64748b; background: rgba(100,116,139,0.15); }
+        .novus-eg-status-badge.idle { color: #94a3b8; }
+        .novus-eg-link {
+            background: none;
+            border: none;
+            color: #818cf8;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            padding: 0;
+        }
+        .novus-eg-link:hover { color: #a5b4fc; }
+        .novus-eg-motor-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.35rem;
+        }
+        .novus-eg-stat {
+            font-size: 11px;
+            color: #34d399;
+            font-weight: 700;
+        }
+        #novus-eg-detail-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            background: rgba(2, 6, 23, 0.72);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        #novus-eg-detail-modal.open { display: flex; }
+        .novus-eg-detail-box {
+            width: min(560px, 100%);
+            max-height: min(80vh, 640px);
+            overflow: auto;
+            background: #0b1220;
+            border: 1px solid #1f2937;
+            border-radius: 1rem;
+            padding: 1.25rem;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+        }
+        .novus-eg-detail-box h3 {
+            margin: 0 0 0.75rem;
+            color: #67e8f9;
+            font-size: 0.95rem;
+        }
+        .novus-eg-detail-section {
+            margin-bottom: 1rem;
+        }
+        .novus-eg-detail-section h4 {
+            margin: 0 0 0.4rem;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+        }
+        .novus-eg-detail-section ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .novus-eg-detail-section li {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            font-size: 11px;
+            padding: 0.35rem 0;
+            border-bottom: 1px solid rgba(31,41,55,0.7);
+            color: #cbd5e1;
+        }
+        .novus-notif-meta .pri {
+            font-size: 9px; text-transform: uppercase; font-weight: 700; margin-right: 0.35rem;
+        }
+        .pri.critical, .pri.high { color: #f87171; }
+        .pri.warning { color: #fbbf24; }
+        .pri.info { color: #93c5fd; }
+        .novus-notif-panel {
+            position: fixed; top: 4.5rem; right: 1rem; width: min(420px, 94vw);
+            max-height: min(70vh, 640px); overflow: auto; z-index: 80;
+            background: #0c121d; border: 1px solid #374151; border-radius: 0.85rem;
+            box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+        }
+        .novus-notif-panel.hidden { display: none; }
+        .novus-notif-head {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem 0.9rem; border-bottom: 1px solid #1f2937;
+        }
+        .novus-notif-filters {
+            display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0.55rem 0.75rem;
+            border-bottom: 1px solid #1f2937;
+        }
+        .novus-notif-chip {
+            font-size: 10px; padding: 0.2rem 0.45rem; border-radius: 999px;
+            border: 1px solid #374151; background: #111827; color: #d1d5db; cursor: pointer;
+        }
+        .novus-notif-item {
+            padding: 0.7rem 0.85rem; border-bottom: 1px solid #1f2937;
+        }
+        .novus-notif-item h4 { margin: 0.25rem 0; font-size: 12px; color: #f3f4f6; }
+        .novus-notif-item .desc { margin: 0; font-size: 11px; color: #9ca3af; }
+        .novus-notif-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; font-size: 10px; color: #6b7280; }
+        .novus-notif-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.45rem; }
+        .novus-notif-actions a, .novus-notif-actions button {
+            font-size: 10px; color: #a5b4fc; background: transparent; border: 1px solid #374151;
+            border-radius: 0.4rem; padding: 0.15rem 0.4rem; cursor: pointer; text-decoration: none;
+        }
+
+    </style>
+</head>
+
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen w-full" data-novus-module="dashboard">
+
+    {% set active_module = 'dashboard' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+
+    <div class="novus-main flex-1 flex flex-col relative min-w-0 min-h-0">
+
+        <header class="min-h-16 border-b border-gray-800 flex flex-wrap items-center justify-between gap-3 px-4 md:px-8 py-3 bg-[#06090f]/90 backdrop-blur-md z-50">
+
+            <div class="flex-1 max-w-xl relative novus-global-search-bar">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 text-xs pointer-events-none"></i>
+                <input type="search" id="search-input" data-novus-search-inline="true" autocomplete="off" spellcheck="false" placeholder="Buscar en toda la plataforma... (Ctrl+K)" class="w-full bg-[#0c121d] border border-gray-800 rounded-xl py-2 pl-10 pr-4 text-xs focus:outline-none focus:border-indigo-500 text-gray-300 cursor-text">
+                <div id="novus-inline-search-kernel" class="novus-inline-search-kernel hidden"></div>
+                <div id="novus-inline-search-results" class="novus-inline-search-dropdown novus-search-results hidden" role="listbox" aria-label="Resultados de búsqueda"></div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 md:gap-6 md:pl-8">
+
+                <a href="{{ url_for('auth.logout_seguro') }}" class="text-gray-400 hover:text-red-500 text-sm no-underline">
+                    <i class="fas fa-sign-out-alt mr-1"></i>Cerrar Sesión
+                </a>
+
+                <div class="relative cursor-pointer" id="novus-bell-btn" title="Centro de Eventos / Notificaciones">
+                    <i class="fas fa-bell text-gray-400 text-lg"></i>
+                    <span id="alert-count" class="absolute -top-2 -right-2 bg-red-600 text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-[#06090f]">—</span>
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- PRIORIDAD ACTUAL + ESTADO GENERAL (tarjetas gemelas 300×300) -->
+        <div class="px-4 md:px-8 pt-4 md:pt-5">
+            <div class="novus-hero-row">
+            <div id="priority-current-panel" role="button" tabindex="0" onclick="NovusDashboardInvestigation.openPriorityDetail()"
+                class="novus-hero-card novus-hero-card-priority">
+                <div class="flex flex-wrap items-start justify-between gap-2 flex-shrink-0 mb-2">
+                    <div class="flex items-start gap-3 min-w-0">
+                        <div id="priority-icon-wrap" class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                            <i id="priority-icon" class="fas fa-check-circle text-base"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-[9px] uppercase tracking-widest text-gray-500 font-bold mb-1">Prioridad Actual</div>
+                            <div id="priority-title" class="text-base font-bold text-white leading-snug line-clamp-2">Cargando análisis...</div>
+                        </div>
+                    </div>
+                    <span id="priority-level-badge" class="hidden px-2 py-1 rounded-full text-[9px] font-bold uppercase border flex-shrink-0"></span>
+                </div>
+                <div class="novus-hero-body">
+                    <div id="priority-summary" class="text-[11px] text-gray-400 leading-relaxed line-clamp-5"></div>
+                    <div id="priority-details" class="hidden grid grid-cols-1 gap-2 text-[10px]"></div>
+                </div>
+                <div class="novus-hero-footer flex flex-wrap items-center justify-between gap-2">
+                    <div class="min-w-0 flex-1">
+                        <div class="text-[8px] uppercase text-gray-600 mb-0.5">Recomendación</div>
+                        <div id="priority-recommendation" class="text-[11px] text-gray-300 line-clamp-2">—</div>
+                        <div id="priority-last-analysis" class="text-[9px] text-gray-600 mt-1 truncate"></div>
+                    </div>
+                    <a id="priority-action-btn" href="#" onclick="event.stopPropagation()" class="hidden px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-semibold no-underline flex-shrink-0"></a>
+                </div>
+            </div>
+
+            <aside id="novus-estado-general-panel" class="novus-hero-card">
+                <div class="flex items-start justify-between gap-2 flex-shrink-0 mb-2">
+                    <div>
+                        <div class="text-[9px] uppercase tracking-widest text-gray-500 font-bold mb-0.5">Estado de Protección</div>
+                        <div id="novus-eg-headline" class="text-[11px] text-gray-400">Consultando seguridad…</div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="novus-eg-status-badge" class="novus-eg-status-badge idle">—</span>
+                        <button type="button" class="novus-eg-link" id="novus-eg-open-details" onclick="NovusEstadoGeneral.openDetails()">Ver detalles</button>
+                    </div>
+                </div>
+
+                <div class="novus-hero-body">
+                    <div id="novus-eg-waiting" class="text-[11px] text-amber-300/90">Consultando fuente canónica…</div>
+                    <div id="novus-eg-error" class="text-[11px] text-red-400 hidden"></div>
+                    <div id="novus-eg-security-body" class="text-[11px] text-gray-300 space-y-1"></div>
+                    <div class="flex-shrink-0 mt-2">
+                        <div class="text-[9px] uppercase tracking-wider text-gray-600 font-bold mb-1">Amenazas / alertas</div>
+                        <ul id="novus-eg-threat-list" class="novus-eg-chip-list text-[10px]"></ul>
+                    </div>
+                    <div id="novus-eg-meta" class="text-[9px] text-gray-600 mt-2 truncate"></div>
+                    <!-- Legacy nodes kept hidden for modal compatibility -->
+                    <div id="novus-eg-activity" class="hidden"></div>
+                    <div id="novus-eg-progress" class="hidden"></div>
+                    <div id="novus-eg-summary" class="hidden"></div>
+                    <div id="novus-eg-tasks-block" class="hidden"></div>
+                    <ul id="novus-eg-event-feed" class="hidden"></ul>
+                    <ul id="novus-eg-stages" class="hidden"></ul>
+                    <div id="novus-eg-stages-more" class="hidden"></div>
+                    <div id="novus-eg-summary-grid" class="hidden"></div>
+                    <p id="novus-eg-kernel-rec" class="hidden"></p>
+                    <a id="novus-eg-report-link" class="hidden" href="/reportes"></a>
+                    <div id="novus-eg-motors" class="hidden"></div>
+                    <span id="novus-eg-motors-stat" class="hidden"></span>
+                    <ul id="novus-eg-motors-grid" class="hidden"></ul>
+                    <span id="novus-eg-current-stage" class="hidden"></span>
+                    <span id="novus-eg-pct" class="hidden"></span>
+                    <div id="novus-eg-progress-bar" class="hidden"></div>
+                </div>
+            </aside>
+            </div>
+        </div>
+
+        <!-- Modal detalle Estado General (toda la info sin perder datos) -->
+        <div id="novus-eg-detail-modal" role="dialog" aria-modal="true" aria-labelledby="novus-eg-detail-title">
+            <div class="novus-eg-detail-box">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <h3 id="novus-eg-detail-title">Estado General — Detalle</h3>
+                    <button type="button" class="text-gray-400 hover:text-white text-xl leading-none" onclick="NovusEstadoGeneral.closeDetails()" aria-label="Cerrar">&times;</button>
+                </div>
+                <div id="novus-eg-detail-body"></div>
+            </div>
+        </div>
+
+        <!-- KPI -->
+        <div class="novus-dashboard-kpi-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 md:gap-4 px-4 md:px-8 py-4 md:py-6">
+
+            <div role="button" tabindex="0" onclick="NovusDashboardInvestigation.openKpi('status')"
+                class="dashboard-kpi-clickable bg-[#0c121d] p-4 rounded-2xl border border-gray-800">
+                <div class="text-[8px] text-gray-500 uppercase font-bold mb-1">Estado</div>
+                <div id="status-val" class="text-xs font-black text-gray-400">Esperando datos...</div>
+                <div id="dashboard-data-ts" class="text-[9px] text-gray-600 mt-1 uppercase tracking-wider"></div>
+            </div>
+
+            <div role="button" tabindex="0" onclick="NovusDashboardInvestigation.openKpi('nodes')"
+                class="dashboard-kpi-clickable bg-[#0c121d] p-4 rounded-2xl border border-gray-800">
+                <div class="text-[8px] text-gray-500 uppercase font-bold mb-1">Nodos</div>
+                <div id="nodes-val" class="text-lg font-bold">{{ nodos_activos if nodos_activos is not none else 'Sin datos disponibles' }}</div>
+                <div id="nodes-val-sub" class="text-[8px] text-gray-600 mt-0.5 hidden"></div>
+            </div>
+
+            <div role="button" tabindex="0" onclick="NovusDashboardInvestigation.openKpi('traffic')"
+                class="dashboard-kpi-clickable bg-[#0c121d] p-4 rounded-2xl border border-gray-800">
+                <div class="text-[8px] text-gray-500 uppercase font-bold mb-1">Tráfico</div>
+                <div id="traffic-val" class="text-lg font-bold text-indigo-400">{{ network_bytes_recv if network_bytes_recv != 'Sin datos disponibles' else 'Sin datos disponibles' }}</div>
+                <div id="traffic-val-sub" class="text-[8px] text-gray-600 mt-0.5">HOST_GLOBAL</div>
+            </div>
+
+            <div role="button" tabindex="0" onclick="NovusDashboardInvestigation.openKpi('threats')"
+                class="dashboard-kpi-clickable bg-[#0c121d] p-4 rounded-2xl border border-gray-800 border-l-4 border-red-600">
+                <div class="text-[8px] text-red-400 uppercase font-bold mb-1">Amenazas</div>
+                <div id="threats-val" class="text-lg font-bold text-red-500">Esperando datos reales...</div>
+            </div>
+
+            <div role="button" tabindex="0" onclick="NovusDashboardInvestigation.openKpi('vulnerabilities')"
+                class="dashboard-kpi-clickable bg-[#0c121d] p-4 rounded-2xl border border-gray-800 border-l-4 border-amber-600">
+                <div class="text-[8px] text-amber-400 uppercase font-bold mb-1">Vulnerabilidades</div>
+                <div id="vulns-val" class="text-lg font-bold text-amber-400">{{ vulnerabilities_count if vulnerabilities_count is not none else 'Sin datos disponibles' }}</div>
+                <div id="vulns-val-sub" class="text-[8px] text-gray-600 mt-0.5">fuente: análisis</div>
+            </div>
+
+            <div role="button" tabindex="0" onclick="NovusDashboardInvestigation.openKpi('endpoints')"
+                class="dashboard-kpi-clickable bg-[#0c121d] p-4 rounded-2xl border border-gray-800">
+                <div class="text-[8px] text-gray-500 uppercase font-bold mb-1">Endpoints</div>
+                <div id="endpoints-val" class="text-lg font-bold text-purple-400">{{ endpoints_total if endpoints_total is not none else 'Sin datos disponibles' }}</div>
+            </div>
+
+            <div role="button" tabindex="0" onclick="NovusDashboardInvestigation.openKpi('users')"
+                class="dashboard-kpi-clickable bg-[#0c121d] p-4 rounded-2xl border border-gray-800">
+                <div class="text-[8px] text-gray-500 uppercase font-bold mb-1">Users</div>
+                <div id="users-val" class="text-lg font-bold text-blue-300">{{ usuarios_conectados if usuarios_conectados is not none else 'Sin datos disponibles' }}</div>
+            </div>
+
+        </div>
+
+        <!-- CENTRO DE DEFENSA -->
+        {% if user.can_access.get('centro_defensa') or user.can_access.get('manual_defense_center') %}
+        <div class="px-4 md:px-8 pb-4 md:pb-6">
+            <button type="button" id="defense-center-panel" onclick="window.location.href='{{ url_for('main.ruta_centro_defensa') }}'"
+                class="w-full text-left bg-gradient-to-r from-[#0c121d] via-[#121a0f] to-[#0c121d] border border-emerald-500/35 rounded-2xl p-4 md:p-5 hover:border-emerald-400/60 transition-all group shadow-lg shadow-emerald-900/10">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-300 group-hover:scale-105 transition-transform">
+                            <i class="fas fa-shield-virus text-lg"></i>
+                        </div>
+                        <div>
+                            <div class="text-[9px] uppercase tracking-widest text-emerald-400 font-bold mb-1">Centro de Defensa</div>
+                            <div id="dc-protection-overview" class="text-sm md:text-base font-bold text-white">Cargando…</div>
+                            <div class="text-[10px] text-gray-500 mt-1">Operación manual de motores reales · Pulse para abrir el módulo completo</div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <span id="dc-auto-badge" class="px-2 py-1 rounded-full text-[9px] font-bold uppercase bg-gray-800 text-gray-400 border border-gray-700">Automática —</span>
+                        <span id="dc-system-badge" class="px-2 py-1 rounded-full text-[9px] font-bold uppercase bg-gray-800 text-gray-400 border border-gray-700">Sistema —</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-[10px]">
+                    <div><span class="text-gray-500 block uppercase text-[8px]">Motores activos</span><span id="dc-motors-count" class="text-emerald-300 font-bold">—</span></div>
+                    <div><span class="text-gray-500 block uppercase text-[8px]">Último análisis manual</span><span id="dc-last-manual" class="text-gray-300 font-mono">—</span></div>
+                    <div><span class="text-gray-500 block uppercase text-[8px]">Última actualización</span><span id="dc-last-updated" class="text-gray-300 font-mono">—</span></div>
+                    <div><span class="text-gray-500 block uppercase text-[8px]">Estado general</span><span id="dc-system-health" class="text-indigo-300">—</span></div>
+                </div>
+            </button>
+        </div>
+        {% endif %}
+
+        <!-- ESCUDO SECTORIAL ACTIVO -->
+        <div class="px-4 md:px-8 pb-4 md:pb-6">
+            <button type="button" id="sector-shield-panel" onclick="openSectorShieldDetail()"
+                class="w-full text-left bg-gradient-to-r from-[#0c121d] via-[#101827] to-[#0c121d] border border-indigo-500/30 rounded-2xl p-4 md:p-5 hover:border-indigo-400/60 transition-all group shadow-lg shadow-indigo-900/10">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-300 group-hover:scale-105 transition-transform">
+                            <i class="fas fa-shield-alt text-lg"></i>
+                        </div>
+                        <div>
+                            <div class="text-[9px] uppercase tracking-widest text-indigo-400 font-bold mb-1">Escudo Sectorial Activo</div>
+                            <div id="shield-name" class="text-sm md:text-base font-bold text-white">{{ user.sector if user.sector != 'Sin datos disponibles' else 'Cargando escudo...' }}</div>
+                            <div id="shield-subtitle" class="text-[10px] text-gray-500 mt-1">Sector: {{ user.sector_key or user.sector }} · Pulse para acciones</div>
+                            {% if user.dashboard_focus %}
+                            <div id="dashboard-sector-focus" class="flex flex-wrap gap-1 mt-2">
+                                {% for item in user.dashboard_focus %}
+                                <span class="px-2 py-0.5 rounded bg-indigo-900/30 text-indigo-300 text-[9px] border border-indigo-500/20">{{ item }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <span id="shield-status-badge" class="px-2 py-1 rounded-full text-[9px] font-bold uppercase bg-gray-800 text-gray-400 border border-gray-700">Cargando</span>
+                        <span id="shield-risk-badge" class="px-2 py-1 rounded-full text-[9px] font-bold uppercase bg-gray-800 text-gray-400 border border-gray-700">Riesgo —</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-[10px]">
+                    <div><span class="text-gray-500 block uppercase text-[8px]">Último análisis</span><span id="shield-last-analysis" class="text-gray-300 font-mono">—</span></div>
+                    <div><span class="text-gray-500 block uppercase text-[8px]">Nivel protección</span><span id="shield-protection-level" class="text-emerald-400 font-bold">—</span></div>
+                    <div><span class="text-gray-500 block uppercase text-[8px]">Último resultado</span><span id="shield-last-result" class="text-gray-300">—</span></div>
+                    <div><span class="text-gray-500 block uppercase text-[8px]">Motores</span><span id="shield-motors-count" class="text-indigo-300">—</span></div>
+                </div>
+            </button>
+        </div>
+
+        <!-- UCE + ASPE — PROTECCIÓN ADAPTATIVA -->
+        <div class="px-4 md:px-8 pb-4 md:pb-6">
+            <button type="button" id="sector-protection-panel" onclick="openSectorProtectionDetail()"
+                class="w-full text-left bg-gradient-to-r from-[#0c121d] via-[#0f1a2e] to-[#0c121d] border border-cyan-500/25 rounded-2xl p-4 md:p-5 hover:border-cyan-400/50 transition-all group">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300">
+                            <i class="fas fa-microchip text-lg"></i>
+                        </div>
+                        <div>
+                            <div class="text-[9px] uppercase tracking-widest text-cyan-400 font-bold mb-1">UCE + ASPE — Protección Adaptativa</div>
+                            <div id="aspe-sector" class="text-sm md:text-base font-bold text-white">Cargando sector…</div>
+                            <div class="text-[10px] text-gray-500 mt-1">Confianza: <span id="aspe-confidence" class="text-cyan-300">—</span> · Infra: <span id="aspe-infra" class="text-gray-400">—</span></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-[9px] font-bold uppercase">
+                        <span class="px-2 py-1 rounded-full bg-emerald-900/30 text-emerald-300 border border-emerald-500/30">Activas: <span id="aspe-active-count">—</span></span>
+                        <span class="px-2 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700">Standby: <span id="aspe-standby-count">—</span></span>
+                        <span class="px-2 py-1 rounded-full bg-amber-900/30 text-amber-300 border border-amber-500/30">Dinámicas: <span id="aspe-dynamic-count">—</span></span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mt-3 text-[10px]">
+                    <div><span class="text-gray-500 block uppercase text-[8px]">Adaptive Defense</span><span id="aspe-ade-status" class="text-indigo-300 font-bold">—</span></div>
+                    <div><span class="text-gray-500 block uppercase text-[8px]">Motor UCE</span><span class="text-cyan-300 font-bold">Detección automática</span></div>
+                </div>
+            </button>
+        </div>
+
+        <!-- LIVE METRICS -->
+        <div class="novus-dashboard-live-metrics grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 px-4 md:px-8 pb-4 md:pb-6">
+
+            <div role="button" tabindex="0" onclick="NovusDashboardInvestigation.openKpi('cpu')"
+                class="dashboard-kpi-clickable bg-[#0c121d] border border-gray-800 rounded-2xl p-4">
+                <div class="text-[9px] uppercase text-gray-500 mb-2">CPU LIVE</div>
+                <div id="cpu-live" class="text-2xl font-black text-indigo-400">{% if cpu_load is number %}{{ '%.1f'|format(cpu_load) }}%{% else %}{{ cpu_load }}{% endif %}</div>
+            </div>
+
+            <div role="button" tabindex="0" onclick="NovusDashboardInvestigation.openKpi('ram')"
+                class="dashboard-kpi-clickable bg-[#0c121d] border border-gray-800 rounded-2xl p-4">
+                <div class="text-[9px] uppercase text-gray-500 mb-2">RAM LIVE</div>
+                <div id="ram-live" class="text-2xl font-black text-purple-400">{% if ram_load is number %}{{ '%.1f'|format(ram_load) }}%{% else %}{{ ram_load }}{% endif %}</div>
+            </div>
+
+            <div role="button" tabindex="0" onclick="NovusDashboardInvestigation.openKpi('disk')"
+                class="dashboard-kpi-clickable bg-[#0c121d] border border-gray-800 rounded-2xl p-4">
+                <div class="text-[9px] uppercase text-gray-500 mb-2">DISK LIVE</div>
+                <div id="disk-live" class="text-2xl font-black text-red-400">{% if disk_load is number %}{{ '%.1f'|format(disk_load) }}%{% else %}{{ disk_load }}{% endif %}</div>
+            </div>
+
+        </div>
+
+        <!-- TRAFFIC CHART + EVENT LOG -->
+        <div class="novus-dashboard-traffic-row grid grid-cols-1 xl:grid-cols-3 gap-4 px-4 md:px-8 pb-4 md:pb-6">
+            <div role="button" tabindex="0" onclick="NovusDashboardInvestigation.openKpi('traffic')"
+                class="dashboard-kpi-clickable xl:col-span-2 bg-[#0c121d] border border-gray-800 rounded-2xl p-4 min-h-[200px] md:h-64">
+                <div class="text-[9px] uppercase text-gray-500 mb-2 tracking-widest">Análisis de tráfico en tiempo real</div>
+                <canvas id="trafficChart"></canvas>
+            </div>
+            <div class="bg-[#0c121d] border border-gray-800 rounded-2xl p-4 min-h-[160px] md:h-64 overflow-y-auto">
+                <div class="text-[9px] uppercase text-gray-500 mb-2 tracking-widest">Registro de eventos recientes</div>
+                <div id="event-log">
+                    <div class="text-[10px] text-gray-500 py-2">Esperando datos del núcleo...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEWPORT -->
+        <div class="flex-1 px-4 md:px-8 pb-6 md:pb-8 min-h-[240px] overflow-y-auto">
+
+            <div id="network-context-panel" class="mb-4 bg-[#0c121d] border border-gray-800 rounded-2xl p-4 hidden">
+                <div class="text-[9px] uppercase tracking-widest text-gray-500 font-bold mb-2">Red actual</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[10px]">
+                    <div><span class="text-gray-500">SSID</span><br><span id="net-ctx-ssid" class="text-indigo-300">—</span></div>
+                    <div><span class="text-gray-500">Gateway</span><br><span id="net-ctx-gateway" class="text-indigo-300">—</span></div>
+                    <div><span class="text-gray-500">IP local</span><br><span id="net-ctx-ip" class="text-indigo-300">—</span></div>
+                    <div><span class="text-gray-500">Subred</span><br><span id="net-ctx-subnet" class="text-indigo-300">—</span></div>
+                    <div><span class="text-gray-500">Adaptador</span><br><span id="net-ctx-adapter" class="text-indigo-300">—</span></div>
+                    <div><span class="text-gray-500">Nodos detectados</span><br><span id="net-ctx-nodes" class="text-indigo-300">—</span></div>
+                    <div class="col-span-2"><span class="text-gray-500">Último escaneo</span><br><span id="net-ctx-scan" class="text-gray-400">—</span></div>
+                </div>
+            </div>
+
+            <div class="min-h-[200px] w-full bg-[#090e16] rounded-3xl border border-gray-800 relative grid-bg overflow-y-auto shadow-inner">
+                <div id="device-viewport" class="device-grid"></div>
+            </div>
+
+        </div>
+
+        <footer class="px-4 md:px-8 py-3 border-t border-gray-800 flex flex-wrap justify-between items-center gap-2 text-[9px] text-gray-500">
+
+            <div>
+                <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                NOVUS KERNEL | Nodo {{ user.nodo }} Activo
+            </div>
+
+            <div class="flex items-center font-bold uppercase">
+                <span class="animate-pulse mr-2 text-green-500">Live Stream</span>
+                <div class="h-2 w-2 rounded-full bg-green-500"></div>
+            </div>
+
+        </footer>
+
+    </div>
+
+<script>
+
+    // =========================
+    // NOVUS REALTIME ENGINE
+    // =========================
+
+    let _dashboardSecondaryTimer = null;
+    let _dashboardPollGeneration = 0;
+
+    function renderNetworkContext(info, nodesData) {
+        const panel = document.getElementById('network-context-panel');
+        if (!panel) return;
+        const ctx = (nodesData && nodesData.network_context) || {};
+        const payload = (info && info.status === 'success') ? info : {};
+        const ssid = ctx.ssid || payload.ssid || null;
+        const gateway = payload.gateway || ctx.gateway || null;
+        const ip = payload.local_ip || ctx.local_ip || null;
+        const subnet = payload.network_range || ctx.subnet || null;
+        const adapter = payload.adapter || ctx.interface || null;
+        const count = (nodesData && nodesData.count != null) ? nodesData.count : (payload.node_count != null ? payload.node_count : null);
+        const lastScan = (nodesData && nodesData.cache_info && nodesData.cache_info.last_scan) || payload.last_scan || null;
+        const hasAny = ssid || gateway || ip || subnet || adapter || (count != null && count > 0);
+        if (!hasAny) {
+            panel.classList.add('hidden');
+            return;
+        }
+        panel.classList.remove('hidden');
+        document.getElementById('net-ctx-ssid').textContent = ssid || 'N/A';
+        document.getElementById('net-ctx-gateway').textContent = gateway || 'N/A';
+        document.getElementById('net-ctx-ip').textContent = ip || 'N/A';
+        document.getElementById('net-ctx-subnet').textContent = subnet || 'N/A';
+        document.getElementById('net-ctx-adapter').textContent = adapter || 'N/A';
+        document.getElementById('net-ctx-nodes').textContent = (count != null) ? String(count) : 'N/A';
+        document.getElementById('net-ctx-scan').textContent = lastScan || (nodesData && nodesData.updating ? 'Actualizando…' : 'N/A');
+    }
+
+    function applyLiveKPIs(live, securityPartial) {
+        if (!live || live.status !== 'success') return;
+        if (typeof NovusDashboardInvestigation !== 'undefined' && securityPartial) {
+            NovusDashboardInvestigation.setCaches(securityPartial, live);
+        }
+        if (typeof NovusMetrics.applyNetworkNodesKpi === 'function') {
+            NovusMetrics.applyNetworkNodesKpi(live);
+        } else {
+            document.getElementById('nodes-val').innerText = NovusMetrics.formatCount(live.nodos_red);
+        }
+        const counters = (securityPartial && securityPartial.counters) || {};
+        const endpointsTotal = counters.endpoints_total ?? live.endpoints_total;
+        document.getElementById('endpoints-val').innerText = NovusMetrics.formatCount(endpointsTotal);
+        document.getElementById('users-val').innerText = live.usuarios;
+        let threatsCount = 'Sin datos disponibles';
+        const analysisOk = securityPartial && (securityPartial.analysis_available || securityPartial.last_scan || (securityPartial.threats && securityPartial.threats.last_scan));
+        if (securityPartial && securityPartial.status === 'ok') {
+            const total = securityPartial.total_threats ?? securityPartial.threats?.total_threats;
+            if (total === null || total === undefined) {
+                threatsCount = analysisOk ? 'Sin datos disponibles' : 'Sin análisis disponible';
+            } else {
+                threatsCount = total;
+            }
+        } else if (typeof live.amenazas === 'number') {
+            threatsCount = live.amenazas;
+        }
+        document.getElementById('threats-val').innerText = threatsCount;
+        const vulnEl = document.getElementById('vulns-val');
+        const vulnMeta = live.vulnerabilities_meta || {};
+        const vulnAnalysisOk =
+            vulnMeta.analysis_state === 'LIVE' || vulnMeta.analysis_state === 'EMPTY';
+        if (vulnEl) {
+            let vt = live.vulnerabilities_total;
+            if (vulnAnalysisOk && counters.vulnerabilities_total != null) {
+                vt = counters.vulnerabilities_total;
+            }
+            vulnEl.innerText = (vt === null || vt === undefined || !vulnAnalysisOk)
+                ? (vulnMeta.analysis_state === 'EMPTY'
+                    ? (live.vulnerabilities_total || '0 vulnerabilidades detectadas en el último análisis')
+                    : 'Sin análisis disponible')
+                : vt;
+        }
+        document.getElementById('traffic-val').innerText = NovusMetrics.formatTrafficTotal(
+            live.traffic_recv, live.traffic_sent, undefined, live.traffic_meta
+        );
+        const trafficSub = document.getElementById('traffic-val-sub');
+        const trafficMeta = live.traffic_meta || {};
+        if (trafficSub) {
+            const scope = trafficMeta.scope || 'HOST_GLOBAL';
+            const st = trafficMeta.data_state || (trafficMeta.measured === false ? 'NOT_AVAILABLE' : 'LIVE');
+            trafficSub.textContent = scope + ' · ' + st;
+        }
+        document.getElementById('cpu-live').innerText = NovusMetrics.formatPercent(live.cpu, 1);
+        document.getElementById('ram-live').innerText = NovusMetrics.formatPercent(live.ram, 1);
+        document.getElementById('disk-live').innerText = NovusMetrics.formatPercent(live.disk, 1);
+        document.getElementById('status-val').innerText =
+            typeof threatsCount === 'number' && threatsCount > 0 ? 'ALERTA'
+            : (typeof threatsCount === 'number' && threatsCount === 0 ? 'Sin amenazas detectadas'
+            : (threatsCount === 'Sin análisis disponible' ? 'Sin análisis disponible' : 'Sin datos disponibles'));
+        document.getElementById('status-val').className =
+            typeof threatsCount === 'number' && threatsCount > 0
+            ? 'text-xs font-black text-red-500' : 'text-xs font-black text-gray-400';
+        // Campanita: unread notifications only (do not overwrite with threats KPI)
+        if (typeof NovusNotificationCenter !== 'undefined' && NovusNotificationCenter.refreshBadge) {
+            NovusNotificationCenter.refreshBadge();
+        }
+        const recvMb = NovusMetrics.parseTrafficMb(live.traffic_recv);
+        const sentMb = NovusMetrics.parseTrafficMb(live.traffic_sent);
+        // Do not chart zeros when the host measurement is PENDING / NOT_AVAILABLE.
+        if (trafficMeta.measured === true && trafficMeta.data_state === 'LIVE' && (recvMb !== null || sentMb !== null)) {
+            updateTrafficChart(recvMb || 0, sentMb || 0);
+        }
+    }
+
+    function applySecurityKPIs(security, livePartial) {
+        if (!security) return;
+        if (security.status === 'loading' || security.snapshot_pending) {
+            const tsEl = document.getElementById('dashboard-data-ts');
+            if (tsEl) tsEl.textContent = 'Actualizando métricas de seguridad…';
+            return;
+        }
+        // stale / error: still apply honesty for threats/vulns (never leave fake SSR zeros)
+        if (security.status === 'stale' || security.status === 'error') {
+            const threatsEl = document.getElementById('threats-val');
+            const vulnEl = document.getElementById('vulns-val');
+            const statusEl = document.getElementById('status-val');
+            if (threatsEl && (security.total_threats === null || security.total_threats === undefined)) {
+                threatsEl.innerText = 'Sin análisis disponible';
+            }
+            if (vulnEl) {
+                const vmeta = (livePartial && livePartial.vulnerabilities_meta) || security.vulnerabilities || {};
+                const astate = vmeta.analysis_state || (security.status === 'stale' ? 'STALE' : 'NOT_AVAILABLE');
+                if (astate !== 'LIVE' && astate !== 'EMPTY') {
+                    vulnEl.innerText = astate === 'STALE' ? 'DATOS NO DISPONIBLES (STALE)' : 'Sin análisis disponible';
+                }
+            }
+            if (statusEl) statusEl.innerText = 'Sin análisis disponible';
+            const tsEl = document.getElementById('dashboard-data-ts');
+            if (tsEl) {
+                const ts = security.timestamp || security.observed_at || (security.snapshot_meta && security.snapshot_meta.generated_at_utc);
+                tsEl.textContent = ts ? ('Últimos datos: ' + ts + ' · ' + security.status) : ('Estado: ' + security.status);
+            }
+            if (livePartial) applyLiveKPIs(livePartial, security);
+            return;
+        }
+        if (security.status !== 'ok' && security.status !== 'monitoring_not_configured') return;
+        if (livePartial) applyLiveKPIs(livePartial, security);
+        else applyLiveKPIs({ status: 'success', nodos_red: document.getElementById('nodes-val')?.innerText }, security);
+        const tsEl = document.getElementById('dashboard-data-ts');
+        if (tsEl) {
+            const ts = security.timestamp || security.observed_at || (security.snapshot_meta && security.snapshot_meta.generated_at_utc);
+            tsEl.textContent = ts ? ('Últimos datos: ' + ts) : 'Actualizando…';
+        }
+    }
+
+    async function fetchDashboardKPIs(fetchJson) {
+        loadCurrentPriority();
+        const cached = (typeof NovusDashboardCache !== 'undefined') ? NovusDashboardCache.load() : null;
+        if (cached) NovusDashboardCache.restoreKPIsToDOM(cached);
+
+        const fetchOne = (typeof NovusDashboardCache !== 'undefined')
+            ? NovusDashboardCache.fetchWithTimeout.bind(NovusDashboardCache)
+            : function (fj, url) { return fj(url); };
+
+        let live = cached ? cached.live : null;
+        let security = cached ? cached.security : null;
+
+        fetchOne(fetchJson, '/api/dashboard/live', 10000).then(function (responseLive) {
+            live = responseLive;
+            if (NovusMetrics.isMonitoringNotConfigured(live)) {
+                showEmptyNodesState(NovusMetrics.monitoringNotConfiguredMessage(live));
+                return;
+            }
+            applyLiveKPIs(live, security);
+            if (typeof NovusDashboardCache !== 'undefined') NovusDashboardCache.save(live, security);
+        }).catch(function (e) {
+            console.warn('NOVUS live KPI:', e);
+        });
+
+        fetchOne(fetchJson, '/api/security/summary', 8000).then(function (responseSecurity) {
+            security = responseSecurity;
+            if (NovusMetrics.isMonitoringNotConfigured(security)) {
+                showEmptyNodesState(NovusMetrics.monitoringNotConfiguredMessage(security));
+                return;
+            }
+            applySecurityKPIs(security, live);
+            if (typeof NovusDashboardCache !== 'undefined') NovusDashboardCache.save(live, security);
+        }).catch(function (e) {
+            console.warn('NOVUS security summary:', e);
+            const tsEl = document.getElementById('dashboard-data-ts');
+            if (tsEl && !cached) tsEl.textContent = 'Resumen de seguridad no disponible temporalmente';
+        });
+
+        return { live, security, blocked: false };
+    }
+
+    async function fetchDashboardSecondary(fetchJson, caches) {
+        fetchJson('/api/network/nodes?trigger_discovery=false').then(function (data) {
+            fetchJson('/api/network/info').then(function (netInfo) {
+                renderNetworkContext(netInfo, data);
+            }).catch(function () { renderNetworkContext(null, data); });
+            if (NovusMetrics.isMonitoringNotConfigured(data)) {
+                showEmptyNodesState(NovusMetrics.monitoringNotConfiguredMessage(data));
+                return;
+            }
+            const allNodes = data.nodes || [];
+            if (allNodes.length) {
+                renderNodes(allNodes);
+            } else {
+                const msg = data.message || (data.updating || data.status === 'scanning' || data.status === 'pending'
+                    ? 'Actualizando descubrimiento de red…' : 'Sin datos disponibles.');
+                showEmptyNodesState(msg);
+            }
+            if (typeof NovusDashboardInvestigation !== 'undefined') {
+                NovusDashboardInvestigation.refreshEventLog();
+            } else if (caches && caches.live && caches.live.status === 'success') {
+                updateEventLog(allNodes, caches.security, caches.live);
+            }
+        }).catch(function (e) {
+            console.warn('NOVUS network nodes:', e);
+        });
+    }
+
+    async function fetchRealtimeData(options) {
+        const opts = options || {};
+        const fetchJson = (typeof NovusFetch !== 'undefined')
+            ? NovusFetch.fetchJson.bind(NovusFetch)
+            : (url) => fetch(url, {credentials: 'same-origin'}).then(r => r.json());
+
+        try {
+            const caches = fetchDashboardKPIs(fetchJson);
+            if (opts.kpisOnly) return;
+
+            const gen = ++_dashboardPollGeneration;
+            const runSecondary = () => {
+                if (gen !== _dashboardPollGeneration) return;
+                fetchDashboardSecondary(fetchJson, caches).catch(e => console.error('NOVUS secondary:', e));
+                loadSectorPanelsDeferred();
+            };
+            if (typeof requestIdleCallback === 'function') {
+                requestIdleCallback(runSecondary, { timeout: 120 });
+            } else {
+                setTimeout(runSecondary, 0);
+            }
+        } catch (error) {
+            console.error("NOVUS ERROR:", error);
+            document.getElementById('status-val').innerText = "Sin datos disponibles";
+            document.getElementById('status-val').className = "text-xs font-black text-gray-400";
+        }
+    }
+
+    let trafficChartInstance = null;
+    const trafficHistory = { recv: [], sent: [] };
+
+    function initTrafficChart() {
+        const canvas = document.getElementById('trafficChart');
+        if (!canvas || trafficChartInstance) return;
+        trafficChartInstance = new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Recibido (MB/s)',
+                        data: [],
+                        borderColor: '#5d5fef',
+                        backgroundColor: 'rgba(93, 95, 239, 0.08)',
+                        fill: true,
+                        tension: 0.35
+                    },
+                    {
+                        label: 'Enviado (MB/s)',
+                        data: [],
+                        borderColor: '#22d3ee',
+                        backgroundColor: 'rgba(34, 211, 238, 0.05)',
+                        fill: true,
+                        tension: 0.35
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 10 } } },
+                scales: {
+                    x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                    y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+                }
+            }
+        });
+    }
+
+    function updateTrafficChart(recvMb, sentMb) {
+        initTrafficChart();
+        if (!trafficChartInstance) return;
+        const label = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        trafficChartInstance.data.labels.push(label);
+        trafficChartInstance.data.datasets[0].data.push(recvMb);
+        trafficChartInstance.data.datasets[1].data.push(sentMb);
+        if (trafficChartInstance.data.labels.length > 20) {
+            trafficChartInstance.data.labels.shift();
+            trafficChartInstance.data.datasets.forEach(dataset => dataset.data.shift());
+        }
+        trafficChartInstance.update('none');
+    }
+
+    function updateEventLog(nodes, security, live) {
+        const logContainer = document.getElementById('event-log');
+        if (!logContainer) return;
+        const entries = [];
+        nodes.forEach(node => {
+            entries.push(`[${new Date().toLocaleTimeString()}] Nodo detectado: ${node.ip} (${node.mac || 'MAC-N/A'})`);
+        });
+        const threats = security?.threats?.threats || [];
+        threats.slice(0, 5).forEach(threat => {
+            entries.push(`[${new Date().toLocaleTimeString()}] Amenaza: ${threat.type || 'detectada'}`);
+        });
+        if (typeof live.amenazas === 'number' && live.amenazas > 0) {
+            entries.push(`[${new Date().toLocaleTimeString()}] Motor de seguridad: ${live.amenazas} detecciones activas`);
+        }
+        logContainer.innerHTML = entries.length
+            ? entries.map(item => `<div class="text-[10px] text-gray-400 border-b border-gray-800 py-2 font-mono">${item}</div>`).join('')
+            : '<div class="text-[10px] text-gray-500 py-2">Sin datos disponibles. Esperando eventos del sistema...</div>';
+    }
+
+    function showEmptyNodesState(message) {
+        const container = document.getElementById('device-viewport');
+        if (!container) return;
+        container.innerHTML = `
+            <div class="col-span-full flex flex-col items-center justify-center py-16 text-center">
+                <i class="fas fa-satellite-dish text-4xl text-indigo-500/40 mb-4"></i>
+                <p class="text-sm text-gray-400">${message || 'Sin datos disponibles. Ejecute un escaneo de red.'}</p>
+                <button onclick="fetch('/api/network/refresh', {method:'POST'}).then(() => fetchRealtimeData())"
+                    class="mt-4 px-4 py-2 bg-indigo-600/20 border border-indigo-500/40 rounded-lg text-xs text-indigo-300">
+                    Iniciar escaneo ARP
+                </button>
+            </div>`;
+    }
+
+    // =========================
+    // RENDER NODES
+    // =========================
+
+    function renderNodes(nodes) {
+
+        const container = document.getElementById('device-viewport');
+
+        if (!container) return;
+
+        container.innerHTML = nodes.map(node => `
+
+            <div role="button" tabindex="0" onclick="NovusDashboardInvestigation.openDevice('${(node.ip || '').replace(/'/g, '')}')"
+                class="bg-[#0c121d] border border-gray-800 p-6 rounded-2xl flex flex-col items-center justify-center hover:border-indigo-500 transition-all cursor-pointer group shadow-2xl">
+
+                <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4 group-hover:scale-110 transition-transform">
+
+                    <i class="fas fa-microchip text-2xl"></i>
+
+                </div>
+
+                <div class="text-xs font-bold text-white text-center truncate w-full">
+                    ${node.name || "Sin datos disponibles"}
+                </div>
+
+                <div class="text-[9px] text-gray-500 mt-1">
+                    ${node.ip || "Sin datos disponibles"}
+                </div>
+
+                <div class="text-[8px] text-gray-600 mt-1">
+                    ${node.mac || "MAC-N/A"}
+                </div>
+
+                <div class="flex items-center mt-3">
+
+                    <span class="w-2 h-2 ${node.online ? 'bg-green-500' : 'bg-red-500'} rounded-full mr-2 animate-pulse"></span>
+
+                    <span class="text-[8px] ${node.online ? 'text-green-500' : 'text-red-500'} font-black uppercase">
+                        ${node.status}
+                    </span>
+
+                </div>
+
+            </div>
+
+        `).join('');
+    }
+
+    function toggleAdminMenu() {
+        document.getElementById('admin-dropdown').classList.toggle('hidden');
+    }
+
+    window.onload = function() {
+        initTrafficChart();
+        {% if current_priority is defined and current_priority %}
+        renderCurrentPriority({{ current_priority | tojson }});
+        {% endif %}
+        fetchRealtimeData();
+    };
+
+    function renderCurrentPriority(d) {
+        if (!d || d.status !== 'success') return;
+        const panel = document.getElementById('priority-current-panel');
+        const titleEl = document.getElementById('priority-title');
+        const summaryEl = document.getElementById('priority-summary');
+        const recEl = document.getElementById('priority-recommendation');
+        const lastEl = document.getElementById('priority-last-analysis');
+        const detailsEl = document.getElementById('priority-details');
+        const badgeEl = document.getElementById('priority-level-badge');
+        const actionBtn = document.getElementById('priority-action-btn');
+        const iconWrap = document.getElementById('priority-icon-wrap');
+        const iconEl = document.getElementById('priority-icon');
+
+        const isStable = d.priority_type === 'stable';
+        const isVuln = d.priority_type === 'vulnerability';
+        const isThreat = d.priority_type === 'threat' || d.priority_type === 'incident';
+
+        panel.classList.remove('priority-alert-pulse');
+        const baseHero = 'novus-hero-card novus-hero-card-priority';
+        panel.className = isStable
+            ? baseHero
+            : baseHero + ' priority-alert-pulse';
+
+        iconWrap.className = isStable
+            ? 'w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400'
+            : 'w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400';
+        iconEl.className = isStable ? 'fas fa-shield-alt text-lg' : (isVuln ? 'fas fa-bug text-lg' : 'fas fa-exclamation-circle text-lg');
+
+        titleEl.textContent = d.title || 'Sin datos disponibles';
+
+        if (isStable && d.summary) {
+            summaryEl.innerHTML = d.summary.map(s => `<div>${s}</div>`).join('');
+        } else if (isVuln && d.details) {
+            summaryEl.innerHTML = [
+                d.level ? `<div><span class="text-gray-500">Nivel de riesgo:</span> <span class="text-amber-300 font-semibold">${d.level}</span></div>` : '',
+                d.details.asset ? `<div><span class="text-gray-500">Equipo afectado:</span> ${d.details.asset}</div>` : '',
+            ].filter(Boolean).join('');
+        } else if (isThreat && d.details) {
+            summaryEl.innerHTML = [
+                d.level ? `<div><span class="text-gray-500">Nivel:</span> <span class="text-amber-300 font-semibold">${d.level}</span></div>` : '',
+                d.details.origin ? `<div><span class="text-gray-500">Origen:</span> ${d.details.origin}</div>` : '',
+                d.details.asset ? `<div><span class="text-gray-500">Activo afectado:</span> ${d.details.asset}</div>` : '',
+            ].filter(Boolean).join('');
+        } else {
+            summaryEl.textContent = '';
+        }
+
+        recEl.textContent = d.recommendation || 'Continuar con la monitorización.';
+        lastEl.textContent = d.last_analysis
+            ? `Último análisis realizado: ${d.last_analysis}`
+            : '';
+
+        if (d.level && !isStable) {
+            badgeEl.classList.remove('hidden');
+            badgeEl.textContent = d.level;
+            badgeEl.className = 'px-2 py-1 rounded-full text-[9px] font-bold uppercase border ' +
+                (d.level === 'Crítico' ? 'bg-red-900/30 text-red-300 border-red-500/40' :
+                 d.level === 'Alto' ? 'bg-amber-900/30 text-amber-300 border-amber-500/40' :
+                 'bg-gray-800 text-gray-300 border-gray-600');
+        } else {
+            badgeEl.classList.add('hidden');
+        }
+
+        if (!isStable && d.details) {
+            detailsEl.classList.remove('hidden');
+            const rows = [];
+            if (d.details.motor) rows.push(['Motor', d.details.motor]);
+            if (d.details.archivo) rows.push(['Archivo', d.details.archivo]);
+            if (d.details.fecha_analisis) rows.push(['Fecha del análisis', d.details.fecha_analisis]);
+            if (d.details.confianza) rows.push(['Nivel de confianza', d.details.confianza]);
+            if (d.details.evidence_summary) rows.push(['Evidencia encontrada', d.details.evidence_summary]);
+            if (d.details.impact) rows.push([isVuln ? 'Qué puede ocurrir si no se corrige' : 'Impacto', d.details.impact]);
+            if (!isVuln && d.details.probability) rows.push(['Probabilidad', d.details.probability]);
+            if (!isVuln && d.details.inaction) rows.push(['Si no actúa', d.details.inaction]);
+            let html = NovusMetrics.renderDetailRowsHtml(rows);
+            if (d.details.evidence_items && d.details.evidence_items.length) {
+                html += NovusMetrics.renderEvidenceItemsHtml(d.details.evidence_items);
+            }
+            detailsEl.innerHTML = html;
+        } else {
+            detailsEl.classList.add('hidden');
+            detailsEl.innerHTML = '';
+        }
+
+        if (d.action_label && d.action_url) {
+            actionBtn.classList.remove('hidden');
+            actionBtn.textContent = d.action_label;
+            actionBtn.href = d.action_url;
+        } else {
+            actionBtn.classList.add('hidden');
+        }
+    }
+
+    async function loadCurrentPriority() {
+        const titleEl = document.getElementById('priority-title');
+        const summaryEl = document.getElementById('priority-summary');
+        try {
+            const r = await fetch('/api/dashboard/priority');
+            const d = await r.json();
+            if (typeof NovusDashboardInvestigation !== 'undefined') {
+                NovusDashboardInvestigation.cachePriority(d);
+            }
+            renderCurrentPriority(d);
+        } catch (e) {
+            console.error('Priority load error:', e);
+            titleEl.textContent = 'Esperando información real';
+            summaryEl.textContent = 'No fue posible cargar la prioridad actual.';
+        }
+    }
+
+    setInterval(function() { fetchRealtimeData({ kpisOnly: true }); }, 15000);
+    setInterval(function() { fetchRealtimeData(); }, 60000);
+
+    let sectorShieldData = null;
+
+    function shieldStatusClass(status) {
+        const s = (status || '').toLowerCase();
+        if (s.includes('atención') || s.includes('atencion')) return 'bg-red-900/40 text-red-300 border-red-500/40';
+        if (s.includes('analiz')) return 'bg-amber-900/30 text-amber-300 border-amber-500/40';
+        if (s.includes('proteg')) return 'bg-emerald-900/30 text-emerald-300 border-emerald-500/40';
+        return 'bg-indigo-900/30 text-indigo-300 border-indigo-500/40';
+    }
+
+    function shieldRiskClass(risk) {
+        const r = (risk || '').toLowerCase();
+        if (r === 'alto') return 'bg-red-900/40 text-red-300 border-red-500/40';
+        if (r === 'medio') return 'bg-amber-900/30 text-amber-300 border-amber-500/40';
+        return 'bg-emerald-900/30 text-emerald-300 border-emerald-500/40';
+    }
+
+    async function loadSectorPanelsDeferred() {
+        try {
+            await Promise.all([loadSectorShield(), loadSectorProtection(), loadDefenseCenterSummary()]);
+        } catch (e) {
+            console.error('Sector panels load error:', e);
+        }
+    }
+
+    async function loadDefenseCenterSummary() {
+        const panel = document.getElementById('defense-center-panel');
+        if (!panel) return;
+        try {
+            const r = await fetch('/api/manual-defense/summary');
+            const js = await r.json();
+            if (js.status !== 'ok' || !js.summary) return;
+            const s = js.summary;
+            document.getElementById('dc-protection-overview').textContent = s.protection_overview || '—';
+            const auto = s.automatic_protection || {};
+            const autoEl = document.getElementById('dc-auto-badge');
+            autoEl.textContent = 'Automática: ' + (auto.label || '—');
+            autoEl.className = auto.active
+                ? 'px-2 py-1 rounded-full text-[9px] font-bold uppercase bg-emerald-900/40 text-emerald-300 border border-emerald-500/40'
+                : 'px-2 py-1 rounded-full text-[9px] font-bold uppercase bg-amber-900/30 text-amber-300 border border-amber-500/40';
+            document.getElementById('dc-motors-count').textContent =
+                (s.runtime_motors && s.runtime_motors.counts)
+                    ? (s.runtime_motors.counts.runtime_active + ' activos · ' + s.runtime_motors.counts.implemented + ' implementados')
+                    : (s.active_motors_count != null ? s.active_motors_count : '—');
+            const lm = s.last_manual_run;
+            document.getElementById('dc-last-manual').textContent = lm
+                ? `${lm.started_at || '—'} · ${(lm.mechanisms || []).length || 1} mecanismo(s)`
+                : 'Sin ejecuciones registradas';
+            document.getElementById('dc-last-updated').textContent = s.last_updated || '—';
+            const health = s.system_health || '—';
+            document.getElementById('dc-system-health').textContent = health;
+            const sysEl = document.getElementById('dc-system-badge');
+            sysEl.textContent = 'Sistema: ' + health;
+        } catch (e) {
+            console.error('Defense center summary error:', e);
+        }
+    }
+
+    async function loadSectorShield() {
+        try {
+            const r = await fetch('/api/system/sector-shield/status');
+            const d = await r.json();
+            if (d.status !== 'success') return;
+            sectorShieldData = d;
+            document.getElementById('shield-name').textContent = d.shield_name || 'Escudo Sectorial';
+            document.getElementById('shield-subtitle').textContent = `Sector: ${d.sector_key} · ${d.protections_enabled?.length || 0} protecciones activas`;
+            const statusEl = document.getElementById('shield-status-badge');
+            statusEl.textContent = d.shield_status || 'Activo';
+            statusEl.className = `px-2 py-1 rounded-full text-[9px] font-bold uppercase border ${shieldStatusClass(d.shield_status)}`;
+            const riskEl = document.getElementById('shield-risk-badge');
+            riskEl.textContent = d.current_risk
+                ? `Riesgo calculado: ${d.current_risk}`
+                : 'Riesgo — sin datos';
+            riskEl.className = `px-2 py-1 rounded-full text-[9px] font-bold uppercase border ${shieldRiskClass(d.current_risk)}`;
+            document.getElementById('shield-last-analysis').textContent = d.last_analysis || '—';
+            document.getElementById('shield-protection-level').textContent = d.protection_level
+                ? `${d.protection_level} (calculado por NOVUS)`
+                : 'Sin datos disponibles';
+            document.getElementById('shield-last-result').textContent = d.last_result || '—';
+            document.getElementById('shield-motors-count').textContent =
+                (d.motors_runtime && d.motors_runtime.active != null)
+                    ? (d.motors_runtime.active + ' activos · ' + (d.motors_runtime.total || 0) + ' asignados')
+                    : ((d.motors || []).length + ' asignados');
+        } catch (e) {
+            console.error('Sector shield load error:', e);
+        }
+    }
+
+    let sectorProtectionData = null;
+
+    async function loadSectorProtection() {
+        try {
+            const r = await fetch('/api/system/sector-protection');
+            const d = await r.json();
+            if (d.status !== 'success') return;
+            sectorProtectionData = d;
+            const sectorEl = document.getElementById('aspe-sector');
+            const confEl = document.getElementById('aspe-confidence');
+            const activeEl = document.getElementById('aspe-active-count');
+            const standbyEl = document.getElementById('aspe-standby-count');
+            const dynamicEl = document.getElementById('aspe-dynamic-count');
+            const infraEl = document.getElementById('aspe-infra');
+            const adeEl = document.getElementById('aspe-ade-status');
+            if (sectorEl) sectorEl.textContent = d.sector_label || d.sector_key || '—';
+            if (confEl) confEl.textContent = d.confidence_level || '—';
+            if (activeEl) activeEl.textContent = (d.protecciones_activas || []).length;
+            if (standbyEl) standbyEl.textContent = (d.protecciones_standby || []).length;
+            if (dynamicEl) dynamicEl.textContent = (d.protecciones_dinamicas || []).length;
+            const techs = d.infrastructure?.technologies || [];
+            if (infraEl) infraEl.textContent = techs.length ? techs.slice(0, 4).join(', ') + (techs.length > 4 ? '…' : '') : 'Sin datos — ejecute escaneo';
+            if (adeEl) adeEl.textContent = d.adaptive_defense?.estado || '—';
+        } catch (e) {
+            console.error('ASPE/UCE load error:', e);
+        }
+    }
+
+    function openSectorProtectionDetail() {
+        const d = sectorProtectionData || {};
+        NovusAction.open({
+            title: 'UCE + ASPE — Protección Adaptativa',
+            description: `Sector: ${d.sector_label || '—'} · Confianza: ${d.confidence_level || '—'}`,
+        });
+        document.getElementById('novus-modal-progress').style.width = '100%';
+        const active = (d.protecciones_activas || []).map(m => `<div class="novus-log-line done">✓ ${m.label}</div>`).join('');
+        const standby = (d.protecciones_standby || []).map(m => `<div class="novus-log-line warning">○ ${m.label} (standby)</div>`).join('');
+        const dynamic = (d.protecciones_dinamicas || []).map(m => `<div class="novus-log-line done">⚡ ${m.label}: ${(m.reason||'').slice(0,80)}</div>`).join('');
+        const techs = (d.infrastructure?.technologies || []).map(t => `<div class="novus-log-line done">${t}</div>`).join('');
+        document.getElementById('novus-modal-log').innerHTML = `
+            <div class="novus-log-line done">Sector: ${d.sector_label || '—'} (${d.sector_key || '—'})</div>
+            <div class="novus-log-line done">Confianza ASPE: ${d.confidence_level || '—'}</div>
+            <div class="novus-log-line done">Adaptive Defense: ${d.adaptive_defense?.estado || '—'}</div>
+            <div class="novus-log-line warning">— Protecciones activas —</div>${active || '<div class="novus-log-line">Ninguna</div>'}
+            <div class="novus-log-line warning">— Standby inteligente —</div>${standby || '<div class="novus-log-line">Ninguna</div>'}
+            <div class="novus-log-line warning">— Activación dinámica —</div>${dynamic || '<div class="novus-log-line">Ninguna en curso</div>'}
+            <div class="novus-log-line warning">— Infraestructura UCE —</div>${techs || '<div class="novus-log-line">Sin tecnologías detectadas aún</div>'}
+        `;
+        document.getElementById('novus-modal-result').innerHTML = `
+            <button type="button" class="novus-btn-primary text-[10px] py-2 w-full" onclick="NovusAIKernel.consultModule('dashboard')">Consultar Kernel IA</button>
+        `;
+    }
+
+    function openSectorShieldDetail() {
+        const d = sectorShieldData || {};
+        NovusAction.open({
+            title: d.shield_name || 'Escudo Sectorial Activo',
+            description: `Estado: ${d.shield_status || '—'} · Riesgo: ${d.current_risk || '—'}`,
+        });
+        document.getElementById('novus-modal-status-value').textContent = d.shield_status || 'Activo';
+        document.getElementById('novus-modal-progress').style.width = '100%';
+        const motors = (d.motors || []).map(m => `<div class="novus-log-line done">${m}</div>`).join('');
+        const controls = (d.protections_enabled || []).map(c => `<div class="novus-log-line done">✓ ${c}</div>`).join('');
+        const crypto = (d.crypto_models || []).map(c => `<div class="novus-log-line warning">${c}</div>`).join('');
+        document.getElementById('novus-modal-log').innerHTML = `
+            <div class="novus-log-line done">Último análisis: ${d.last_analysis || '—'}</div>
+            <div class="novus-log-line done">Nivel: ${d.protection_level || '—'} · ${d.last_result || ''}</div>
+            <div class="novus-log-line done">Hallazgos: ${d.metrics?.vulnerabilities ?? '—'} · Amenazas: ${d.metrics?.threats ?? '—'}</div>
+            <div class="novus-log-line warning">— Protecciones —</div>${controls}
+            <div class="novus-log-line warning">— Motores —</div>${motors}
+            <div class="novus-log-line warning">— Cifrado —</div>${crypto}
+        `;
+        document.getElementById('novus-modal-result').innerHTML = `
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <button type="button" class="novus-btn-primary text-[10px] py-2" onclick="runSectorAction('scan')">Escanear sector</button>
+                <button type="button" class="novus-btn-secondary text-[10px] py-2" onclick="runSectorAction('analyze-vulnerabilities')">Analizar vulns</button>
+                <button type="button" class="novus-btn-secondary text-[10px] py-2" onclick="runSectorAction('remediate')">Remediar</button>
+                <button type="button" class="novus-btn-secondary text-[10px] py-2" onclick="runSectorAction('mitigate')">Mitigar</button>
+                <button type="button" class="novus-btn-secondary text-[10px] py-2" onclick="runSectorAction('update-rules')">Actualizar reglas</button>
+                <button type="button" class="novus-btn-secondary text-[10px] py-2" onclick="runSectorAction('policies')">Ver políticas</button>
+                <button type="button" class="novus-btn-secondary text-[10px] py-2" onclick="runSectorAction('history')">Historial</button>
+                <button type="button" class="novus-btn-secondary text-[10px] py-2" onclick="runSectorAction('reports')">Reportes</button>
+                <button type="button" class="novus-btn-primary text-[10px] py-2 col-span-2" onclick="consultKernelSector()">Consultar Kernel IA</button>
+            </div>
+        `;
+    }
+
+    async function runSectorAction(action) {
+        const titles = {
+            scan: 'Escanear sector',
+            'analyze-vulnerabilities': 'Analizar vulnerabilidades sectoriales',
+            remediate: 'Remediación sectorial',
+            mitigate: 'Mitigación sectorial',
+            'update-rules': 'Actualizar reglas del escudo',
+            policies: 'Políticas activas',
+            history: 'Historial de eventos',
+            reports: 'Reportes relacionados',
+        };
+        if (action === 'policies' || action === 'history' || action === 'reports') {
+            const r = await fetch(`/api/system/sector-shield/${action}`);
+            const d = await r.json();
+            NovusAction.open({ title: titles[action], description: 'Datos en vivo del motor NOVUS' });
+            document.getElementById('novus-modal-progress').style.width = '100%';
+            let html = '';
+            if (action === 'policies') {
+                (d.policies || []).forEach(p => {
+                    html += `<div class="novus-log-line warning">${p.name}</div>`;
+                    (p.items || []).forEach(i => { html += `<div class="novus-log-line done">${i}</div>`; });
+                });
+            } else if (action === 'history') {
+                (d.events || []).forEach(ev => {
+                    html += `<div class="novus-log-line done">[${ev.time}] ${ev.title}: ${ev.detail}</div>`;
+                });
+                if (!html) html = '<div class="novus-log-line warning">Sin eventos sectoriales registrados aún.</div>';
+            } else {
+                (d.reports || []).slice(0, 10).forEach(rep => {
+                    html += `<div class="novus-log-line done">${rep.id} — ${rep.tipo || rep.severidad || 'Informe'}</div>`;
+                });
+                if (!html) html = '<div class="novus-log-line warning">Sin informes. Ejecute sincronizar hallazgos en Reportes.</div>';
+            }
+            document.getElementById('novus-modal-log').innerHTML = html;
+            document.getElementById('novus-modal-status-value').textContent = 'Completado';
+            return;
+        }
+        await NovusAction.runApi({
+            title: titles[action] || action,
+            url: `/api/system/sector-shield/${action}`,
+            method: 'POST',
+            successStatus: 'Completado',
+            onComplete: () => { loadSectorPanelsDeferred(); fetchRealtimeData(); },
+        });
+    }
+
+    function consultKernelSector() {
+        const sector = sectorShieldData?.sector_key || '{{ user.sector }}';
+        if (typeof consultKernelIA === 'function') {
+            consultKernelIA('aspe', { sector });
+        } else if (typeof NovusAIKernel !== 'undefined') {
+            NovusAIKernel.consultModule('aspe', { sector });
+        }
+    }
+
+</script>
+
+    {% include 'partials/global_search.html' %}
+    <script src="{{ url_for('static', filename='js/novus-dashboard-estado-general.js') }}?v=activation-gate-1"></script>
+    <script src="{{ url_for('static', filename='js/novus-notification-center.js') }}?v=notif-bh-1"></script>
+    {% include 'partials/ai_kernel_panel.html' %}
+
+</body>
+</html>

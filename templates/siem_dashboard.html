@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS - SIEM Kernel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background-color: #050505; color: #00ff41; font-family: 'Courier New', monospace; }
+        .log-entry { border-bottom: 1px solid #1a1a1a; padding: 4px 0; font-size: 11px; }
+        .timestamp { color: #888; }
+        .critical { color: #ff3e3e; font-weight: bold; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen p-4 md:p-6" data-novus-module="siem">
+    {% set active_module = 'siem' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 min-h-screen">
+    <div class="flex flex-col md:flex-row md:justify-between gap-3 border-b border-[#00ff41] pb-4 mb-6">
+        <h1 class="text-xl font-bold uppercase tracking-tighter">Acceso de Kernel: SIEM / LOGS EN VIVO</h1>
+        <span class="bg-[#00ff41] text-black px-2 py-1 text-xs font-bold">SESIÓN ENCRIPTADA</span>
+    </div>
+
+    <div class="bg-black/50 p-4 border border-[#1a1a1a] min-h-[50vh] md:h-[80vh] overflow-y-auto">
+        {% for log in logs %}
+        <div class="log-entry">
+            <span class="timestamp">[{{ log.time }}]</span>
+            <span class="text-indigo-400"> [{{ hostname }}] </span>
+            <span class="{% if 'ERROR' in log.msg %}critical{% endif %}">{{ log.msg }}</span>
+        </div>
+        {% endfor %}
+        <div class="animate-pulse">_</div>
+    </div>
+    {% include 'partials/global_search.html' %}
+    {% include 'partials/ai_kernel_panel.html' %}
+    </main>
+</body>
+</html>

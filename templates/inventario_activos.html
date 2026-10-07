@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — Inventario de Activos (AIE)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'partials/responsive_assets.html' %}
+    <style>
+        body { background: #06090f; color: #e6edf3; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(13,17,23,0.85); border: 1px solid #30363d; border-radius: 12px; }
+        .status-pill { font-size: 10px; padding: 2px 8px; border-radius: 999px; border: 1px solid; }
+        .trust-bar { height: 6px; border-radius: 3px; background: #21262d; overflow: hidden; }
+        .trust-fill { height: 100%; border-radius: 3px; }
+    </style>
+</head>
+<body class="novus-shell flex flex-col lg:flex-row min-h-screen" data-novus-module="inventario">
+    {% set active_module = 'inventario' %}
+    {% include 'partials/novus_nav_sidebar.html' %}
+    <main class="novus-main flex-1 p-4 md:p-6 overflow-y-auto">
+        <div class="max-w-7xl mx-auto">
+            <header class="mb-6 border-b border-gray-800 pb-4">
+                <h1 class="text-2xl font-bold text-white">Inventario de Activos</h1>
+                <p class="text-sm text-gray-400 mt-1">Asset Intelligence Engine (AIE) — clasificación basada en evidencia real de red</p>
+            </header>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div class="glass p-4 text-center">
+                    <p class="text-xs text-gray-500 uppercase">Total</p>
+                    <p class="text-2xl font-bold text-white" id="sum-total">{{ summary.total }}</p>
+                </div>
+                <div class="glass p-4 text-center">
+                    <p class="text-xs text-gray-500 uppercase">Pendientes</p>
+                    <p class="text-2xl font-bold text-yellow-400" id="sum-pending">{{ summary.pending_approval }}</p>
+                </div>
+                <div class="glass p-4 text-center">
+                    <p class="text-xs text-gray-500 uppercase">Autorizados</p>
+                    <p class="text-2xl font-bold text-green-400" id="sum-auth">{{ summary.authorized }}</p>
+                </div>
+                <div class="glass p-4 text-center">
+                    <p class="text-xs text-gray-500 uppercase">Trust promedio</p>
+                    <p class="text-2xl font-bold text-indigo-300" id="sum-trust">{{ summary.avg_trust }}%</p>
+                </div>
+            </div>
+
+            <div id="assets-list" class="space-y-3">
+                {% for asset in assets %}
+                <article class="glass p-4 md:p-5" data-mac="{{ asset.mac }}">
+                    <div class="flex flex-wrap justify-between gap-3 mb-3">
+                        <div>
+                            <p class="text-xs text-gray-500 font-mono">{{ asset.mac }}</p>
+                            <h2 class="text-lg font-semibold text-white">{{ asset.hostname }} · {{ asset.ip }}</h2>
+                            <p class="text-xs text-gray-400">{{ asset.vendor }} · {{ asset.device_type }} · {{ asset.os_estimate }}</p>
+                        </div>
+                        <span class="status-pill border-indigo-700 text-indigo-300">{{ asset.asset_status_label }}</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mb-3">
+                        <div><span class="text-gray-500">Primer descubrimiento</span><br>{{ asset.first_seen or '—' }}</div>
+                        <div><span class="text-gray-500">Última vez visto</span><br>{{ asset.last_seen or '—' }}</div>
+                        <div><span class="text-gray-500">Segmento</span><br>{{ asset.network_segment or '—' }}</div>
+                        <div><span class="text-gray-500">Riesgo</span><br>{{ asset.risk_level }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-500">Trust Score</span>
+                            <span class="text-indigo-300 font-bold">{{ asset.trust_score }}%</span>
+                        </div>
+                        <div class="trust-bar"><div class="trust-fill bg-indigo-500" style="width:{{ asset.trust_score }}%"></div></div>
+                    </div>
+                    {% if asset.classification_reason %}
+                    <p class="text-xs text-gray-400 mb-3"><i class="fas fa-info-circle"></i> {{ asset.classification_reason }}</p>
+                    {% endif %}
+                    <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-800">
+                        <button type="button" class="aie-action px-3 py-1 rounded bg-green-900/30 text-green-300 text-xs border border-green-800" data-action="approve" data-mac="{{ asset.mac }}">Aprobar</button>
+                        <button type="button" class="aie-action px-3 py-1 rounded bg-blue-900/30 text-blue-300 text-xs border border-blue-800" data-action="corporate" data-mac="{{ asset.mac }}">Corporativo</button>
+                        <button type="button" class="aie-action px-3 py-1 rounded bg-gray-800 text-gray-300 text-xs border border-gray-700" data-action="temporary" data-mac="{{ asset.mac }}">Temporal</button>
+                        <button type="button" class="aie-action px-3 py-1 rounded bg-yellow-900/30 text-yellow-300 text-xs border border-yellow-800" data-action="ignore" data-mac="{{ asset.mac }}">Ignorar</button>
+                        <button type="button" class="aie-action px-3 py-1 rounded bg-red-900/30 text-red-300 text-xs border border-red-800" data-action="reject" data-mac="{{ asset.mac }}">Rechazar</button>
+                        <button type="button" class="aie-action px-3 py-1 rounded bg-red-950/50 text-red-400 text-xs border border-red-900" data-action="block" data-mac="{{ asset.mac }}">Bloquear</button>
+                        <button type="button" class="aie-action px-3 py-1 rounded bg-purple-900/30 text-purple-300 text-xs border border-purple-800" data-action="isolate" data-mac="{{ asset.mac }}">Aislar</button>
+                    </div>
+                </article>
+                {% else %}
+                <div class="glass p-12 text-center text-gray-500">
+                    <i class="fas fa-radar text-4xl mb-3 block text-gray-700"></i>
+                    Sin activos en inventario. Ejecute un escaneo de red desde Network.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+    <script>
+    document.querySelectorAll('.aie-action').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const mac = btn.dataset.mac;
+            const action = btn.dataset.action;
+            if (!confirm(`¿Confirmar acción "${action}" sobre ${mac}?`)) return;
+            btn.disabled = true;
+            try {
+                const r = await fetch(`/api/network/assets/${encodeURIComponent(mac)}/action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action }),
+                });
+                const d = await r.json();
+                if (d.status === 'success') {
+                    location.reload();
+                } else {
+                    alert(d.message || 'Error');
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                alert('Error de red');
+                btn.disabled = false;
+            }
+        });
+    });
+    </script>
+</body>
+</html>

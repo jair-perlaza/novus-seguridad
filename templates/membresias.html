@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVUS — Membresías y Planes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% include 'partials/membership_styles.html' %}
+</head>
+<body>
+<div class="nv-page">
+    <header class="nv-hero">
+        <div class="nv-hero-inner">
+            <p class="nv-eyebrow">NOVUS Security Platform</p>
+            <h1>Membresías empresariales</h1>
+            <p class="nv-lead">Planes basados en módulos y motores <strong>realmente implementados</strong> en la plataforma. Precios orientativos por equipo protegido.</p>
+            <div class="nv-hero-actions">
+                {% if registration_enabled %}
+                <a href="{{ url_for('auth.registro_empresa') }}" class="nv-btn nv-btn-primary"><i class="fas fa-rocket"></i> Contratar / Registrarse</a>
+                {% endif %}
+                <a href="{{ url_for('auth.login') }}" class="nv-btn nv-btn-ghost"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</a>
+                <button type="button" class="nv-btn nv-btn-kernel" onclick="consultKernelMembership()"><i class="fas fa-brain"></i> Consultar al Kernel IA</button>
+            </div>
+        </div>
+    </header>
+
+    {% set show_contract = false %}
+    {% include 'partials/membership_plans_section.html' %}
+
+    <footer class="nv-footer">
+        <p>{{ catalog.disclaimer }}</p>
+        <p><a href="{{ url_for('auth.login') }}">Volver al login</a></p>
+    </footer>
+</div>
+
+{% include 'partials/membership_scripts.html' %}
+</body>
+</html>

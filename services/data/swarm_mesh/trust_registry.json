@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "peers": {
+    "mesh-peer-b-live": {
+      "public_pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAP/Z/VK67xJhevQEGaZ/aHwy0J1iLH/NJoFZindu3LmI=\n-----END PUBLIC KEY-----",
+      "fingerprint": "ca7c0e0f5dae29c097c5cc4632dc4508",
+      "base_url": "http://127.0.0.1:5055",
+      "label": "mesh-peer-b-live",
+      "trusted_at": "2026-07-27T18:53:54.988537+00:00",
+      "trusted_by": "live_proof_restore",
+      "revoked": false,
+      "reputation": 50,
+      "messages_accepted": 0,
+      "messages_rejected": 1
+    },
+    "novus-usuario-8ea82b133e20": {
+      "public_pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA7lZ6RgU8niZmMf5pz5WoNarVxZgoP1uHYLgOAzi5Q0o=\n-----END PUBLIC KEY-----",
+      "fingerprint": "f7623d05528c624090f9cf6ff08e2084",
+      "base_url": "http://127.0.0.1:5000",
+      "label": "live-node-a",
+      "trusted_at": "2026-07-27T18:53:24.778298+00:00",
+      "trusted_by": "live_proof",
+      "revoked": false,
+      "reputation": 32,
+      "messages_accepted": 2,
+      "messages_rejected": 4
+    }
+  },
+  "revoked": {}
+}
